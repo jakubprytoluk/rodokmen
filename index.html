@@ -81,26 +81,25 @@
           </div>
           <div>
             <h1 id="familyTitleHeader" class="serif text-2xl font-bold tracking-wide leading-none">Rodokmen Poležalů, Prytoluků a Pojerů</h1>
-            <p class="text-xs text-[#c5b49a] mt-1">133 osob z MyHeritage GEDCOM • Propojeno s JSONBin cloudem</p>
+            <p class="text-xs text-[#c5b49a] mt-1">Data oddělena v <code>data.js</code> + synchronizace JSONBin</p>
           </div>
         </div>
       </div>
 
-      <!-- Vyhledávání, Cloud Status a akce -->
       <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end">
         <div id="syncStatus" class="hidden sm:flex items-center gap-2 bg-emerald-950/90 text-emerald-400 border border-emerald-800/60 px-3 py-1.5 rounded-full text-xs">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span>Cloud připojen</span>
         </div>
 
-        <button onclick="overwriteCloudWithGedcom()" title="Přepsat stará fiktivní data v cloudu těmito reálnými předky" class="bg-amber-700 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow">
+        <button onclick="overwriteCloudWithGedcom()" title="Nahrát výchozí data ze souboru data.js do cloudu" class="bg-amber-700 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow">
           <i class="fa-solid fa-cloud-arrow-up"></i>
-          <span>Uložit GEDCOM do cloudu</span>
+          <span>Načíst z data.js do cloudu</span>
         </button>
 
         <div class="relative flex-1 sm:w-52">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-[#a38f72] text-xs"></i>
-          <input type="text" id="globalSearch" oninput="handleSearch(this.value)" placeholder="Hledat ze 133 osob..."
+          <input type="text" id="globalSearch" oninput="handleSearch(this.value)" placeholder="Hledat osobu, obec..."
             class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#3d302a] border border-[#57463e] text-xs text-[#f7f3e9] placeholder-[#a38f72] focus:outline-none focus:border-[#c5b49a]">
         </div>
 
@@ -108,13 +107,12 @@
           <i class="fa-solid fa-user-plus"></i> <span>Přidat osobu</span>
         </button>
 
-        <button onclick="openDataModal()" title="Nastavení a import" class="bg-[#3d302a] hover:bg-[#4e3e37] text-[#e2d7c5] p-2 rounded-xl border border-[#57463e] transition">
+        <button onclick="openDataModal()" title="Nastavení a export" class="bg-[#3d302a] hover:bg-[#4e3e37] text-[#e2d7c5] p-2 rounded-xl border border-[#57463e] transition">
           <i class="fa-solid fa-gear text-xs"></i>
         </button>
       </div>
     </div>
 
-    <!-- Navigační záložky -->
     <div class="bg-[#382c27] border-t border-[#4a3b34]">
       <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto gap-1 py-1.5 text-xs font-medium">
         <button onclick="switchTab('fan')" id="tab-fan" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white whitespace-nowrap">
@@ -139,10 +137,7 @@
   <!-- ==================== 3. HLAVNÍ OBSAH ==================== -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-    <!-- LEVÁ / HLAVNÍ ČÁST (8 sloupců) -->
     <div class="lg:col-span-8 space-y-6">
-
-      <!-- Výběr výchozí osoby (středu vějíře) -->
       <div class="bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-3.5 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-3">
         <div class="flex items-center gap-2 text-xs">
           <span class="font-bold uppercase tracking-wider text-[#8c583a]"><i class="fa-solid fa-bullseye mr-1"></i>Střed vějíře (#1):</span>
@@ -152,7 +147,7 @@
         <span class="text-[11px] text-[#6e5a4f]">Přepnutím osoby okamžitě přepočítáte vějíř i strom předků.</span>
       </div>
 
-      <!-- TAB 1: VĚJÍŘ PŘEDKŮ (SVG) -->
+      <!-- TAB 1: VĚJÍŘ PŘEDKŮ -->
       <section id="view-fan" class="bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm">
         <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4 border-b border-[#efe8d8] pb-3">
           <div>
@@ -164,27 +159,26 @@
             <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-[#f5dce0] border border-[#d9a7b0]"></span> Ženy</span>
           </div>
         </div>
-
         <div class="w-full overflow-x-auto flex justify-center py-2">
           <svg id="fanChartSvg" viewBox="-370 -370 740 430" class="w-full max-w-[700px] h-auto select-none"></svg>
         </div>
       </section>
 
-      <!-- TAB 2: STROM PŘEDKŮ (PO GENERACÍCH AŽ DO 7. GENERACE) -->
+      <!-- TAB 2: STROM PO GENERACÍCH -->
       <section id="view-tree" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
         <div class="border-b border-[#efe8d8] pb-3">
           <h2 class="serif text-2xl font-bold text-[#2c221e]">Kompletní vývod předků po generacích</h2>
-          <p class="text-xs text-[#6e5a4f]">Zobrazuje všechny nalezené přímé předky zvolené výchozí osoby (včetně prapraprarodičů z 18. a 19. století).</p>
+          <p class="text-xs text-[#6e5a4f]">Zobrazuje všechny nalezené přímé předky zvolené výchozí osoby.</p>
         </div>
         <div id="treeGenerationsContainer" class="space-y-6"></div>
       </section>
 
-      <!-- TAB 3: SEZNAM VŠECH 133 OSOB -->
+      <!-- TAB 3: SEZNAM VŠECH OSOB -->
       <section id="view-people" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm">
         <div class="flex flex-col sm:flex-row justify-between sm:items-center border-b border-[#efe8d8] pb-3 mb-4 gap-2">
           <div>
             <h2 class="serif text-2xl font-bold text-[#2c221e]">Rejstřík všech osob v rodokmenu</h2>
-            <p class="text-xs text-[#6e5a4f]">Všech 133 členů importovaných z vašeho souboru Poležalová Family Tree.ged.</p>
+            <p class="text-xs text-[#6e5a4f]">Kompletní seznam členů rodu.</p>
           </div>
           <select id="surnameFilter" onchange="renderPeopleList()" class="bg-[#f7f3e9] border border-[#d5c5ab] rounded-xl px-3 py-1.5 text-xs font-semibold">
             <option value="">Všechna příjmení</option>
@@ -215,15 +209,12 @@
         </div>
         <div id="placesStatsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
       </section>
-
     </div>
 
-    <!-- PRAVÝ PANEL: DETAIL VYBRANÉ OSOBY (4 sloupce) -->
+    <!-- PRAVÝ PANEL: DETAIL OSOBY -->
     <aside class="lg:col-span-4">
-      <div id="personDetailCard" class="bg-[#fffdf9] border-2 border-[#d5c5ab] rounded-2xl p-5 shadow-md sticky top-28 space-y-4">
-      </div>
+      <div id="personDetailCard" class="bg-[#fffdf9] border-2 border-[#d5c5ab] rounded-2xl p-5 shadow-md sticky top-28 space-y-4"></div>
     </aside>
-
   </main>
 
   <!-- ==================== 4. MODÁL: UPRAVIT / PŘIDAT OSOBU ==================== -->
@@ -274,17 +265,17 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Otec (vyberte ze seznamu)</label>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Otec</label>
             <select id="formFather" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white"></select>
           </div>
           <div>
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Matka (vyberte ze seznamu)</label>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Matka</label>
             <select id="formMother" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white"></select>
           </div>
         </div>
 
         <div>
-          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Poznámka / Matriční záznam / Vojenská služba</label>
+          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Poznámka / Matriční záznam</label>
           <textarea id="formNote" rows="3" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white"></textarea>
         </div>
 
@@ -310,7 +301,7 @@
   <div id="dataModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-[#fffdf9] border border-[#d5c5ab] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3">
-        <h3 class="serif text-2xl font-bold text-[#2c221e]">Nastavení rodokmenu</h3>
+        <h3 class="serif text-2xl font-bold text-[#2c221e]">Nastavení a export dat</h3>
         <button onclick="closeDataModal()" class="text-[#6e5a4f] hover:text-[#2c221e]"><i class="fa-solid fa-xmark text-xl"></i></button>
       </div>
 
@@ -332,18 +323,21 @@
         <hr class="border-[#efe8d8] my-3">
 
         <div class="flex flex-col gap-2">
-          <button onclick="overwriteCloudWithGedcom()" class="w-full py-2.5 bg-amber-700 hover:bg-amber-600 text-white font-semibold rounded-xl">
-            <i class="fa-solid fa-rotate mr-1"></i> Obnovit výchozích 133 osob z GEDCOMu a uložit do cloudu
+          <button onclick="exportDataJsFile()" class="w-full py-2.5 bg-[#382c27] hover:bg-[#2c221e] text-white font-semibold rounded-xl">
+            <i class="fa-solid fa-file-code mr-1"></i> Stáhnout aktualizovaný soubor data.js (pro GitHub)
           </button>
-          <button onclick="exportJsonData()" class="w-full py-2.5 bg-[#382c27] text-white font-semibold rounded-xl">
-            <i class="fa-solid fa-download mr-1"></i> Stáhnout zálohu rodokmenu (JSON)
+          <button onclick="overwriteCloudWithGedcom()" class="w-full py-2.5 bg-amber-700 hover:bg-amber-600 text-white font-semibold rounded-xl">
+            <i class="fa-solid fa-rotate mr-1"></i> Obnovit data ze souboru data.js do cloudu
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ==================== 6. DATA Z VAŠEHO GEDCOMU & LOGIKA ==================== -->
+  <!-- NAČTENÍ SAMOSTATNÉHO SOUBORU S DATY ČLENŮ RODU -->
+  <script src="data.js"></script>
+
+  <!-- HLAVNÍ LOGIKA APLIKACE -->
   <script>
     const JSONBIN_BIN_ID = "6adc6b4aac6210605a4e2241";
     const JSONBIN_MASTER_KEY = "$2a$10$TEIYmhA7g5etdJmkOrXXE.cP6pLXM0o9epsQcn5nZXdgfZMPaRF/u";
@@ -353,230 +347,9 @@
     const UNLOCK_KEY = 'rodokmen_unlocked_polezal';
 
     let fullCloudRecord = {};
-
-    // KOMPLETNÍ DATA VYTAŽENÁ Z VAŠEHO SOUBORU Poležalová Family Tree.ged (133 OSOB)
-    const gedcomFamilyData = {
-      config: {
-        title: "Rodokmen rodu Poležalů, Prytoluků, Pojerů a Ženíšků",
-        question: "Jak se jmenovala babička Miluše (*1953) za svobodna?",
-        answer: "Poležalová",
-        rootId: "I12" // Výchozí střed: Jakub Prytoluk (*1994)
-      },
-      people: [
-        { id: "I1", name: "Michal Poležal", maiden: "Poležal", gender: "M", birth: "4. 1. 1910", death: "19. 9. 1994", place: "", fatherId: "I48", motherId: "I52", spouseIds: ["I2"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWZjYWU4ODU1YWNkOGEwOWI0MWVmZjM4MGY0NjUxZjVkOWQzNmQyNzIyYjgyYTY3OThkNzU0OWI1ZTY4YmUzM2EmZT0xNzkzODA4MDAw/014/622/4791/500501_128894gf1tum45123da8d2_Z.jpg" },
-        { id: "I2", name: "Marie Poležalová", maiden: "Osobová", gender: "F", birth: "14. 5. 1923", death: "19. 3. 2014", place: "Lenešice", fatherId: "I50", motherId: "I51", spouseIds: ["I1"], note: "Pohřbena v Lenešicích.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTM1MGJmYjViNmU4MTcyNWViMWRhOTgzMTRjYjlmZGNkYzY3YWY1NDBmYTMyYmYyNDEwNTliN2JiMjU3YjVkNWUmZT0xNzkzODA4MDAw/014/622/4791/500521_5498622age5fdy840yd8kf_D.jpg" },
-        { id: "I3", name: "Miluše Prytoluková", maiden: "Poležalová", gender: "F", birth: "27. 1. 1953, Bečov u Mostu", death: "", place: "Bečov u Mostu", fatherId: "I1", motherId: "I2", spouseIds: ["I4", "I500001"], note: "Sňatek 24. 4. 1971 (Bečov u Mostu) s Vladislavem Prytolukem; sňatek 3. 8. 2019 (Louny) s Jaroslavem Pudrem.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTk2NjExYjU4MzRhOTU1OTVlNzBiYTk0M2ZkYWU1ZDU0MWI0MTU1ZDQwYzMxZjE4NTgxODY1NWI5YTNmYWQ5Y2MmZT0xNzkzODA4MDAw/014/622/4791/500911_761943vq9e2vme4014392x_D.jpg" },
-        { id: "I4", name: "Vladislav Prytoluk", maiden: "Prytoluk", gender: "M", birth: "9. 1. 1949", death: "13. 1. 2010", place: "", fatherId: "I40", motherId: "I41", spouseIds: ["I3"], note: "Sňatek 24. 4. 1971 v Bečově u Mostu.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTNiMTg0NDhkNmJiMDEyZjlmMTcyODIxOThhMDJmMWRkNTQ0YjMzYjFhYjQ0NmIwNGQ3OGYxNTg5NTFhYzE1MzQmZT0xNzkzODA4MDAw/014/622/4791/500621_482706q3464od36cqa7me2_D.jpg" },
-        { id: "I5", name: "Vladimír Poležal", maiden: "Poležal", gender: "M", birth: "4. 3. 1946", death: "", place: "", fatherId: "I1", motherId: "I2", spouseIds: ["I22"], note: "", photo: "" },
-        { id: "I6", name: "Jaroslav Poležal", maiden: "Poležal", gender: "M", birth: "17. 2. 1948", death: "", place: "", fatherId: "I1", motherId: "I2", spouseIds: ["I24"], note: "", photo: "" },
-        { id: "I7", name: "Marie Molatová", maiden: "Poležalová", gender: "F", birth: "28. 3. 1949", death: "", place: "", fatherId: "I1", motherId: "I2", spouseIds: ["I27", "I72", "I102"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTRmMWI3MjU3ZmFkOGQxMWYyYmMzMDI0NzQ4Y2MzZGI3YmNhYjkwMDc4NGFmYzA0NzBmZGQwNjUyMjUyZjUzMDYmZT0xNzkzODA4MDAw/014/622/4791/500391_373542f24ae5daf524i60b_Z.jpg" },
-        { id: "I8", name: "Anna Hlaváčová", maiden: "Poležalová", gender: "F", birth: "17. 10. 1950", death: "", place: "", fatherId: "I1", motherId: "I2", spouseIds: ["I32"], note: "", photo: "" },
-        { id: "I9", name: "Vladislav Prytoluk", maiden: "Prytoluk", gender: "M", birth: "14. 4. 1972", death: "", place: "Žatec", fatherId: "I4", motherId: "I3", spouseIds: ["I13", "I15"], note: "Sňatek 10. 10. 1992 s Vlastou Pojerovou; druhé manželství s Alenou Liškovou.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWY2MDFmOWU1OTAyNGVhZmY3Y2UzNWY2M2YyZTUwZDllMThhYWU3YTQ5OWVkODJlZjFiMzJmZGY2YmVjMTE3OGYmZT0xNzkzODA4MDAw/014/622/4791/500920_4379185deck377a0v1z49j_G.jpg" },
-        { id: "I10", name: "Bohuslava Kubátová", maiden: "Prytoluková", gender: "F", birth: "24. 12. 1974", death: "", place: "", fatherId: "I4", motherId: "I3", spouseIds: ["I16"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTY0NmE0OWM0ZTUwYzY0Y2MxYWIxZTIwN2RkNzlhOTNjNTY2MDI3NmU0ODI1NjYzMjc0YTJlMDM3YjAxMzFiZTkmZT0xNzkzODA4MDAw/014/622/4791/500291_85435024yu00d4aaib2470_D.jpg" },
-        { id: "I11", name: "Rostislav Prytoluk", maiden: "Prytoluk", gender: "M", birth: "31. 10. 1976, Žatec", death: "", place: "Žatec", fatherId: "I4", motherId: "I3", spouseIds: ["I500004"], note: "Sňatek 5. 10. 1996 v Libochovicích.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWQ2MTkxNDRhMGE2MmY1ZDIyNzJiNWNmMDNkMzZkMTk5ZTNhZGI1ZDdiNzFmOTM4YjhkMTZmZDU0ZWQxOTg2OWEmZT0xNzkzODA4MDAw/014/622/4791/500311_202896142w320sta2e8d0b_Z.jpg" },
-        { id: "I12", name: "Jakub Prytoluk", maiden: "Prytoluk", gender: "M", birth: "20. 6. 1994, Žatec", death: "", place: "Chomutov / Žatec", fatherId: "I9", motherId: "I13", spouseIds: [], note: "Narozen v Žatci, bydliště Chomutov.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTljNDJiOGVlOTJiYWU1Njc3ODRlNDNmZDU3ZTRlNGE0OTI2YjEzMTEyNzEzNDdlMjYyMTkzMDFiZGQ4MWU0ZjUmZT0xNzkzODA4MDAw/014/622/4791/500918_446683ede645bcvk6147p1_G.jpg" },
-        { id: "I13", name: "Vlasta Schauerová", maiden: "Pojerová", gender: "F", birth: "14. 6. 1973", death: "", place: "Chomutov", fatherId: "I500007", motherId: "I500006", spouseIds: ["I9", "I500034"], note: "1. sňatek 10. 10. 1992 (Vladislav Prytoluk), 2. sňatek 31. 12. 2002 v Nezabylicích (Vítězslav Schauer).", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTgxZjE0ZGUzMzU2MjRmNDgyZGUxNzZiMTc0MWFkMTYwZTk0NTU0NThhZjQwN2E1OGZiMTgxOTY0NzBiNDY4YTQmZT0xNzkzODA4MDAw/014/622/4791/500919_6168605d3b1vx5oe6k7ci7_X.jpg" },
-        { id: "I14", name: "Vladislav Prytoluk ml.", maiden: "Prytoluk", gender: "M", birth: "5. 5. 2006", death: "", place: "", fatherId: "I9", motherId: "I15", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWEwNzU3OTQ2OTBiNjc0YjliOTUxMGFkYWJhZWVjNjcyM2IyOTRmMTU5MGQyNzZkODgwMTE4MWQ4ZjIyOThmMTYmZT0xNzkzODA4MDAw/014/622/4791/500331_36611448yeacz24fd4y2id_D.jpg" },
-        { id: "I15", name: "Alena Karlovská", maiden: "Lišková", gender: "F", birth: "18. 3. 1972, Žatec", death: "", place: "Žatec", fatherId: "I88", motherId: "I89", spouseIds: ["I9", "I92"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTc3MzEyOGEyNTg1NTk3MWQ5NzQ5MGEzM2I0MTc2ZjI5MmJjMjAxNDkwZmRiN2RmOTVhNjAwYTM3NTQ0YmY2NWImZT0xNzkzODA4MDAw/014/622/4791/500791_659803bd0fc4261f5ncq92_Z.jpg" },
-        { id: "I16", name: "Stanislav Kubát", maiden: "Kubát", gender: "M", birth: "28. 2. 1970", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I10"], note: "", photo: "" },
-        { id: "I17", name: "Eliška Kubátová", maiden: "Kubátová", gender: "F", birth: "30. 3. 2003", death: "", place: "", fatherId: "I16", motherId: "I10", spouseIds: [], note: "", photo: "" },
-        { id: "I19", name: "Lukáš Prytoluk", maiden: "Prytoluk", gender: "M", birth: "25. 1. 2001, Žatec", death: "", place: "Žatec", fatherId: "I11", motherId: "I500004", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTExYmE5MDM3YmVhYjM0YTQ5OWRlMmQ2YTI3Mjg3MTcyNjFhNmZmNjAzMDAyN2Y1Y2Y2NTU2MTM4MzYyNDljYzkmZT0xNzkzODA4MDAw/014/622/4791/500938_452989efed979os8t45ax1_W.jpg" },
-        { id: "I20", name: "Lucie Prytoluková", maiden: "Prytoluková", gender: "F", birth: "18. 11. 2004", death: "", place: "", fatherId: "I11", motherId: "I500004", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWFhYjQ3NzMwMmI4N2MwMDk1ZTFkMDk3NDc2YzI4MzZkY2M1ODI0MGUyNzMyMzcwZDFlYTVlZTIyMzQyZjk5N2MmZT0xNzkzODA4MDAw/014/622/4791/500923_5516057dw9d579c8d0g528_W.jpg" },
-        { id: "I21", name: "Soňa Poležalová", maiden: "Poležalová", gender: "F", birth: "", death: "", place: "", fatherId: "I5", motherId: "I22", spouseIds: [], note: "", photo: "" },
-        { id: "I22", name: "Květa Poležalová", maiden: "Ramešová", gender: "F", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I5"], note: "", photo: "" },
-        { id: "I23", name: "Monika Poležalová", maiden: "Poležalová", gender: "F", birth: "", death: "", place: "", fatherId: "I5", motherId: "I22", spouseIds: [], note: "", photo: "" },
-        { id: "I24", name: "Jana Poležalová", maiden: "Simandlová", gender: "F", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I6"], note: "", photo: "" },
-        { id: "I25", name: "Jana Heřtová", maiden: "Poležalová", gender: "F", birth: "", death: "", place: "", fatherId: "I6", motherId: "I24", spouseIds: [], note: "", photo: "" },
-        { id: "I27", name: "Oldřich Trybula", maiden: "Trybula", gender: "M", birth: "", death: "Zemřel", place: "", fatherId: "", motherId: "", spouseIds: ["I7"], note: "", photo: "" },
-        { id: "I28", name: "Marie Trybulová", maiden: "Trybulová", gender: "F", birth: "23. 5. 1968", death: "", place: "", fatherId: "I27", motherId: "I7", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTA5ZmZiNjA3MzIzY2JlZDVlNTQ2ODZlYmViZmJhMzllZjI3NWM0NzNiMzU3NGNhMTdhNjZlNWRhOWViZjk5ZjYmZT0xNzkzODA4MDAw/014/622/4791/500421_2153324ss6215w1zb95ead_Z.jpg" },
-        { id: "I29", name: "Karin Černeková", maiden: "Trybulová", gender: "F", birth: "1. 9. 1969", death: "", place: "", fatherId: "I27", motherId: "I7", spouseIds: ["I55", "I57"], note: "", photo: "" },
-        { id: "I30", name: "Michaela Sopková", maiden: "Trybulová", gender: "F", birth: "4. 2. 1975", death: "", place: "", fatherId: "I27", motherId: "I7", spouseIds: ["I37"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTQwYzA1NGY1ZjE3ZDdiMTE3OTdmM2IzNjIxYmI5ZDJhYmJlZGMyMjk5OWY1MThjNTU4OTExZWIxYzMxMDdlNTAmZT0xNzkzODA4MDAw/014/622/4791/500141_346560rannt122a41f4d2z_Z.jpg" },
-        { id: "I31", name: "Denisa Farkašová", maiden: "Molatová", gender: "F", birth: "20. 9. 1983", death: "", place: "", fatherId: "I72", motherId: "I7", spouseIds: ["I39"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTU4ZTY3NzEzZDQ5MjE3MTYwYzQwMzZhZTQ1MDIyYTdkZjEzMjE0Yjg4N2I1ZWQ2ZDRkMjI2ZTFhM2VkNzRhYzAmZT0xNzkzODA4MDAw/014/622/4791/500011_6165009a4vc4d2u1a272xb_D.jpg" },
-        { id: "I32", name: "Václav Hlaváč", maiden: "Hlaváč", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I8"], note: "", photo: "" },
-        { id: "I33", name: "Petr Hlaváč", maiden: "Hlaváč", gender: "M", birth: "25. 1. 1970", death: "", place: "", fatherId: "I32", motherId: "I8", spouseIds: [], note: "", photo: "" },
-        { id: "I34", name: "Radek Hlaváč", maiden: "Hlaváč", gender: "M", birth: "9. 4. 1972", death: "", place: "", fatherId: "I32", motherId: "I8", spouseIds: [], note: "", photo: "" },
-        { id: "I35", name: "Jiří Hlaváč", maiden: "Hlaváč", gender: "M", birth: "31. 12. 1986", death: "", place: "", fatherId: "I32", motherId: "I8", spouseIds: [], note: "", photo: "" },
-        { id: "I36", name: "Petr Sopka ml.", maiden: "Sopka", gender: "M", birth: "5. 6. 1995", death: "", place: "", fatherId: "I37", motherId: "I30", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTliMmZiMGE1ZGQyMzUyNjE1NDc4MGU3YzBhZWUyNGNhY2ZiNGY1ZDE5NjYxODAzNzI5ZTZjYTNjMWYxZmNmNTEmZT0xNzkzODA4MDAw/014/622/4791/500121_394757d2ae4faw61l37l3r_Z.jpg" },
-        { id: "I37", name: "Petr Sopka", maiden: "Sopka", gender: "M", birth: "6. 12. 1959", death: "", place: "", fatherId: "I81", motherId: "I79", spouseIds: ["I30"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTQ3ZGViZDAwNWU4NTNiODUyODgyYjlmYTg1YzEyMTZlOTY5YTNkMTZhZWMxNWViOTU3NzUwNDQxZjZmNDMxZTYmZT0xNzkzODA4MDAw/014/622/4791/500101_08495342a3ac4drfs20t1d_D.jpg" },
-        { id: "I39", name: "Jan Farkaš", maiden: "Farkaš", gender: "M", birth: "14. 9. 1981", death: "", place: "", fatherId: "I59", motherId: "I58", spouseIds: ["I31"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTNmNDE3ZjdkZmYwYzQ2M2YyMzQ1NWM3ZThjMTUxODRiYTM3ZWZlYWJjNWZlODIzNDc0ZTBmN2E5MjIyZDg4ODUmZT0xNzkzODA4MDAw/014/622/4791/500031_707446a74e1ebt2a1czo4d_D.jpg" },
-        { id: "I40", name: "Vladimír Prytoluk", maiden: "Prytoluk", gender: "M", birth: "24. 11. 1924, Teremno, Luck (Volyň)", death: "8. 11. 1992, Postoloprty", place: "Teremno (Volyň) / Postoloprty", fatherId: "I45", motherId: "I46", spouseIds: ["I41"], note: "Narozen v obci Teremno u Lucku na Volyni, zemřel v Postoloprtech.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTIzNzFmZTU3ZDUwM2RhMmY4ZmIzM2RmZmJhZjU5MjQ2YTE1ZTlmOWQzNTcwZjU0NTYwNDVmYjNhYThiMjZiZTUmZT0xNzkzODA4MDAw/014/622/4791/500741_0362871lr2bddbc157s4bb_D.jpg" },
-        { id: "I41", name: "Emilie Prytoluková", maiden: "Camprová", gender: "F", birth: "1. 7. 1925, Dlouhé Pole (Volyň)", death: "13. 1. 1995, Postoloprty", place: "Dlouhé Pole (Volyň) / Postoloprty", fatherId: "I47", motherId: "I500002", spouseIds: ["I40"], note: "Narozena v obci Dlouhé Pole na Volyni, zemřela v Postoloprtech.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWQzNmMzZDlkYzc0NTVjZGZkY2M3M2QwNWE5YTg0NzU1N2Y4Zjc3YTJjZjljOWI5NjY2ZTkxNzU1NWFiZTczNDYmZT0xNzkzODA4MDAw/014/622/4791/500761_221550s4c2kv759s1bbd9e_D.jpg" },
-        { id: "I42", name: "Miluše Kalayová", maiden: "Prytoluková", gender: "F", birth: "23. 11. 1946", death: "", place: "", fatherId: "I40", motherId: "I41", spouseIds: [], note: "", photo: "" },
-        { id: "I43", name: "Libuše Kořánová", maiden: "Prytoluková", gender: "F", birth: "16. 6. 1952", death: "", place: "", fatherId: "I40", motherId: "I41", spouseIds: [], note: "", photo: "" },
-        { id: "I44", name: "Marie Benyová", maiden: "Prytoluková", gender: "F", birth: "13. 1. 1955", death: "", place: "", fatherId: "I40", motherId: "I41", spouseIds: [], note: "", photo: "" },
-        { id: "I45", name: "Fedor Prytoluk", maiden: "Prytoluk", gender: "M", birth: "1896", death: "1968", place: "Volyň", fatherId: "", motherId: "", spouseIds: ["I46"], note: "", photo: "" },
-        { id: "I46", name: "Anna Prytoluková", maiden: "Dokoupilová", gender: "F", birth: "1898", death: "1992", place: "Volyň", fatherId: "", motherId: "", spouseIds: ["I45"], note: "", photo: "" },
-        { id: "I47", name: "Rostislav Campr", maiden: "Campr", gender: "M", birth: "okolo 1. 1. 1882, Dlouhé Pole (Volyň)", death: "Zemřel", place: "Dlouhé Pole (Volyň)", fatherId: "", motherId: "", spouseIds: ["I500002"], note: "", photo: "" },
-        { id: "I48", name: "Semjon Poležal", maiden: "Poležal", gender: "M", birth: "", death: "1966", place: "", fatherId: "", motherId: "", spouseIds: ["I52"], note: "", photo: "" },
-        { id: "I50", name: "p. Osobov", maiden: "Osobov", gender: "M", birth: "", death: "Zemřel", place: "", fatherId: "", motherId: "", spouseIds: ["I51"], note: "Otec Marie Osobové (*1923).", photo: "" },
-        { id: "I51", name: "paní Osobová", maiden: "", gender: "F", birth: "", death: "Zemřela", place: "", fatherId: "", motherId: "", spouseIds: ["I50"], note: "Matka Marie Osobové (*1923).", photo: "" },
-        { id: "I52", name: "Eva Poležalová", maiden: "Bombová", gender: "F", birth: "", death: "Zemřela", place: "", fatherId: "", motherId: "", spouseIds: ["I48"], note: "", photo: "" },
-        { id: "I53", name: "Klára Farkašová", maiden: "Farkašová", gender: "F", birth: "15. 9. 2010", death: "", place: "", fatherId: "I39", motherId: "I31", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTdhNjYyYjc1YzcyMDE4YWYyNmZiYmIwODI5NzQ5NDZlNTYwMjI4ZjQzNDMzNjU3Zjg4MGMwOTAxMDczNjAwZGEmZT0xNzkzODA4MDAw/014/622/4791/500051_247272b4j147id3o2d0acd_Z.jpg" },
-        { id: "I54", name: "Michael Abeni", maiden: "Abeni", gender: "M", birth: "5. 11. 1989", death: "", place: "", fatherId: "I55", motherId: "I29", spouseIds: [], note: "", photo: "" },
-        { id: "I55", name: "Walter Abeni", maiden: "Abeni", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I29"], note: "", photo: "" },
-        { id: "I56", name: "Zuzana Černeková", maiden: "Černeková", gender: "F", birth: "26. 4. 1994", death: "", place: "", fatherId: "I57", motherId: "I29", spouseIds: [], note: "", photo: "" },
-        { id: "I57", name: "Antonín Černek", maiden: "Černek", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I29"], note: "", photo: "" },
-        { id: "I58", name: "Libuše Farkašová", maiden: "Tobolíková", gender: "F", birth: "15. 8. 1946", death: "", place: "", fatherId: "I77", motherId: "I78", spouseIds: ["I59"], note: "", photo: "" },
-        { id: "I59", name: "Jan Farkaš st.", maiden: "Farkaš", gender: "M", birth: "25. 7. 1942", death: "Zemřel", place: "", fatherId: "I75", motherId: "I76", spouseIds: ["I58"], note: "", photo: "" },
-        { id: "I60", name: "Jana Filáková", maiden: "Farkašová", gender: "F", birth: "", death: "", place: "", fatherId: "I59", motherId: "I58", spouseIds: ["I62"], note: "", photo: "" },
-        { id: "I61", name: "Eva Kasalová", maiden: "Farkašová", gender: "F", birth: "", death: "", place: "", fatherId: "I59", motherId: "I58", spouseIds: ["I66"], note: "", photo: "" },
-        { id: "I62", name: "Jiří Filák", maiden: "Filák", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I60"], note: "", photo: "" },
-        { id: "I63", name: "David Filák", maiden: "Filák", gender: "M", birth: "", death: "", place: "", fatherId: "I62", motherId: "I60", spouseIds: ["I70"], note: "", photo: "" },
-        { id: "I64", name: "Pavlína Filáková", maiden: "Filáková", gender: "F", birth: "", death: "", place: "", fatherId: "I62", motherId: "I60", spouseIds: [], note: "", photo: "" },
-        { id: "I65", name: "Radek Kasala ml.", maiden: "Kasala", gender: "M", birth: "", death: "", place: "", fatherId: "I66", motherId: "I61", spouseIds: [], note: "", photo: "" },
-        { id: "I66", name: "Radek Kasala", maiden: "Kasala", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I61"], note: "", photo: "" },
-        { id: "I67", name: "Dušan Kasala", maiden: "Kasala", gender: "M", birth: "", death: "", place: "", fatherId: "I66", motherId: "I61", spouseIds: [], note: "", photo: "" },
-        { id: "I68", name: "Radka Kasalová", maiden: "Kasalová", gender: "F", birth: "", death: "", place: "", fatherId: "I66", motherId: "I61", spouseIds: [], note: "", photo: "" },
-        { id: "I69", name: "Eva Kasalová ml.", maiden: "Kasalová", gender: "F", birth: "", death: "", place: "", fatherId: "I66", motherId: "I61", spouseIds: [], note: "", photo: "" },
-        { id: "I70", name: "Veronika Filáková", maiden: "", gender: "F", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I63"], note: "", photo: "" },
-        { id: "I71", name: "Sara Filáková", maiden: "Filáková", gender: "F", birth: "", death: "", place: "", fatherId: "I63", motherId: "I70", spouseIds: [], note: "", photo: "" },
-        { id: "I72", name: "Alois Molata ml.", maiden: "Molata", gender: "M", birth: "15. 2. 1950", death: "25. 7. 2000", place: "", fatherId: "I73", motherId: "I74", spouseIds: ["I7"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTM5MmExMjM0N2YzNTUyNWQ4OTdlYmNkMGQwYTFkNzljNDA4ODFlYjk5NmEyMmYyNjhlMjlmN2FhYjcxMTU4OGEmZT0xNzkzODA4MDAw/014/622/4791/500481_411383241d64gbfe945a83_Z.jpg" },
-        { id: "I73", name: "Alois Molata st.", maiden: "Molata", gender: "M", birth: "", death: "Zemřel", place: "", fatherId: "", motherId: "", spouseIds: ["I74"], note: "", photo: "" },
-        { id: "I74", name: "Štěpánka Molatová", maiden: "Zielinková", gender: "F", birth: "", death: "Zemřela", place: "", fatherId: "", motherId: "", spouseIds: ["I73"], note: "", photo: "" },
-        { id: "I75", name: "Jan Vrabčan", maiden: "Vrabčan", gender: "M", birth: "", death: "Zemřel", place: "", fatherId: "", motherId: "", spouseIds: ["I76"], note: "", photo: "" },
-        { id: "I76", name: "Anna Vrabčanová", maiden: "Farkašová", gender: "F", birth: "", death: "Zemřela", place: "", fatherId: "", motherId: "", spouseIds: ["I75"], note: "", photo: "" },
-        { id: "I77", name: "Alois Tobolík", maiden: "Tobolík", gender: "M", birth: "", death: "Zemřel", place: "", fatherId: "", motherId: "", spouseIds: ["I78"], note: "", photo: "" },
-        { id: "I78", name: "Františka Tobolíková", maiden: "Tobolíková", gender: "F", birth: "", death: "Zemřela", place: "", fatherId: "", motherId: "", spouseIds: ["I77"], note: "", photo: "" },
-        { id: "I79", name: "Zdenka Sopková", maiden: "Lepíková", gender: "F", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I81"], note: "", photo: "" },
-        { id: "I80", name: "Dana Marešová", maiden: "Marešová", gender: "F", birth: "20. 7. 1958", death: "", place: "", fatherId: "I81", motherId: "I79", spouseIds: [], note: "", photo: "" },
-        { id: "I81", name: "Jozef Sopka", maiden: "Sopka", gender: "M", birth: "5. 12. 1935", death: "2008", place: "", fatherId: "", motherId: "", spouseIds: ["I79"], note: "", photo: "" },
-        { id: "I82", name: "Kateřina Špaková", maiden: "Sopková", gender: "F", birth: "25. 4. 1986", death: "", place: "", fatherId: "I37", motherId: "I30", spouseIds: ["I83"], note: "", photo: "" },
-        { id: "I83", name: "Michal Špak", maiden: "Špak", gender: "M", birth: "28. 12. 1979", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I82"], note: "", photo: "" },
-        { id: "I85", name: "Ondřej Špak", maiden: "Špak", gender: "M", birth: "22. 6. 2007", death: "", place: "", fatherId: "I83", motherId: "I82", spouseIds: [], note: "", photo: "" },
-        { id: "I86", name: "Vojtěch Špak", maiden: "Špak", gender: "M", birth: "", death: "", place: "", fatherId: "I83", motherId: "I82", spouseIds: [], note: "", photo: "" },
-        { id: "I87", name: "Anežka Špaková", maiden: "Špaková", gender: "F", birth: "18. 3. 2010", death: "", place: "", fatherId: "I83", motherId: "I82", spouseIds: [], note: "", photo: "" },
-        { id: "I88", name: "Miroslav Liška", maiden: "Liška", gender: "M", birth: "28. 9. 1947", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I89"], note: "", photo: "" },
-        { id: "I89", name: "Cecilie Lišková", maiden: "Gabajová", gender: "F", birth: "30. 11. 1950", death: "", place: "", fatherId: "I96", motherId: "I95", spouseIds: ["I88"], note: "", photo: "" },
-        { id: "I90", name: "Miroslava Krtičková", maiden: "Lišková", gender: "F", birth: "1. 8. 1980", death: "", place: "", fatherId: "I88", motherId: "I89", spouseIds: [], note: "", photo: "" },
-        { id: "I91", name: "Jana Kořánová", maiden: "Lišková", gender: "F", birth: "30. 3. 1973", death: "", place: "", fatherId: "I88", motherId: "I89", spouseIds: [], note: "", photo: "" },
-        { id: "I92", name: "Josef Karlovský", maiden: "Karlovský", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I15"], note: "", photo: "" },
-        { id: "I93", name: "Veronika Karlovská", maiden: "Karlovská", gender: "F", birth: "3. 6. 1992", death: "", place: "", fatherId: "I92", motherId: "I15", spouseIds: [], note: "", photo: "" },
-        { id: "I94", name: "Pavlína Karlovská", maiden: "Karlovská", gender: "F", birth: "21. 3. 1997", death: "", place: "", fatherId: "I92", motherId: "I15", spouseIds: [], note: "", photo: "" },
-        { id: "I95", name: "Melánie Gabajová", maiden: "Raičanová", gender: "F", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I96"], note: "", photo: "" },
-        { id: "I96", name: "Valentýn Gabaj", maiden: "Gabaj", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I95"], note: "", photo: "" },
-        { id: "I98", name: "Radek Molata", maiden: "Molata", gender: "M", birth: "", death: "", place: "", fatherId: "I72", motherId: "", spouseIds: [], note: "", photo: "" },
-        { id: "I101", name: "Martina Málková", maiden: "Poležalová", gender: "F", birth: "1. 5. 1979", death: "", place: "", fatherId: "I6", motherId: "I24", spouseIds: ["I106"], note: "", photo: "" },
-        { id: "I102", name: "Libor Kotek", maiden: "Kotek", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I7"], note: "", photo: "" },
-        { id: "I103", name: "Jan Kotek", maiden: "Kotek", gender: "M", birth: "", death: "", place: "", fatherId: "I102", motherId: "", spouseIds: [], note: "", photo: "" },
-        { id: "I105", name: "Rostislav Prytoluk ml.", maiden: "Prytoluk", gender: "M", birth: "14. 3. 1999", death: "1. 9. 2001", place: "", fatherId: "I11", motherId: "I500004", spouseIds: [], note: "", photo: "" },
-        { id: "I106", name: "Michal Málek", maiden: "Málek", gender: "M", birth: "10. 1. 1973", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I101"], note: "", photo: "" },
-        { id: "I107", name: "Michael Málek", maiden: "Málek", gender: "M", birth: "23. 9. 2008", death: "", place: "", fatherId: "I106", motherId: "I101", spouseIds: [], note: "", photo: "" },
-        { id: "I108", name: "Martin Málek", maiden: "Málek", gender: "M", birth: "11. 10. 2003", death: "", place: "", fatherId: "I106", motherId: "I101", spouseIds: [], note: "", photo: "" },
-        { id: "I500001", name: "Jaroslav Pudr", maiden: "Pudr", gender: "M", birth: "22. 1. 1948, Žatec", death: "", place: "Žatec / Louny", fatherId: "", motherId: "", spouseIds: ["I3"], note: "Sňatek 3. 8. 2019 v Lounech.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTlmOTViYTJjYTkyZTM5NDRkYjdmMWIwNWNlNjkyMGE1MDBmMzQ4MjRkYWI1YzI3YTg0Y2E3M2YwMGY4MGQyYjMmZT0xNzkzODA4MDAw/014/622/4791/500921_351903194uqd3t757e11c7_J.jpg" },
-        { id: "I500002", name: "Anna Camprová", maiden: "Křenčilová", gender: "F", birth: "", death: "Zemřela", place: "Dlouhé Pole (Volyň)", fatherId: "", motherId: "", spouseIds: ["I47"], note: "", photo: "" },
-        { id: "I500004", name: "Manželka R. Prytoluka", maiden: "", gender: "F", birth: "", death: "", place: "Libochovice", fatherId: "", motherId: "", spouseIds: ["I11"], note: "Sňatek 5. 10. 1996 v Libochovicích.", photo: "" },
-        { id: "I500006", name: "Vlasta Pojerová", maiden: "Ženíšková", gender: "F", birth: "4. 6. 1948", death: "", place: "Česko", fatherId: "I500014", motherId: "I500015", spouseIds: ["I500007"], note: "", photo: "" },
-        { id: "I500007", name: "Milan Pojer", maiden: "Pojer", gender: "M", birth: "5. 11. 1949", death: "2010", place: "Česko", fatherId: "I500008", motherId: "I500009", spouseIds: ["I500006"], note: "", photo: "" },
-        { id: "I500008", name: "Bohuslav Pojer", maiden: "Pojer", gender: "M", birth: "16. 7. 1916, Blatná", death: "Zemřel", place: "Blatná", fatherId: "I500010", motherId: "I500011", spouseIds: ["I500009"], note: "", photo: "" },
-        { id: "I500009", name: "Milada Pojerová", maiden: "Stehnová", gender: "F", birth: "14. 3. 1921, Hluboká", death: "5. 6. 2013, Havlíčkův Brod", place: "Hluboká / Havlíčkův Brod", fatherId: "I500012", motherId: "I500013", spouseIds: ["I500008"], note: "", photo: "" },
-        { id: "I500010", name: "František Pojer", maiden: "Pojer", gender: "M", birth: "15. 6. 1882, Oselec (Horažďovice)", death: "Zemřel", place: "Oselec / Blatná", fatherId: "", motherId: "", spouseIds: ["I500011"], note: "", photo: "" },
-        { id: "I500011", name: "Marie Pojerová", maiden: "Libé", gender: "F", birth: "26. 7. 1875, Blatná", death: "Zemřela", place: "Blatná", fatherId: "", motherId: "", spouseIds: ["I500010"], note: "", photo: "" },
-        { id: "I500012", name: "Josef Stehno", maiden: "Stehno", gender: "M", birth: "", death: "Zemřel", place: "Hluboká", fatherId: "", motherId: "", spouseIds: ["I500013"], note: "", photo: "" },
-        { id: "I500013", name: "Marie Stehnová", maiden: "Marková", gender: "F", birth: "", death: "Zemřela", place: "Hluboká", fatherId: "", motherId: "", spouseIds: ["I500012"], note: "", photo: "" },
-        { id: "I500014", name: "Josef Ženíšek ml.", maiden: "Ženíšek", gender: "M", birth: "22. 4. 1912, Bedřichov", death: "1979, Karlovy Vary", place: "Bedřichov / Karlovy Vary", fatherId: "I500018", motherId: "I500019", spouseIds: ["I500015"], note: "Pohřben v Karlových Varech.", photo: "" },
-        { id: "I500015", name: "Anežka Ženíšková", maiden: "Šittlerová", gender: "F", birth: "21. 10. 1924, Šellenberk", death: "19. 1. 2014, Karlovy Vary", place: "Šellenberk / Karlovy Vary", fatherId: "I500017", motherId: "I500016", spouseIds: ["I500014"], note: "Pohřbena v Karlových Varech.", photo: "" },
-        { id: "I500016", name: "Petronila Šittlerová", maiden: "Šafářová", gender: "F", birth: "Mašovice", death: "Zemřela", place: "Mašovice", fatherId: "", motherId: "", spouseIds: ["I500017"], note: "", photo: "" },
-        { id: "I500017", name: "František Šittler", maiden: "Šittler", gender: "M", birth: "", death: "Zemřel", place: "Šellenberk", fatherId: "", motherId: "", spouseIds: ["I500016"], note: "", photo: "" },
-        { id: "I500018", name: "Josef Ženíšek st.", maiden: "Ženíšek", gender: "M", birth: "14. 3. 1883, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500044", motherId: "I500043", spouseIds: ["I500019"], note: "", photo: "" },
-        { id: "I500019", name: "Františka Ženíšková", maiden: "", gender: "F", birth: "14. 11. 1884, Roučkovice", death: "Zemřela", place: "Roučkovice / Bedřichov", fatherId: "", motherId: "", spouseIds: ["I500018"], note: "", photo: "" },
-        { id: "I500020", name: "Marie Michálková", maiden: "Ženíšková", gender: "F", birth: "3. 6. 1946", death: "", place: "", fatherId: "I500014", motherId: "I500015", spouseIds: [], note: "", photo: "" },
-        { id: "I500021", name: "Josef Ženíšek (*1961)", maiden: "Ženíšek", gender: "M", birth: "září 1961", death: "", place: "", fatherId: "I500014", motherId: "I500015", spouseIds: [], note: "", photo: "" },
-        { id: "I500022", name: "Petr Pojer", maiden: "Pojer", gender: "M", birth: "1. 3. 1972, Cheb", death: "", place: "Cheb", fatherId: "I500007", motherId: "I500006", spouseIds: [], note: "", photo: "" },
-        { id: "I500023", name: "Józef Campr", maiden: "Campr", gender: "M", birth: "20. 8. 1921, Polsko/Volyň", death: "1. 6. 2015", place: "Polsko", fatherId: "I47", motherId: "I500002", spouseIds: ["I500024"], note: "Bratr Emilie a Vladimíra Camprových.", photo: "" },
-        { id: "I500024", name: "Helena Campr", maiden: "Tarnawska", gender: "F", birth: "1926, Polsko", death: "2008", place: "Polsko", fatherId: "I500028", motherId: "I500029", spouseIds: ["I500023"], note: "", photo: "" },
-        { id: "I500025", name: "Józef Campr ml.", maiden: "Campr", gender: "M", birth: "1948", death: "2018", place: "Polsko", fatherId: "I500023", motherId: "I500024", spouseIds: [], note: "", photo: "" },
-        { id: "I500026", name: "Stanisław Campr", maiden: "Campr", gender: "M", birth: "1958", death: "2017", place: "Polsko", fatherId: "I500023", motherId: "I500024", spouseIds: [], note: "", photo: "" },
-        { id: "I500028", name: "Bronisław Tarnawski", maiden: "Tarnawski", gender: "M", birth: "1887", death: "Zemřel", place: "Polsko", fatherId: "", motherId: "I500031", spouseIds: ["I500029"], note: "", photo: "" },
-        { id: "I500029", name: "Łucja Tarnawska", maiden: "Anyszkiewicz", gender: "F", birth: "1903", death: "1990", place: "Polsko", fatherId: "", motherId: "", spouseIds: ["I500028"], note: "", photo: "" },
-        { id: "I500031", name: "Joanna Tarnawska", maiden: "Podgórska", gender: "F", birth: "", death: "Zemřela", place: "Polsko", fatherId: "", motherId: "", spouseIds: [], note: "", photo: "" },
-        { id: "I500033", name: "Vladimír (Rostislav) Campr", maiden: "Campr", gender: "M", birth: "20. 11. 1919, Dlouhé Pole, Volyň", death: "Žatec", place: "Dlouhé Pole (Volyň) / Žatec", fatherId: "I47", motherId: "I500002", spouseIds: [], note: "Svobodník Campr Vladimír (Rostislav). Velitel družstva, kmen. čís. 250/m, Buzuluk 14. 2. 1942. Sokolovo - Čs. medaile Za chrabrost před nepřítelem, 1945 - rotmistr, velitel čety 1. roty 3. polního praporu 1. čs. samostatné brigády, 1948 - Sokolovská pamětní medaile, podporučík.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWRlMjc1MTJjYjBiNzJkOWZlZTQ3M2ZkMDJjY2VmNzllZDY1ZGRhZTQ0NmNjODg4OWM4ZTUzM2M4NGFlNGY5YTkmZT0xNzkzODA4MDAw/014/622/4791/500940_876308c6116a5f17btbj8e_A.jpg" },
-        { id: "I500034", name: "Vítězslav Schauer", maiden: "Schauer", gender: "M", birth: "23. 2. 1980", death: "", place: "Nezabylice", fatherId: "", motherId: "", spouseIds: ["I13"], note: "Sňatek 31. 12. 2002 v Nezabylicích.", photo: "" },
-        { id: "I500035", name: "Lucie Schauerová", maiden: "Schauerová", gender: "F", birth: "7. 1. 2003, Chomutov", death: "", place: "Chomutov", fatherId: "I500034", motherId: "I13", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWNkOGQ3ODlhZjA4YTY5YjlhOWRlOWQwZWZlOWI4NzlmMzZhOTk5OWViYzRhYjE1NWZiNzQ0NzYxOWJkMjU0MjcmZT0xNzkzODA4MDAw/014/622/4791/500942_442096ujl66aegqa7507c5_A.jpg" },
-        { id: "I500036", name: "Václav Pojer", maiden: "Pojer", gender: "M", birth: "2. 2. 1908, Blatná", death: "Zemřel", place: "Blatná", fatherId: "I500010", motherId: "I500011", spouseIds: [], note: "", photo: "" },
-        { id: "I500037", name: "Karolína Pojerová", maiden: "Pojerová", gender: "F", birth: "25. 1. 1912, Blatná", death: "Zemřela", place: "Blatná", fatherId: "I500010", motherId: "I500011", spouseIds: [], note: "", photo: "" },
-        { id: "I500038", name: "František Pojer ml.", maiden: "Pojer", gender: "M", birth: "31. 5. 1913, Blatná", death: "Zemřel", place: "Blatná", fatherId: "I500010", motherId: "I500011", spouseIds: [], note: "", photo: "" },
-        { id: "I500039", name: "Emilie Pojerová", maiden: "Pojerová", gender: "F", birth: "21. 11. 1914, Blatná", death: "Zemřela", place: "Blatná", fatherId: "I500010", motherId: "I500011", spouseIds: [], note: "", photo: "" },
-        { id: "I500040", name: "Jaroslav Ženíšek", maiden: "Ženíšek", gender: "M", birth: "15. 4. 1909, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500018", motherId: "I500019", spouseIds: [], note: "", photo: "" },
-        { id: "I500041", name: "Bedřich Ženíšek", maiden: "Ženíšek", gender: "M", birth: "5. 7. 1914, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500018", motherId: "I500019", spouseIds: [], note: "", photo: "" },
-        { id: "I500042", name: "Marie Nekovářová", maiden: "Ženíšková", gender: "F", birth: "3. 9. 1920, Bedřichov", death: "2002", place: "Bedřichov", fatherId: "I500018", motherId: "I500019", spouseIds: ["I500068"], note: "", photo: "" },
-        { id: "I500043", name: "Františka Ženíšková", maiden: "Plášilová", gender: "F", birth: "18. 9. 1857, Zlátenka", death: "Zemřela", place: "Zlátenka / Bedřichov", fatherId: "I500066", motherId: "I500067", spouseIds: ["I500044"], note: "Sňatek 14. 2. 1882 ve Zlátence.", photo: "" },
-        { id: "I500044", name: "František Ženíšek", maiden: "Ženíšek", gender: "M", birth: "21. 3. 1857, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: ["I500043"], note: "Sňatek 14. 2. 1882 ve Zlátence.", photo: "" },
-        { id: "I500045", name: "Jozef Ženíšek (*1812)", maiden: "Ženíšek", gender: "M", birth: "1812, Bedřichov", death: "26. 12. 1886, Bedřichov", place: "Bedřichov", fatherId: "I500047", motherId: "I500048", spouseIds: ["I500046"], note: "", photo: "" },
-        { id: "I500046", name: "Barbora Ženíšková", maiden: "Dománková", gender: "F", birth: "12. 12. 1833, Německá Lhota", death: "17. 4. 1910, Bedřichov", place: "Německá Lhota / Bedřichov", fatherId: "", motherId: "", spouseIds: ["I500045"], note: "", photo: "" },
-        { id: "I500047", name: "Vácslav Ženíšek (*1786)", maiden: "Ženíšek", gender: "M", birth: "1786, Bedřichov", death: "10. 11. 1869, Bedřichov", place: "Bedřichov", fatherId: "", motherId: "", spouseIds: ["I500048"], note: "Nejstarší dohledaný předek větve Ženíšků v Bedřichově (*1786).", photo: "" },
-        { id: "I500048", name: "Marie Ženíšková", maiden: "Nekovářová", gender: "F", birth: "1792, Bedřichov", death: "25. 1. 1865, Bedřichov", place: "Bedřichov", fatherId: "I500049", motherId: "", spouseIds: ["I500047"], note: "", photo: "" },
-        { id: "I500049", name: "Jan Nekovář (18. stol.)", maiden: "Nekovář", gender: "M", birth: "před 1775, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "", motherId: "", spouseIds: [], note: "Otec Marie Nekovářové (*1792).", photo: "" },
-        { id: "I500050", name: "Josefa Novotná", maiden: "Ženíšková", gender: "F", birth: "1815", death: "Zemřela", place: "Bedřichov", fatherId: "I500047", motherId: "I500048", spouseIds: [], note: "", photo: "" },
-        { id: "I500051", name: "Florian Ženíšek", maiden: "Ženíšek", gender: "M", birth: "5. 6. 1827, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500047", motherId: "I500048", spouseIds: [], note: "", photo: "" },
-        { id: "I500052", name: "Jan Ženíšek (*1837)", maiden: "Ženíšek", gender: "M", birth: "okolo 1837, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500047", motherId: "I500048", spouseIds: [], note: "", photo: "" },
-        { id: "I500053", name: "Marie Musilová", maiden: "Ženíšková", gender: "F", birth: "1854, Bedřichov", death: "Zemřela", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: ["I500054"], note: "Sňatek 27. 1. 1874 v Bedřichově.", photo: "" },
-        { id: "I500054", name: "Vácslav Musil", maiden: "Musil", gender: "M", birth: "1849, Rovná", death: "Zemřel", place: "Rovná", fatherId: "", motherId: "", spouseIds: ["I500053"], note: "", photo: "" },
-        { id: "I500055", name: "Viktorie Ženíšková", maiden: "Ženíšková", gender: "F", birth: "19. 12. 1861, Bedřichov", death: "Zemřela", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: [], note: "", photo: "" },
-        { id: "I500056", name: "Barbora Hrubešová", maiden: "Ženíšková", gender: "F", birth: "12. 4. 1864, Bedřichov", death: "Zemřela", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: ["I500057"], note: "Sňatek 20. 11. 1883 v Bedřichově.", photo: "" },
-        { id: "I500057", name: "Josef Hrubeš", maiden: "Hrubeš", gender: "M", birth: "Zhořec", death: "Zemřel", place: "Zhořec", fatherId: "", motherId: "", spouseIds: ["I500056"], note: "", photo: "" },
-        { id: "I500058", name: "Josefa Veselá", maiden: "Ženíšková", gender: "F", birth: "1. 11. 1865", death: "Zemřela", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: ["I500059"], note: "Sňatek 19. 7. 1887 v Bedřichově.", photo: "" },
-        { id: "I500059", name: "Jan Veselý", maiden: "Veselý", gender: "M", birth: "24. 6. 1859, Dolní Huť", death: "Zemřel", place: "Dolní Huť", fatherId: "", motherId: "", spouseIds: ["I500058"], note: "", photo: "" },
-        { id: "I500060", name: "Jan Veselý ml.", maiden: "Veselý", gender: "M", birth: "18. 5. 1903, Mezimostí n. L.", death: "Zemřel", place: "Mezimostí, Veselí nad Lužnicí", fatherId: "I500059", motherId: "I500058", spouseIds: [], note: "", photo: "" },
-        { id: "I500061", name: "Cecilie Veselá", maiden: "Veselá", gender: "F", birth: "14. 11. 1904, Mezimostí n. L.", death: "Zemřela", place: "Mezimostí, Veselí nad Lužnicí", fatherId: "I500059", motherId: "I500058", spouseIds: [], note: "", photo: "" },
-        { id: "I500062", name: "Karel Veselý", maiden: "Veselý", gender: "M", birth: "16. 10. 1906, Mezimostí n. L.", death: "Zemřel", place: "Mezimostí, Veselí nad Lužnicí", fatherId: "I500059", motherId: "I500058", spouseIds: [], note: "", photo: "" },
-        { id: "I500063", name: "Jan Ženíšek (*1868)", maiden: "Ženíšek", gender: "M", birth: "4. 12. 1868, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: [], note: "", photo: "" },
-        { id: "I500064", name: "Kateřina Dvořáková", maiden: "Ženíšková", gender: "F", birth: "6. 8. 1873, Bedřichov", death: "Zemřela", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: ["I500065"], note: "Sňatek 31. 7. 1894.", photo: "" },
-        { id: "I500065", name: "Josef Dvořák", maiden: "Dvořák", gender: "M", birth: "19. 3. 1851, Zahrádka", death: "Zemřel", place: "Zahrádka", fatherId: "", motherId: "", spouseIds: ["I500064"], note: "", photo: "" },
-        { id: "I500066", name: "Jan Plášil", maiden: "Plášil", gender: "M", birth: "", death: "Zemřel", place: "Zlátenka", fatherId: "", motherId: "", spouseIds: ["I500067"], note: "", photo: "" },
-        { id: "I500067", name: "Majdalena Plášilová", maiden: "Hanyková", gender: "F", birth: "Leskovice", death: "Zemřela", place: "Leskovice / Zlátenka", fatherId: "", motherId: "", spouseIds: ["I500066"], note: "", photo: "" },
-        { id: "I500068", name: "František Nekovář", maiden: "Nekovář", gender: "M", birth: "19. 11. 1910, Bedřichov", death: "15. 5. 1977, Pelhřimov", place: "Bedřichov / Pelhřimov", fatherId: "I500069", motherId: "I500070", spouseIds: ["I500042"], note: "", photo: "" },
-        { id: "I500069", name: "Jan Nekovář (*1881)", maiden: "Nekovář", gender: "M", birth: "1881", death: "Nezvěstný", place: "Hartlíkov", fatherId: "", motherId: "", spouseIds: ["I500070"], note: "V matrikách veden jako nezvěstný.", photo: "" },
-        { id: "I500070", name: "Kristina Nekovářová", maiden: "Janurová", gender: "F", birth: "26. 5. 1884, Hartlíkov", death: "listopad 1964", place: "Hartlíkov", fatherId: "I500072", motherId: "I500073", spouseIds: ["I500069"], note: "", photo: "" },
-        { id: "I500071", name: "Jan Nekovář (*1906)", maiden: "Nekovář", gender: "M", birth: "26. 5. 1906, Hartlíkov", death: "Zemřel", place: "Hartlíkov", fatherId: "I500069", motherId: "I500070", spouseIds: [], note: "", photo: "" },
-        { id: "I500072", name: "p. Janura", maiden: "Janura", gender: "M", birth: "", death: "Zemřel", place: "Hartlíkov", fatherId: "", motherId: "", spouseIds: ["I500073"], note: "", photo: "" },
-        { id: "I500073", name: "paní Janurová", maiden: "Janurová", gender: "F", birth: "", death: "Zemřela", place: "Hartlíkov", fatherId: "", motherId: "", spouseIds: ["I500072"], note: "", photo: "" },
-        { id: "I500074", name: "Antonie Janurová", maiden: "Janurová", gender: "F", birth: "17. 2. 1901, Hartlíkov", death: "Zemřela", place: "Hartlíkov", fatherId: "I500072", motherId: "I500073", spouseIds: [], note: "", photo: "" },
-        { id: "I500076", name: "Jiří Kašpar", maiden: "Kašpar", gender: "M", birth: "19. 7. 1946, Kozolupy", death: "5. 7. 2012, Praha", place: "Kozolupy / Praha", fatherId: "", motherId: "", spouseIds: [], note: "", photo: "" },
-        { id: "I500077", name: "Ladislav Ženíšek", maiden: "Ženíšek", gender: "M", birth: "16. 3. 1926", death: "15. 9. 2011, Písek", place: "Písek", fatherId: "I500018", motherId: "I500019", spouseIds: ["I500078"], note: "", photo: "" },
-        { id: "I500078", name: "Anna Ženíšková", maiden: "Nečasová", gender: "F", birth: "29. 12. 1927, Kloub", death: "25. 2. 2007, Písek", place: "Kloub / Písek", fatherId: "I500082", motherId: "I500083", spouseIds: ["I500077"], note: "", photo: "" },
-        { id: "I500080", name: "Miroslav Konvičný", maiden: "Konvičný", gender: "M", birth: "10. 8. 1950, Malá Lhota", death: "31. 10. 2017, Písek", place: "Malá Lhota / Písek", fatherId: "I500081", motherId: "", spouseIds: [], note: "", photo: "" },
-        { id: "I500081", name: "Josef Konvičný", maiden: "Konvičný", gender: "M", birth: "16. 12. 1918", death: "4. 2. 1990", place: "", fatherId: "", motherId: "", spouseIds: [], note: "", photo: "" },
-        { id: "I500082", name: "František Nečas", maiden: "Nečas", gender: "M", birth: "1. 1. 1895, Albrechtice", death: "1937", place: "Albrechtice", fatherId: "", motherId: "", spouseIds: ["I500083"], note: "", photo: "" },
-        { id: "I500083", name: "Růžena Nečasová", maiden: "Polanská", gender: "F", birth: "19. 6. 1895, Kloub", death: "1933", place: "Kloub", fatherId: "I500087", motherId: "I500088", spouseIds: ["I500082"], note: "", photo: "" },
-        { id: "I500084", name: "Jaroslav Nečas", maiden: "Nečas", gender: "M", birth: "", death: "Zemřel", place: "Kloub", fatherId: "I500082", motherId: "I500083", spouseIds: [], note: "", photo: "" },
-        { id: "I500085", name: "Václav Nečas", maiden: "Nečas", gender: "M", birth: "", death: "Zemřel", place: "Kloub", fatherId: "I500082", motherId: "I500083", spouseIds: [], note: "", photo: "" },
-        { id: "I500086", name: "Marie Nečasová", maiden: "Nečasová", gender: "F", birth: "", death: "Zemřela", place: "Kloub", fatherId: "I500082", motherId: "I500083", spouseIds: [], note: "", photo: "" },
-        { id: "I500087", name: "František Polanský", maiden: "Polanský", gender: "M", birth: "28. 11. 1852, Kloub", death: "6. 11. 1914, Kloub", place: "Kloub", fatherId: "", motherId: "", spouseIds: ["I500088"], note: "Sňatek 24. 2. 1879.", photo: "" },
-        { id: "I500088", name: "Marie Polanská", maiden: "Kačírková", gender: "F", birth: "30. 6. 1857, Albrechtice", death: "12. 7. 1928", place: "Albrechtice / Kloub", fatherId: "", motherId: "", spouseIds: ["I500087"], note: "", photo: "" },
-        { id: "I500089", name: "Antonín Polanský", maiden: "Polanský", gender: "M", birth: "18. 4. 1890, Kloub", death: "Zemřel", place: "Kloub", fatherId: "I500087", motherId: "I500088", spouseIds: [], note: "", photo: "" },
-        { id: "I500090", name: "Václav Polanský", maiden: "Polanský", gender: "M", birth: "18. 8. 1892, Kloub", death: "Zemřel", place: "Kloub", fatherId: "I500087", motherId: "I500088", spouseIds: [], note: "", photo: "" },
-        { id: "I500091", name: "Terezie Nečasová", maiden: "Polanská", gender: "F", birth: "5. 10. 1898, Kloub", death: "Zemřela", place: "Kloub / Protivín", fatherId: "I500087", motherId: "I500088", spouseIds: ["I500092"], note: "Sňatek 3. 1. 1931 v Protivíně.", photo: "" },
-        { id: "I500092", name: "Josef Nečas", maiden: "Nečas", gender: "M", birth: "22. 4. 1908, Albrechtice", death: "", place: "Albrechtice / Protivín", fatherId: "", motherId: "", spouseIds: ["I500091"], note: "", photo: "" },
-        { id: "I500093", name: "Marie Krejčová", maiden: "Polanská", gender: "F", birth: "24. 6. 1878, Albrechtice", death: "6. 3. 1963", place: "Albrechtice", fatherId: "I500087", motherId: "I500088", spouseIds: [], note: "", photo: "" },
-        { id: "I500094", name: "Josefa Černá", maiden: "Šittlerová", gender: "F", birth: "14. 3. 1914", death: "15. 2. 1992", place: "", fatherId: "I500017", motherId: "I500016", spouseIds: ["I500095"], note: "", photo: "" },
-        { id: "I500095", name: "František Černý", maiden: "Černý", gender: "M", birth: "8. 6. 1912", death: "6. 12. 1975", place: "", fatherId: "", motherId: "", spouseIds: ["I500094"], note: "", photo: "" },
-        { id: "I500096", name: "Miroslav Černý", maiden: "Černý", gender: "M", birth: "30. 8. 1936", death: "9. 7. 2009", place: "", fatherId: "I500095", motherId: "I500094", spouseIds: [], note: "", photo: "" }
-      ],
-      stories: [
-        {
-          id: "st-volyn",
-          title: "Volyňští Češi v rodokmenu: Rod Prytoluků a Camprů (Teremno a Dlouhé Pole)",
-          period: "1882–1948",
-          content: "Významná část otcovské linie pochází z Volyně. Vladimír Prytoluk (* 24. 11. 1924) se narodil v obci Teremno u Lucku (syn Fedora Prytoluka *1896 a Anny Dokoupilové *1898) a jeho manželka Emilie roz. Camprová (* 1. 7. 1925) v obci Dlouhé Pole (dcera Rostislava Campra *1882 a Anny Křenčilové). Po 2. světové válce se rodina usadila na Žatecku a v Postoloprtech."
-        },
-        {
-          id: "st-sokolovo",
-          title: "Podporučík Vladimír (Rostislav) Campr (* 1919) – Hrdina od Sokolova",
-          period: "1942–1948",
-          content: "Bratr babičky Emilie, Vladimír Campr (* 20. 11. 1919, Dlouhé Pole, Volyň), vstoupil 14. 2. 1942 v Buzuluku do čs. jednotky (kmenové číslo 250/m). Bojoval u Sokolova, kde získal Čs. medaili Za chrabrost před nepřítelem. V roce 1945 sloužil v hodnosti rotmistra jako velitel čety 1. roty 3. polního praporu 1. čs. samostatné brigády. V roce 1948 obdržel Sokolovskou pamětní medaili a hodnost podporučíka."
-        },
-        {
-          id: "st-bedrichov",
-          title: "Jihočeská a pelhřimovská větev Ženíšků, Pojerů a Polanských",
-          period: "1786–20. století",
-          content: "Z matčiny strany (Vlasta Pojerová * 1973) sahají kořeny hluboko do jižních Čech a na Pelhřimovsko/Pacovsko. Rod Pojerů pochází z Blatné a Oselce u Horažďovic (František Pojer * 1882 a Marie Libé * 1875). Větev Ženíšků v Bedřichově je zmapována až k Vácslavu Ženíškovi (* 1786 – † 1869) a Janu Nekovářovi z 18. století."
-        }
-      ]
-    };
-
-    let appData = structuredClone(gedcomFamilyData);
+    let appData = typeof gedcomFamilyData !== 'undefined' ? structuredClone(gedcomFamilyData) : { config: {}, people: [], stories: [] };
     let selectedPersonId = "I12";
-    let sosaMap = {}; // Mapa sosaNumber -> personObj pro aktuální střed
+    let sosaMap = {};
     let searchFilter = "";
 
     window.addEventListener('DOMContentLoaded', async () => {
@@ -584,7 +357,6 @@
       await loadFromCloud();
     });
 
-    // ==================== CLOUD SYNCHRONIZACE (JSONBIN) ====================
     function updateSyncStatus(state, text) {
       const el = document.getElementById('syncStatus');
       if (!el) return;
@@ -612,7 +384,6 @@
         const record = resData.record || {};
         fullCloudRecord = record;
 
-        // Pokud jsou v cloudu ještě stará fiktivní data (Novákovi - 15 osob), rovnou je nahradíme našimi 133 lidmi z GEDCOMu!
         if (record.familyTree && Array.isArray(record.familyTree.people) && record.familyTree.people.length > 30 && record.familyTree.people[0].id) {
           appData = record.familyTree;
         } else {
@@ -630,7 +401,7 @@
         selectedPersonId = appData.config.rootId || "I12";
         applyHeaderAndLockConfig();
         renderAll();
-        updateSyncStatus('error', 'Lokální režim');
+        updateSyncStatus('error', 'Data z data.js');
       }
     }
 
@@ -671,9 +442,9 @@
 
     async function overwriteCloudWithGedcom() {
       appData = structuredClone(gedcomFamilyData);
-      selectedPersonId = "I12";
+      selectedPersonId = appData.config.rootId || "I12";
       await saveToCloud(true);
-      alert("Všech 133 osob z vašeho souboru Poležalová Family Tree.ged bylo uloženo do JSONBin cloudu!");
+      alert("Data ze souboru data.js byla nahrána a uložena do JSONBin cloudu!");
     }
 
     function applyHeaderAndLockConfig() {
@@ -683,7 +454,6 @@
       }
     }
 
-    // ==================== KONTROLA RODINNÉ OTÁZKY ====================
     function checkLockStatus() {
       if (sessionStorage.getItem(UNLOCK_KEY) === 'true') {
         document.getElementById('lockScreen').classList.add('hidden');
@@ -703,7 +473,6 @@
       }
     }
 
-    // ==================== VÝPOČET SOSA STROMU OD VYBRANÉ OSOBY ====================
     function buildSosaMap(rootId) {
       sosaMap = {};
       const rootPerson = getPersonById(rootId);
@@ -721,7 +490,6 @@
           if (mother) traverse(mother, sosaNum * 2 + 1, depth + 1);
         }
       }
-
       traverse(rootPerson, 1, 1);
     }
 
@@ -735,7 +503,6 @@
       renderAll();
     }
 
-    // ==================== PŘEPÍNÁNÍ ZÁLOŽEK ====================
     function switchTab(tabId) {
       ['fan', 'tree', 'people', 'stories', 'places'].forEach(t => {
         const view = document.getElementById(`view-${t}`);
@@ -750,7 +517,6 @@
       });
     }
 
-    // ==================== HLAVNÍ VYKRESLENÍ ====================
     function renderAll() {
       const rootId = appData.config.rootId || "I12";
       buildSosaMap(rootId);
@@ -769,7 +535,7 @@
     function populateRootSelect(currentRootId) {
       const select = document.getElementById('rootPersonSelect');
       const prioritized = ["I12", "I9", "I13", "I3", "I4", "I500006", "I500007", "I1", "I2", "I40", "I41", "I500014", "I500018"];
-      const sorted = [...appData.people].sort((a, b) => {
+      const sorted = [...(appData.people || [])].sort((a, b) => {
         const ia = prioritized.indexOf(a.id);
         const ib = prioritized.indexOf(b.id);
         if (ia !== -1 && ib !== -1) return ia - ib;
@@ -789,15 +555,12 @@
       const sel = document.getElementById('surnameFilter');
       const currentVal = sel.value;
       const surnames = new Set();
-      appData.people.forEach(p => {
-        if (p.maiden) surnames.add(p.maiden);
-      });
+      (appData.people || []).forEach(p => { if (p.maiden) surnames.add(p.maiden); });
       const sorted = [...surnames].sort((a, b) => a.localeCompare(b, 'cs'));
-      sel.innerHTML = `<option value="">Všechna příjmení (${appData.people.length})</option>` +
+      sel.innerHTML = `<option value="">Všechna příjmení (${(appData.people || []).length})</option>` +
         sorted.map(s => `<option value="${s}" ${s === currentVal ? 'selected' : ''}>${s}</option>`).join('');
     }
 
-    // ==================== 1. SVG VĚJÍŘ PŘEDKŮ ====================
     function polarToCartesian(cx, cy, r, angleDeg) {
       const rad = (angleDeg * Math.PI) / 180.0;
       return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
@@ -809,14 +572,7 @@
       const p3 = polarToCartesian(cx, cy, rInner, endAngle);
       const p4 = polarToCartesian(cx, cy, rInner, startAngle);
       const largeArc = endAngle - startAngle <= 180 ? "0" : "1";
-
-      return [
-        "M", p1.x, p1.y,
-        "A", rOuter, rOuter, 0, largeArc, 1, p2.x, p2.y,
-        "L", p3.x, p3.y,
-        "A", rInner, rInner, 0, largeArc, 0, p4.x, p4.y,
-        "Z"
-      ].join(" ");
+      return ["M", p1.x, p1.y, "A", rOuter, rOuter, 0, largeArc, 1, p2.x, p2.y, "L", p3.x, p3.y, "A", rInner, rInner, 0, largeArc, 0, p4.x, p4.y, "Z"].join(" ");
     }
 
     function renderFanChart() {
@@ -843,23 +599,14 @@
           let fill = "#f3eee3";
           let stroke = "#d5c5ab";
           if (person) {
-            if (person.gender === "M") {
-              fill = "#d6e4f0";
-              stroke = "#9ab7d3";
-            } else {
-              fill = "#f5dce0";
-              stroke = "#d9a7b0";
-            }
+            fill = person.gender === "M" ? "#d6e4f0" : "#f5dce0";
+            stroke = person.gender === "M" ? "#9ab7d3" : "#d9a7b0";
           }
-          if (person && person.id === selectedPersonId) {
-            stroke = "#8c583a";
-          }
+          if (person && person.id === selectedPersonId) stroke = "#8c583a";
 
           const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
           g.setAttribute("class", "fan-slice");
-          if (person) {
-            g.onclick = () => selectPersonById(person.id);
-          }
+          if (person) g.onclick = () => selectPersonById(person.id);
 
           const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
           path.setAttribute("d", createAnnularSectorPath(0, 0, ring.rIn, ring.rOut, startAngle, endAngle));
@@ -870,9 +617,7 @@
 
           const pos = polarToCartesian(0, 0, midRadius, midAngle);
           let textRot = midAngle + 90;
-          if (ring.gen === 3) {
-            textRot = midAngle > -90 ? midAngle : midAngle + 180;
-          }
+          if (ring.gen === 3) textRot = midAngle > -90 ? midAngle : midAngle + 180;
 
           const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
           text.setAttribute("x", pos.x);
@@ -943,7 +688,6 @@
       svg.appendChild(centerG);
     }
 
-    // ==================== 2. VÝVOD PŘEDKŮ PO GENERACÍCH ====================
     function renderTreeGenerations() {
       const container = document.getElementById('treeGenerationsContainer');
       const genRanges = [
@@ -970,9 +714,7 @@
               ${foundInGen.map(({ sosa, person }) => `
                 <div onclick="selectPersonById('${person.id}')" class="p-3 rounded-xl border ${person.id === selectedPersonId ? 'border-[#8c583a] bg-[#f7f3e9]' : 'border-[#e2d7c5] bg-white'} hover:border-[#8c583a] cursor-pointer transition flex items-center gap-3">
                   ${person.photo ? `<img src="${person.photo}" class="w-11 h-11 rounded-full object-cover border border-[#d5c5ab]">` : `
-                    <div class="w-11 h-11 rounded-full ${person.gender === 'M' ? 'bg-[#d6e4f0] text-[#2b547e]' : 'bg-[#f5dce0] text-[#8a3346]'} flex items-center justify-center font-bold text-xs">
-                      #${sosa}
-                    </div>
+                    <div class="w-11 h-11 rounded-full ${person.gender === 'M' ? 'bg-[#d6e4f0] text-[#2b547e]' : 'bg-[#f5dce0] text-[#8a3346]'} flex items-center justify-center font-bold text-xs">#${sosa}</div>
                   `}
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-1.5">
@@ -991,7 +733,6 @@
       }).join('');
     }
 
-    // ==================== 3. SEZNAM VŠECH 133 OSOB ====================
     function handleSearch(val) {
       searchFilter = val.trim().toLowerCase();
       if (searchFilter.length > 0) switchTab('people');
@@ -1023,9 +764,7 @@
         <div onclick="selectPersonById('${p.id}')" class="py-3 px-3 hover:bg-[#f7f3e9] rounded-xl cursor-pointer transition flex justify-between items-center gap-3">
           <div class="flex items-center gap-3 min-w-0">
             ${p.photo ? `<img src="${p.photo}" class="w-10 h-10 rounded-full object-cover border border-[#d5c5ab]">` : `
-              <div class="w-10 h-10 rounded-full ${p.gender === 'M' ? 'bg-[#d6e4f0] text-[#2b547e]' : 'bg-[#f5dce0] text-[#8a3346]'} flex items-center justify-center font-bold text-xs">
-                ${p.gender === 'M' ? 'M' : 'Ž'}
-              </div>
+              <div class="w-10 h-10 rounded-full ${p.gender === 'M' ? 'bg-[#d6e4f0] text-[#2b547e]' : 'bg-[#f5dce0] text-[#8a3346]'} flex items-center justify-center font-bold text-xs">${p.gender === 'M' ? 'M' : 'Ž'}</div>
             `}
             <div class="min-w-0">
               <div class="flex items-center gap-2">
@@ -1045,7 +784,6 @@
       `).join('');
     }
 
-    // ==================== 4. PŘÍBĚHY RODU ====================
     function renderStories() {
       const container = document.getElementById('storiesContainer');
       container.innerHTML = (appData.stories || []).map(st => `
@@ -1070,19 +808,14 @@
       await saveToCloud(true);
     }
 
-    // ==================== 5. OBCE A STATISTIKY ====================
     function renderPlacesAndStats() {
       const container = document.getElementById('placesStatsContainer');
       const placesCount = {};
       const surnamesCount = {};
 
       (appData.people || []).forEach(p => {
-        if (p.place) {
-          placesCount[p.place] = (placesCount[p.place] || 0) + 1;
-        }
-        if (p.maiden) {
-          surnamesCount[p.maiden] = (surnamesCount[p.maiden] || 0) + 1;
-        }
+        if (p.place) placesCount[p.place] = (placesCount[p.place] || 0) + 1;
+        if (p.maiden) surnamesCount[p.maiden] = (surnamesCount[p.maiden] || 0) + 1;
       });
 
       const topPlaces = Object.entries(placesCount).sort((a, b) => b[1] - a[1]);
@@ -1119,7 +852,6 @@
       `;
     }
 
-    // ==================== PRAVÝ PANEL: DETAIL OSOBY ====================
     function selectPersonById(id) {
       selectedPersonId = id;
       renderFanChart();
@@ -1158,7 +890,6 @@
           <i class="fa-solid fa-bullseye text-[#8c583a]"></i> Nastavit tuto osobu jako střed vějíře (#1)
         </button>
 
-        <!-- Životní data -->
         <div class="space-y-2 text-xs bg-[#f7f3e9] p-3.5 rounded-xl border border-[#e2d7c5]">
           <div class="flex justify-between gap-2">
             <span class="text-[#6e5a4f] font-semibold">Narození (*):</span>
@@ -1177,59 +908,37 @@
         ${p.note ? `
           <div class="space-y-1">
             <label class="text-[11px] font-bold uppercase tracking-wider text-[#6e5a4f] block">Poznámka / Záznam</label>
-            <div class="p-3 rounded-xl bg-[#fff9eb] border border-[#e6d6b5] serif italic text-sm text-[#2c221e]">
-              ${p.note}
-            </div>
+            <div class="p-3 rounded-xl bg-[#fff9eb] border border-[#e6d6b5] serif italic text-sm text-[#2c221e]">${p.note}</div>
           </div>
         ` : ''}
 
-        <!-- Rodiče -->
         <div class="pt-2 border-t border-[#efe8d8] space-y-2 text-xs">
           <span class="text-[11px] font-bold uppercase tracking-wider text-[#6e5a4f] block">Rodiče</span>
           <div class="grid grid-cols-2 gap-2">
-            ${father ? `
-              <button onclick="selectPersonById('${father.id}')" class="p-2.5 rounded-xl border border-[#e2d7c5] bg-[#f7f3e9] hover:border-[#8c583a] text-left truncate">
-                <span class="text-[10px] text-[#6e5a4f] block">Otec</span>
-                <span class="font-bold text-[#2c221e]">${father.name}</span>
-              </button>
-            ` : `<div class="p-2.5 rounded-xl border border-dashed border-[#d5c5ab] text-[#6e5a4f] text-[11px]">Otec nezadán</div>`}
-
-            ${mother ? `
-              <button onclick="selectPersonById('${mother.id}')" class="p-2.5 rounded-xl border border-[#e2d7c5] bg-[#f7f3e9] hover:border-[#8c583a] text-left truncate">
-                <span class="text-[10px] text-[#6e5a4f] block">Matka</span>
-                <span class="font-bold text-[#2c221e]">${mother.name}</span>
-              </button>
-            ` : `<div class="p-2.5 rounded-xl border border-dashed border-[#d5c5ab] text-[#6e5a4f] text-[11px]">Matka nezadána</div>`}
+            ${father ? `<button onclick="selectPersonById('${father.id}')" class="p-2.5 rounded-xl border border-[#e2d7c5] bg-[#f7f3e9] hover:border-[#8c583a] text-left truncate"><span class="text-[10px] text-[#6e5a4f] block">Otec</span><span class="font-bold text-[#2c221e]">${father.name}</span></button>` : `<div class="p-2.5 rounded-xl border border-dashed border-[#d5c5ab] text-[#6e5a4f] text-[11px]">Otec nezadán</div>`}
+            ${mother ? `<button onclick="selectPersonById('${mother.id}')" class="p-2.5 rounded-xl border border-[#e2d7c5] bg-[#f7f3e9] hover:border-[#8c583a] text-left truncate"><span class="text-[10px] text-[#6e5a4f] block">Matka</span><span class="font-bold text-[#2c221e]">${mother.name}</span></button>` : `<div class="p-2.5 rounded-xl border border-dashed border-[#d5c5ab] text-[#6e5a4f] text-[11px]">Matka nezadána</div>`}
           </div>
         </div>
 
-        <!-- Děti -->
         ${children.length > 0 ? `
           <div class="pt-2 border-t border-[#efe8d8] space-y-1.5 text-xs">
             <span class="text-[11px] font-bold uppercase tracking-wider text-[#6e5a4f] block">Děti (${children.length})</span>
             <div class="flex flex-wrap gap-1.5">
-              ${children.map(ch => `
-                <button onclick="selectPersonById('${ch.id}')" class="px-2.5 py-1 rounded-lg bg-[#f7f3e9] hover:bg-[#efe8d8] border border-[#e2d7c5] font-medium text-[#2c221e]">
-                  ${ch.name}
-                </button>
-              `).join('')}
+              ${children.map(ch => `<button onclick="selectPersonById('${ch.id}')" class="px-2.5 py-1 rounded-lg bg-[#f7f3e9] hover:bg-[#efe8d8] border border-[#e2d7c5] font-medium text-[#2c221e]">${ch.name}</button>`).join('')}
             </div>
           </div>
         ` : ''}
       `;
     }
 
-    // ==================== ÚPRAVA A PŘIDÁNÍ OSOBY ====================
     function populateParentSelects(selectedFatherId, selectedMotherId) {
       const fSel = document.getElementById('formFather');
       const mSel = document.getElementById('formMother');
-      const men = appData.people.filter(p => p.gender === 'M').sort((a, b) => a.name.localeCompare(b.name, 'cs'));
-      const women = appData.people.filter(p => p.gender === 'F').sort((a, b) => a.name.localeCompare(b.name, 'cs'));
+      const men = (appData.people || []).filter(p => p.gender === 'M').sort((a, b) => a.name.localeCompare(b.name, 'cs'));
+      const women = (appData.people || []).filter(p => p.gender === 'F').sort((a, b) => a.name.localeCompare(b.name, 'cs'));
 
-      fSel.innerHTML = `<option value="">-- Nevybráno --</option>` +
-        men.map(m => `<option value="${m.id}" ${m.id === selectedFatherId ? 'selected' : ''}>${m.name} (${m.birth || ''})</option>`).join('');
-      mSel.innerHTML = `<option value="">-- Nevybráno --</option>` +
-        women.map(w => `<option value="${w.id}" ${w.id === selectedMotherId ? 'selected' : ''}>${w.name} (${w.birth || ''})</option>`).join('');
+      fSel.innerHTML = `<option value="">-- Nevybráno --</option>` + men.map(m => `<option value="${m.id}" ${m.id === selectedFatherId ? 'selected' : ''}>${m.name} (${m.birth || ''})</option>`).join('');
+      mSel.innerHTML = `<option value="">-- Nevybráno --</option>` + women.map(w => `<option value="${w.id}" ${w.id === selectedMotherId ? 'selected' : ''}>${w.name} (${w.birth || ''})</option>`).join('');
     }
 
     function openNewPersonModal() {
@@ -1308,7 +1017,6 @@
       await saveToCloud(true);
     }
 
-    // ==================== NASTAVENÍ A ZÁLOHA ====================
     function openDataModal() {
       document.getElementById('cfgTitle').value = appData.config.title || '';
       document.getElementById('cfgQuestion').value = appData.config.question || '';
@@ -1328,11 +1036,13 @@
       await saveToCloud(true);
     }
 
-    function exportJsonData() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+    // Vygeneruje přímo hotový soubor data.js ke stažení pro GitHub
+    function exportDataJsFile() {
+      const jsContent = "const gedcomFamilyData = " + JSON.stringify(appData, null, 2) + ";\n";
+      const dataStr = "data:text/javascript;charset=utf-8," + encodeURIComponent(jsContent);
       const a = document.createElement('a');
       a.setAttribute("href", dataStr);
-      a.setAttribute("download", "rodokmen-polezal-prytoluk.json");
+      a.setAttribute("download", "data.js");
       document.body.appendChild(a);
       a.click();
       a.remove();
