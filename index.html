@@ -1,1458 +1,1342 @@
 <!DOCTYPE html>
-<html lang="cs" class="h-full bg-slate-50">
+<html lang="cs">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sledování domácích projektů</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            500: '#0284c7',
-                            600: '#0369a1',
-                            700: '#075985',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Dynamic PWA Manifest Generator -->
-    <script>
-        const manifest = {
-            "name": "Domácí Projekty",
-            "short_name": "Projekty",
-            "start_url": "./",
-            "display": "standalone",
-            "background_color": "#ffffff",
-            "theme_color": "#0369a1",
-            "icons": [
-                {
-                    "src": "https://api.iconify.design/lucide:hammer.svg?color=%230369a1",
-                    "sizes": "192x192",
-                    "type": "image/svg+xml"
-                }
-            ]
-        };
-        const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-        const manifestURL = URL.createObjectURL(blob);
-        const link = document.createElement('link');
-        link.rel = 'manifest';
-        link.href = manifestURL;
-        document.head.appendChild(link);
-    </script>
-    <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Rodokmen rodu Poležalů, Prytoluků, Pojerů a Ženíšků</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+      --bg-parchment: #f7f3e9;
+      --bg-card: #fffdf9;
+      --ink-dark: #2c221e;
+      --ink-muted: #6e5a4f;
+      --accent-sepia: #8c583a;
+      --border-warm: #e2d7c5;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-parchment);
+      color: var(--ink-dark);
+    }
+
+    h1, h2, h3, .serif {
+      font-family: 'Crimson Pro', Georgia, serif;
+    }
+
+    .fan-slice {
+      transition: opacity 0.2s, filter 0.2s;
+      cursor: pointer;
+    }
+    .fan-slice:hover {
+      filter: brightness(0.92);
+    }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #efe9da; }
+    ::-webkit-scrollbar-thumb { background: #c5b49a; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a38f72; }
+  </style>
 </head>
-<body class="h-full flex flex-col text-slate-800 dark:text-slate-100 antialiased font-sans selection:bg-brand-500 selection:text-white transition-colors duration-200">
+<body class="min-h-screen flex flex-col">
 
-    <!-- Header Navigation -->
-    <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16 gap-4">
-                <!-- Logo & Title -->
-                <div class="flex items-center gap-3">
-                    <div class="p-2 bg-brand-600 text-white rounded-xl shadow-sm">
-                        <i data-lucide="hammer" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-lg leading-none text-slate-900 dark:text-white">Domácí Projekty</h1>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Správa, Úkoly, Nápady & Rozpočet</p>
-                    </div>
-                </div>
-
-                <!-- Global Search Bar -->
-                <div class="flex-1 max-w-xs hidden md:block">
-                    <div class="relative">
-                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                        <input type="text" id="global-search" oninput="handleGlobalSearch(this.value)" placeholder="Hledat cokoliv..." class="w-full bg-slate-100 dark:bg-slate-800 border border-transparent focus:border-brand-500 text-xs rounded-xl pl-9 pr-3 py-2 text-slate-800 dark:text-slate-100 focus:outline-none">
-                    </div>
-                </div>
-
-                <!-- Navigation Controls -->
-                <div class="flex items-center gap-2">
-                    <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Přepnout tmavý režim">
-                        <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
-                        <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
-                    </button>
-                    <button onclick="openModal('history')" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Historie změn">
-                        <i data-lucide="history" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="openModal('members')" class="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-xl text-xs font-semibold transition border border-slate-200 dark:border-slate-700">
-                        <i data-lucide="users" class="w-4 h-4 text-brand-600"></i>
-                        <span class="hidden sm:inline">Členové</span>
-                    </button>
-                    <div id="sync-status-btn" class="hidden lg:inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 px-3 py-2 rounded-xl text-xs font-semibold border border-emerald-200 dark:border-emerald-800">
-                        <span id="sync-indicator" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span id="sync-text">Cloud OK</span>
-                    </div>
-                    <button onclick="openModal('project')" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition shadow-sm">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                        <span class="hidden sm:inline">Nový Projekt</span>
-                    </button>
-                </div>
-            </div>
+  <!-- ==================== 1. RODINNÁ OTÁZKA (LOCK SCREEN) ==================== -->
+  <div id="lockScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2c221e]/90 backdrop-blur-sm">
+    <div class="bg-[#fffdf9] border-2 border-[#d5c5ab] rounded-2xl max-w-md w-full p-8 shadow-2xl text-center">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[#efe8d8] border border-[#d5c5ab] flex items-center justify-center text-[#8c583a]">
+        <i class="fa-solid fa-tree text-2xl"></i>
+      </div>
+      <h1 class="serif text-3xl font-bold text-[#2c221e] mb-2">Rodinná kronika</h1>
+      <p class="text-xs text-[#6e5a4f] mb-6">Soukromý rodokmen rodu Poležalů, Prytoluků, Pojerů a Ženíšků. Pro vstup odpovězte na kontrolní otázku.</p>
+      
+      <form onsubmit="unlockSite(event)" class="space-y-4">
+        <div class="bg-[#f7f3e9] p-3.5 rounded-xl border border-[#e2d7c5] text-left">
+          <label class="block text-[11px] uppercase tracking-wider font-bold text-[#8c583a] mb-1">Kontrolní otázka:</label>
+          <p id="lockQuestionText" class="serif text-lg font-semibold text-[#2c221e]">Jak se jmenovala babička Miluše (*1953) za svobodna?</p>
         </div>
-    </header>
+        <div>
+          <input type="text" id="lockAnswerInput" placeholder="Napište odpověď (Poležalová)..." required
+            class="w-full px-4 py-3 rounded-xl border border-[#d5c5ab] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8c583a]">
+          <p id="lockError" class="text-xs text-red-700 mt-1.5 hidden">Nesprávná odpověď. Zkuste napsat: Poležalová</p>
+        </div>
+        <button type="submit" class="w-full py-3 bg-[#8c583a] hover:bg-[#73462c] text-white font-semibold rounded-xl shadow-md transition text-sm">
+          Odemknout rodokmen
+        </button>
+      </form>
+    </div>
+  </div>
 
-    <!-- Main Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+  <!-- ==================== 2. HLAVNÍ HLAVIČKA ==================== -->
+  <header class="bg-[#2c221e] text-[#f7f3e9] border-b-4 border-[#8c583a] sticky top-0 z-30 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-col lg:flex-row justify-between items-center gap-3">
+      <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-[#8c583a] flex items-center justify-center text-[#fffdf9] shadow-inner">
+            <i class="fa-solid fa-tree text-xl"></i>
+          </div>
+          <div>
+            <h1 id="familyTitleHeader" class="serif text-2xl font-bold tracking-wide leading-none">Rodokmen Poležalů, Prytoluků a Pojerů</h1>
+            <p class="text-xs text-[#c5b49a] mt-1">133 osob z MyHeritage GEDCOM • Propojeno s JSONBin cloudem</p>
+          </div>
+        </div>
+      </div>
 
-        <!-- Dashboard Statistics -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4">
-                <div class="p-3 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 rounded-xl">
-                    <i data-lucide="folder-kanban" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Aktivní projekty</p>
-                    <p id="stat-active-projects" class="text-2xl font-bold text-slate-800 dark:text-white">0</p>
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4">
-                <div class="p-3 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-xl">
-                    <i data-lucide="check-circle" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Dokončené úkoly</p>
-                    <p id="stat-tasks-done" class="text-2xl font-bold text-slate-800 dark:text-white">0%</p>
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4">
-                <div class="p-3 bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 rounded-xl">
-                    <i data-lucide="wallet" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Celkový rozpočet</p>
-                    <p id="stat-total-budget" class="text-2xl font-bold text-slate-800 dark:text-white">0 Kč</p>
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4">
-                <div class="p-3 bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 rounded-xl">
-                    <i data-lucide="shopping-bag" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Skutečné náklady</p>
-                    <p id="stat-total-spent" class="text-2xl font-bold text-slate-800 dark:text-white">0 Kč</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Project Selector and Views Tabs -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-            <!-- Project Selector -->
-            <div class="flex items-center gap-3 w-full md:w-auto">
-                <span class="text-xs font-bold uppercase text-slate-400 tracking-wider whitespace-nowrap pl-2">Projekt:</span>
-                <select id="project-select" onchange="switchProject(this.value)" class="w-full md:w-64 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-semibold rounded-xl px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                    <!-- Dynamic Options -->
-                </select>
-            </div>
-
-            <!-- View Switcher Tabs -->
-            <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1 self-start md:self-auto w-full md:w-auto overflow-x-auto">
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
-                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
-                    <span>Přehled</span>
-                </button>
-                <button onclick="switchTab('kanban')" id="tab-kanban" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
-                    <i data-lucide="kanban" class="w-4 h-4"></i>
-                    <span>Úkoly</span>
-                </button>
-                <button onclick="switchTab('alltasks')" id="tab-alltasks" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
-                    <i data-lucide="list-todo" class="w-4 h-4"></i>
-                    <span>Všechny úkoly</span>
-                </button>
-                <button onclick="switchTab('globalshop')" id="tab-globalshop" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
-                    <i data-lucide="shopping-cart" class="w-4 h-4"></i>
-                    <span>Nákupní lístek</span>
-                </button>
-                <button onclick="switchTab('ideas')" id="tab-ideas" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
-                    <i data-lucide="lightbulb" class="w-4 h-4"></i>
-                    <span>Nápady</span>
-                </button>
-                <button onclick="switchTab('budget')" id="tab-budget" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
-                    <i data-lucide="receipt" class="w-4 h-4"></i>
-                    <span>Rozpočet</span>
-                </button>
-                <button onclick="switchTab('notes')" id="tab-notes" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
-                    <i data-lucide="notebook-pen" class="w-4 h-4"></i>
-                    <span>Poznámky</span>
-                </button>
-            </div>
+      <!-- Vyhledávání, Cloud Status a akce -->
+      <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end">
+        <div id="syncStatus" class="hidden sm:flex items-center gap-2 bg-emerald-950/90 text-emerald-400 border border-emerald-800/60 px-3 py-1.5 rounded-full text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Cloud připojen</span>
         </div>
 
-        <!-- ================= VIEW: SEARCH RESULTS ================= -->
-        <section id="view-search" class="hidden space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-800 dark:text-white">Výsledky vyhledávání</h2>
-                <button onclick="switchTab('dashboard')" class="text-xs font-semibold text-brand-600 hover:underline">Zavřít hledání</button>
-            </div>
-            <div id="search-results-container" class="space-y-3"></div>
-        </section>
+        <button onclick="overwriteCloudWithGedcom()" title="Přepsat stará fiktivní data v cloudu těmito reálnými předky" class="bg-amber-700 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Uložit GEDCOM do cloudu</span>
+        </button>
 
-        <!-- ================= VIEW: DASHBOARD ================= -->
-        <section id="view-dashboard" class="space-y-6">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-800 dark:text-white">Aktivní Projekty</h2>
-            </div>
-            <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        </section>
-
-        <!-- ================= VIEW: KANBAN ================= -->
-        <section id="view-kanban" class="hidden space-y-4">
-            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                <div>
-                    <h2 id="kanban-project-title" class="text-lg font-bold text-slate-800 dark:text-white">Název projektu</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Správa úkolů projektu.</p>
-                </div>
-                <button onclick="openModal('task')" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition self-start sm:self-auto">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    <span>Přidat úkol</span>
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-                <div class="bg-slate-100 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800 flex flex-col gap-3">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> K udělení
-                        </span>
-                        <span id="count-todo" class="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold px-2 py-0.5 rounded-full">0</span>
-                    </div>
-                    <div id="col-todo" class="flex flex-col gap-3 min-h-[150px]"></div>
-                </div>
-
-                <div class="bg-slate-100 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800 flex flex-col gap-3">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> V procesu
-                        </span>
-                        <span id="count-inprogress" class="text-xs bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 font-bold px-2 py-0.5 rounded-full">0</span>
-                    </div>
-                    <div id="col-inprogress" class="flex flex-col gap-3 min-h-[150px]"></div>
-                </div>
-
-                <div class="bg-slate-100 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800 flex flex-col gap-3">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Hotovo
-                        </span>
-                        <span id="count-done" class="text-xs bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 font-bold px-2 py-0.5 rounded-full">0</span>
-                    </div>
-                    <div id="col-done" class="flex flex-col gap-3 min-h-[150px]"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= VIEW: ALL TASKS ================= -->
-        <section id="view-alltasks" class="hidden space-y-4">
-            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-800 dark:text-white">Všechny Úkoly</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Přehled všech úkolů napříč projekty.</p>
-                </div>
-                <select id="filter-member" onchange="renderAllTasks()" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-xl px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                    <option value="">Všichni členové</option>
-                </select>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
-                                <th class="p-4">Stav</th>
-                                <th class="p-4">Úkol</th>
-                                <th class="p-4">Projekt</th>
-                                <th class="p-4">Přiřazeno</th>
-                                <th class="p-4 text-center">Akce</th>
-                            </tr>
-                        </thead>
-                        <tbody id="all-tasks-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= VIEW: GLOBAL SHOPPING LIST ================= -->
-        <section id="view-globalshop" class="hidden space-y-4">
-            <div>
-                <h2 class="text-lg font-bold text-slate-800 dark:text-white">Globální Nákupní Seznam</h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400">Všechny nezaplacené položky z rozpočtů napříč všemi projekty na jednom místě.</p>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
-                                <th class="p-4">Položka</th>
-                                <th class="p-4">Projekt</th>
-                                <th class="p-4 text-right">Cena</th>
-                                <th class="p-4 text-center">E-shop</th>
-                                <th class="p-4 text-center">Koupit / Zaplatit</th>
-                            </tr>
-                        </thead>
-                        <tbody id="global-shop-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= VIEW: IDEAS (NÁPADY) ================= -->
-        <section id="view-ideas" class="hidden space-y-4">
-            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-800 dark:text-white">Nápady & Podněty</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Místo pro nápady (např. od přítelkyně), které můžete jedním kliknutím převést na projekt.</p>
-                </div>
-                <button onclick="openModal('idea')" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition self-start sm:self-auto">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    <span>Přidat nápad</span>
-                </button>
-            </div>
-
-            <div id="ideas-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        </section>
-
-        <!-- ================= VIEW: BUDGET & MATERIAL ================= -->
-        <section id="view-budget" class="hidden space-y-4">
-            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                <div>
-                    <h2 id="budget-project-title" class="text-lg font-bold text-slate-800 dark:text-white">Rozpočet & Materiál</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Položky rozpočtu vybraného projektu.</p>
-                </div>
-                <button onclick="openModal('material')" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition self-start sm:self-auto">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    <span>Přidat položku</span>
-                </button>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
-                                <th class="p-4">Stav</th>
-                                <th class="p-4">Položka</th>
-                                <th class="p-4 text-right">Plánovaná cena</th>
-                                <th class="p-4 text-right">Skutečná cena</th>
-                                <th class="p-4 text-center">E-shop</th>
-                                <th class="p-4 text-center">Akce</th>
-                            </tr>
-                        </thead>
-                        <tbody id="materials-list-body" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm"></tbody>
-                    </table>
-                </div>
-                
-                <div class="bg-slate-50 dark:bg-slate-800/40 p-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap justify-between items-center gap-4 text-sm font-semibold">
-                    <div class="text-slate-600 dark:text-slate-400">Položek celkem: <span id="materials-count" class="text-slate-900 dark:text-white font-bold">0</span></div>
-                    <div class="flex gap-6">
-                        <div><span class="text-slate-500 mr-2">Plán:</span><span id="budget-planned-total" class="text-slate-900 dark:text-white font-bold">0 Kč</span></div>
-                        <div><span class="text-slate-500 mr-2">Utraceno:</span><span id="budget-spent-total" class="text-slate-900 dark:text-white font-bold">0 Kč</span></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= VIEW: NOTES & CONTACTS ================= -->
-        <section id="view-notes" class="hidden space-y-4">
-            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                <div>
-                    <h2 id="notes-project-title" class="text-lg font-bold text-slate-800 dark:text-white">Poznámky & Kontakty</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Provozní poznámky a kontakty pro vybraný projekt.</p>
-                </div>
-                <button onclick="saveProjectNotes()" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition self-start sm:self-auto">
-                    <i data-lucide="save" class="w-4 h-4"></i>
-                    <span>Uložit</span>
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
-                    <label class="block font-bold text-sm text-slate-800 dark:text-white flex items-center gap-2">
-                        <i data-lucide="file-text" class="w-4 h-4 text-brand-600"></i> Poznámky
-                    </label>
-                    <textarea id="project-notes-input" rows="8" placeholder="Rozměry, kódy barev..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
-                    <label class="block font-bold text-sm text-slate-800 dark:text-white flex items-center gap-2">
-                        <i data-lucide="users" class="w-4 h-4 text-brand-600"></i> Kontakty
-                    </label>
-                    <textarea id="project-contacts-input" rows="8" placeholder="Řemeslníci, obchody..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- ================= MODALS ================= -->
-
-    <!-- Modal: Project -->
-    <div id="modal-project" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-800">
-            <div class="flex justify-between items-center">
-                <h3 id="modal-project-title" class="font-bold text-lg text-slate-900 dark:text-white">Nový Projekt</h3>
-                <button onclick="closeModal('project')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <form id="form-project" onsubmit="handleProjectSubmit(event)" class="space-y-4">
-                <input type="hidden" id="project-id">
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Název projektu</label>
-                    <input type="text" id="project-name" required placeholder="např. Malování obýváku" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Popis</label>
-                    <textarea id="project-desc" rows="2" placeholder="Popis projektu..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Odkaz na fotku / vizualizaci (URL)</label>
-                    <input type="url" id="project-image" placeholder="https://example.com/image.jpg" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Celkový plánovaný rozpočet (Kč)</label>
-                    <input type="number" id="project-budget" min="0" required placeholder="5000" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('project')" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Zrušit</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition">Uložit</button>
-                </div>
-            </form>
+        <div class="relative flex-1 sm:w-52">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-[#a38f72] text-xs"></i>
+          <input type="text" id="globalSearch" oninput="handleSearch(this.value)" placeholder="Hledat ze 133 osob..."
+            class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#3d302a] border border-[#57463e] text-xs text-[#f7f3e9] placeholder-[#a38f72] focus:outline-none focus:border-[#c5b49a]">
         </div>
+
+        <button onclick="openNewPersonModal()" class="bg-[#8c583a] hover:bg-[#a16746] text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shadow">
+          <i class="fa-solid fa-user-plus"></i> <span>Přidat osobu</span>
+        </button>
+
+        <button onclick="openDataModal()" title="Nastavení a import" class="bg-[#3d302a] hover:bg-[#4e3e37] text-[#e2d7c5] p-2 rounded-xl border border-[#57463e] transition">
+          <i class="fa-solid fa-gear text-xs"></i>
+        </button>
+      </div>
     </div>
 
-    <!-- Modal: Idea (Nápad) -->
-    <div id="modal-idea" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-800">
-            <div class="flex justify-between items-center">
-                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Přidat nový nápad</h3>
-                <button onclick="closeModal('idea')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <form onsubmit="handleIdeaSubmit(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Název nápadu</label>
-                    <input type="text" id="idea-title" required placeholder="např. Osvětlení na terasu" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Popis / detaily</label>
-                    <textarea id="idea-desc" rows="3" placeholder="Kdo to vymyslel, jak by to mělo vypadat..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Autor / Kdo to navrhl</label>
-                    <input type="text" id="idea-author" placeholder="např. Přítelkyně Jana" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('idea')" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Zrušit</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition">Přidat nápad</button>
-                </div>
-            </form>
+    <!-- Navigační záložky -->
+    <div class="bg-[#382c27] border-t border-[#4a3b34]">
+      <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto gap-1 py-1.5 text-xs font-medium">
+        <button onclick="switchTab('fan')" id="tab-fan" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white whitespace-nowrap">
+          <i class="fa-solid fa-fan"></i> Vějíř předků
+        </button>
+        <button onclick="switchTab('tree')" id="tab-tree" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
+          <i class="fa-solid fa-sitemap"></i> Vývod po generacích
+        </button>
+        <button onclick="switchTab('people')" id="tab-people" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
+          <i class="fa-solid fa-users"></i> Všichni členové rodu (<span id="navCountPeople">0</span>)
+        </button>
+        <button onclick="switchTab('stories')" id="tab-stories" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
+          <i class="fa-solid fa-scroll"></i> Příběhy & Volyňští Češi
+        </button>
+        <button onclick="switchTab('places')" id="tab-places" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
+          <i class="fa-solid fa-location-dot"></i> Obce & statistiky
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 3. HLAVNÍ OBSAH ==================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- LEVÁ / HLAVNÍ ČÁST (8 sloupců) -->
+    <div class="lg:col-span-8 space-y-6">
+
+      <!-- Výběr výchozí osoby (středu vějíře) -->
+      <div class="bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-3.5 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div class="flex items-center gap-2 text-xs">
+          <span class="font-bold uppercase tracking-wider text-[#8c583a]"><i class="fa-solid fa-bullseye mr-1"></i>Střed vějíře (#1):</span>
+          <select id="rootPersonSelect" onchange="changeRootPerson(this.value)" class="bg-[#f7f3e9] border border-[#d5c5ab] rounded-xl px-3 py-1.5 font-semibold text-[#2c221e] focus:outline-none">
+          </select>
         </div>
+        <span class="text-[11px] text-[#6e5a4f]">Přepnutím osoby okamžitě přepočítáte vějíř i strom předků.</span>
+      </div>
+
+      <!-- TAB 1: VĚJÍŘ PŘEDKŮ (SVG) -->
+      <section id="view-fan" class="bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4 border-b border-[#efe8d8] pb-3">
+          <div>
+            <h2 class="serif text-2xl font-bold text-[#2c221e]">Vějíř předků (4 generace)</h2>
+            <p class="text-xs text-[#6e5a4f]">Kliknutím na libovolné pole zobrazíte kartu předka vpravo.</p>
+          </div>
+          <div class="flex items-center gap-3 text-xs">
+            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-[#d6e4f0] border border-[#9ab7d3]"></span> Muži</span>
+            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-[#f5dce0] border border-[#d9a7b0]"></span> Ženy</span>
+          </div>
+        </div>
+
+        <div class="w-full overflow-x-auto flex justify-center py-2">
+          <svg id="fanChartSvg" viewBox="-370 -370 740 430" class="w-full max-w-[700px] h-auto select-none"></svg>
+        </div>
+      </section>
+
+      <!-- TAB 2: STROM PŘEDKŮ (PO GENERACÍCH AŽ DO 7. GENERACE) -->
+      <section id="view-tree" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="border-b border-[#efe8d8] pb-3">
+          <h2 class="serif text-2xl font-bold text-[#2c221e]">Kompletní vývod předků po generacích</h2>
+          <p class="text-xs text-[#6e5a4f]">Zobrazuje všechny nalezené přímé předky zvolené výchozí osoby (včetně prapraprarodičů z 18. a 19. století).</p>
+        </div>
+        <div id="treeGenerationsContainer" class="space-y-6"></div>
+      </section>
+
+      <!-- TAB 3: SEZNAM VŠECH 133 OSOB -->
+      <section id="view-people" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center border-b border-[#efe8d8] pb-3 mb-4 gap-2">
+          <div>
+            <h2 class="serif text-2xl font-bold text-[#2c221e]">Rejstřík všech osob v rodokmenu</h2>
+            <p class="text-xs text-[#6e5a4f]">Všech 133 členů importovaných z vašeho souboru Poležalová Family Tree.ged.</p>
+          </div>
+          <select id="surnameFilter" onchange="renderPeopleList()" class="bg-[#f7f3e9] border border-[#d5c5ab] rounded-xl px-3 py-1.5 text-xs font-semibold">
+            <option value="">Všechna příjmení</option>
+          </select>
+        </div>
+        <div id="peopleListContainer" class="divide-y divide-[#efe8d8] max-h-[700px] overflow-y-auto pr-1"></div>
+      </section>
+
+      <!-- TAB 4: PŘÍBĚHY RODU -->
+      <section id="view-stories" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3">
+          <div>
+            <h2 class="serif text-2xl font-bold text-[#2c221e]">Příběhy rodu a paměť rodiny</h2>
+            <p class="text-xs text-[#6e5a4f]">Zápisy z vašeho GEDCOMu a historické souvislosti rodu.</p>
+          </div>
+          <button onclick="openStoryModal()" class="bg-[#8c583a] hover:bg-[#73462c] text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition">
+            <i class="fa-solid fa-pen-nib mr-1"></i> Přidat kapitolu
+          </button>
+        </div>
+        <div id="storiesContainer" class="space-y-4"></div>
+      </section>
+
+      <!-- TAB 5: OBCE A STATISTIKY -->
+      <section id="view-places" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="border-b border-[#efe8d8] pb-3">
+          <h2 class="serif text-2xl font-bold text-[#2c221e]">Obce, místa původu a nejčastější příjmení</h2>
+          <p class="text-xs text-[#6e5a4f]">Statistické rozložení vašeho rodokmenu podle zadaných míst a rodů.</p>
+        </div>
+        <div id="placesStatsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </section>
+
     </div>
 
-    <!-- Modal: Task -->
-    <div id="modal-task" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-800">
-            <div class="flex justify-between items-center">
-                <h3 id="modal-task-title-heading" class="font-bold text-lg text-slate-900 dark:text-white">Úkol</h3>
-                <button onclick="closeModal('task')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <form id="form-task" onsubmit="handleTaskSubmit(event)" class="space-y-4">
-                <input type="hidden" id="task-id">
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Název úkolu</label>
-                    <input type="text" id="task-title" required placeholder="např. Koupit krycí folii" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Fáze / Stav</label>
-                    <select id="task-status" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                        <option value="todo">K udělení</option>
-                        <option value="inprogress">V procesu</option>
-                        <option value="done">Hotovo</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Přiřadit členovi</label>
-                    <select id="task-assignee" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                        <option value="">-- Nepřiřazeno --</option>
-                    </select>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('task')" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Zrušit</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition">Uložit úkol</button>
-                </div>
-            </form>
+    <!-- PRAVÝ PANEL: DETAIL VYBRANÉ OSOBY (4 sloupce) -->
+    <aside class="lg:col-span-4">
+      <div id="personDetailCard" class="bg-[#fffdf9] border-2 border-[#d5c5ab] rounded-2xl p-5 shadow-md sticky top-28 space-y-4">
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ==================== 4. MODÁL: UPRAVIT / PŘIDAT OSOBU ==================== -->
+  <div id="personModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#fffdf9] border border-[#d5c5ab] rounded-2xl max-w-xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+      <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3">
+        <h3 id="personModalTitle" class="serif text-2xl font-bold text-[#2c221e]">Upravit osobu</h3>
+        <button onclick="closePersonModal()" class="text-[#6e5a4f] hover:text-[#2c221e]"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <form onsubmit="savePersonForm(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="formId">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Jméno a příjmení</label>
+            <input type="text" id="formName" required class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Rodné příjmení</label>
+            <input type="text" id="formMaiden" placeholder="např. Poležalová" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
         </div>
-    </div>
 
-    <!-- Modal: Members Management -->
-    <div id="modal-members" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-800">
-            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Správa členů</h3>
-                <button onclick="closeModal('members')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            
-            <form onsubmit="handleAddMember(event)" class="flex gap-2">
-                <input type="text" id="new-member-name" required placeholder="Jméno (např. Ota, Jana)" class="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">Přidat</button>
-            </form>
-
-            <div class="space-y-2 max-h-48 overflow-y-auto" id="members-list-container"></div>
-
-            <div class="flex justify-end pt-2">
-                <button type="button" onclick="closeModal('members')" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Zavřít</button>
-            </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Pohlaví</label>
+            <select id="formGender" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+              <option value="M">Muž</option>
+              <option value="F">Žena</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Hlavní obec / Působiště</label>
+            <input type="text" id="formPlace" placeholder="např. Žatec, Bedřichov, Volyň..." class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
         </div>
-    </div>
 
-    <!-- Modal: History -->
-    <div id="modal-history" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-800 max-h-[80vh] flex flex-col">
-            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Historie změn a aktivit</h3>
-                <button onclick="closeModal('history')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="space-y-2 overflow-y-auto flex-1 pr-1 text-xs" id="history-list-container"></div>
-            <div class="flex justify-end pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onclick="closeModal('history')" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Zavřít</button>
-            </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Narození (*)</label>
+            <input type="text" id="formBirth" placeholder="např. 20. 6. 1994, Žatec" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Úmrtí (†)</label>
+            <input type="text" id="formDeath" placeholder="např. 19. 9. 1994" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
         </div>
-    </div>
 
-    <!-- Modal: Material / Budget Item -->
-    <div id="modal-material" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-800">
-            <div class="flex justify-between items-center">
-                <h3 id="modal-material-heading" class="font-bold text-lg text-slate-900 dark:text-white">Položka Rozpočtu</h3>
-                <button onclick="closeModal('material')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <form id="form-material" onsubmit="handleMaterialSubmit(event)" class="space-y-4">
-                <input type="hidden" id="material-id">
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Název položky / materiálu</label>
-                    <input type="text" id="material-name" required placeholder="např. Bílá barva Dulux 10L" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Plánovaná cena (Kč)</label>
-                        <input type="number" id="material-planned" min="0" required placeholder="800" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Skutečná cena (Kč)</label>
-                        <input type="number" id="material-actual" min="0" placeholder="0" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Odkaz na e-shop (URL)</label>
-                    <input type="url" id="material-url" placeholder="https://www.obi.cz/..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-                <div class="flex items-center gap-2 pt-1">
-                    <input type="checkbox" id="material-purchased" class="w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
-                    <label for="material-purchased" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Zaplaceno / Zakoupeno</label>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('material')" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Zrušit</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition">Uložit položku</button>
-                </div>
-            </form>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Otec (vyberte ze seznamu)</label>
+            <select id="formFather" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white"></select>
+          </div>
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Matka (vyberte ze seznamu)</label>
+            <select id="formMother" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white"></select>
+          </div>
         </div>
+
+        <div>
+          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Poznámka / Matriční záznam / Vojenská služba</label>
+          <textarea id="formNote" rows="3" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white"></textarea>
+        </div>
+
+        <div>
+          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Odkaz na fotku nebo matriku (URL)</label>
+          <input type="url" id="formPhoto" placeholder="https://..." class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+        </div>
+
+        <div class="flex justify-between items-center pt-3 border-t border-[#efe8d8]">
+          <button type="button" onclick="deletePersonFromForm()" class="px-3 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-semibold">
+            <i class="fa-solid fa-trash-can mr-1"></i> Smazat
+          </button>
+          <div class="flex gap-2">
+            <button type="button" onclick="closePersonModal()" class="px-4 py-2 rounded-xl bg-[#efe8d8] text-[#2c221e] font-semibold">Zrušit</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-[#8c583a] text-white font-semibold shadow">Uložit do cloudu</button>
+          </div>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <!-- Application Script Logic -->
-    <script>
-        const JSONBIN_BIN_ID = "6adc6b4aac6210605a4e2241";
-        const JSONBIN_MASTER_KEY = "$2a$10$TEIYmhA7g5etdJmkOrXXE.cP6pLXM0o9epsQcn5nZXdgfZMPaRF/u";
-        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+  <!-- ==================== 5. MODÁL: NASTAVENÍ ==================== -->
+  <div id="dataModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#fffdf9] border border-[#d5c5ab] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3">
+        <h3 class="serif text-2xl font-bold text-[#2c221e]">Nastavení rodokmenu</h3>
+        <button onclick="closeDataModal()" class="text-[#6e5a4f] hover:text-[#2c221e]"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
 
-        let projects = [];
-        let members = [];
-        let ideas = [];
-        let historyLog = [];
-        let currentProjectId = null;
-        let activeTab = 'dashboard';
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Název rodokmenu</label>
+          <input type="text" id="cfgTitle" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+        </div>
+        <div>
+          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Rodinná kontrolní otázka</label>
+          <input type="text" id="cfgQuestion" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+        </div>
+        <div>
+          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Správná odpověď</label>
+          <input type="text" id="cfgAnswer" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+        </div>
+        <button onclick="saveConfig()" class="w-full py-2.5 bg-[#8c583a] text-white font-semibold rounded-xl shadow">Uložit nastavení</button>
 
-        const demoMembers = [{ id: 'm-1', name: 'Ota' }, { id: 'm-2', name: 'Jana' }];
-        const demoProjects = [{
-            id: 'proj-1',
-            name: 'Malování obýváku',
-            description: 'Obnovit nátěr a opravit omítku.',
-            imageUrl: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=600&q=80',
-            budget: 8000,
-            notes: 'Barevný odstín: Dulux Soft Sand.',
-            contacts: 'Malíř pan Svoboda: +420 608 123 456',
-            tasks: [
-                { id: 't1', title: 'Odstěhovat nábytek', status: 'done', assignee: 'm-1' },
-                { id: 't2', title: 'Koupit barvy v OBI', status: 'inprogress', assignee: 'm-2' }
-            ],
-            materials: [
-                { id: 'm1', name: 'Bílá barva Dulux 10L', plannedPrice: 1200, actualPrice: 1150, url: 'https://obi.cz', purchased: true }
-            ]
-        }];
-        const demoIdeas = [{
-            id: 'i-1',
-            title: 'Venkovní osvětlení terasy',
-            description: 'LED pásky pod zábradlí pro příjemnou atmosféru večer.',
-            author: 'Jana'
-        }];
+        <hr class="border-[#efe8d8] my-3">
 
-        function logAction(text) {
-            const timeStr = new Date().toLocaleString('cs-CZ');
-            historyLog.unshift({ text, time: timeStr });
-            if (historyLog.length > 50) historyLog.pop();
+        <div class="flex flex-col gap-2">
+          <button onclick="overwriteCloudWithGedcom()" class="w-full py-2.5 bg-amber-700 hover:bg-amber-600 text-white font-semibold rounded-xl">
+            <i class="fa-solid fa-rotate mr-1"></i> Obnovit výchozích 133 osob z GEDCOMu a uložit do cloudu
+          </button>
+          <button onclick="exportJsonData()" class="w-full py-2.5 bg-[#382c27] text-white font-semibold rounded-xl">
+            <i class="fa-solid fa-download mr-1"></i> Stáhnout zálohu rodokmenu (JSON)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 6. DATA Z VAŠEHO GEDCOMU & LOGIKA ==================== -->
+  <script>
+    const JSONBIN_BIN_ID = "6adc6b4aac6210605a4e2241";
+    const JSONBIN_MASTER_KEY = "$2a$10$TEIYmhA7g5etdJmkOrXXE.cP6pLXM0o9epsQcn5nZXdgfZMPaRF/u";
+    const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
+    const STORAGE_KEY = 'rodokmen_polezal_gedcom_v2';
+    const UNLOCK_KEY = 'rodokmen_unlocked_polezal';
+
+    let fullCloudRecord = {};
+
+    // KOMPLETNÍ DATA VYTAŽENÁ Z VAŠEHO SOUBORU Poležalová Family Tree.ged (133 OSOB)
+    const gedcomFamilyData = {
+      config: {
+        title: "Rodokmen rodu Poležalů, Prytoluků, Pojerů a Ženíšků",
+        question: "Jak se jmenovala babička Miluše (*1953) za svobodna?",
+        answer: "Poležalová",
+        rootId: "I12" // Výchozí střed: Jakub Prytoluk (*1994)
+      },
+      people: [
+        { id: "I1", name: "Michal Poležal", maiden: "Poležal", gender: "M", birth: "4. 1. 1910", death: "19. 9. 1994", place: "", fatherId: "I48", motherId: "I52", spouseIds: ["I2"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWZjYWU4ODU1YWNkOGEwOWI0MWVmZjM4MGY0NjUxZjVkOWQzNmQyNzIyYjgyYTY3OThkNzU0OWI1ZTY4YmUzM2EmZT0xNzkzODA4MDAw/014/622/4791/500501_128894gf1tum45123da8d2_Z.jpg" },
+        { id: "I2", name: "Marie Poležalová", maiden: "Osobová", gender: "F", birth: "14. 5. 1923", death: "19. 3. 2014", place: "Lenešice", fatherId: "I50", motherId: "I51", spouseIds: ["I1"], note: "Pohřbena v Lenešicích.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTM1MGJmYjViNmU4MTcyNWViMWRhOTgzMTRjYjlmZGNkYzY3YWY1NDBmYTMyYmYyNDEwNTliN2JiMjU3YjVkNWUmZT0xNzkzODA4MDAw/014/622/4791/500521_5498622age5fdy840yd8kf_D.jpg" },
+        { id: "I3", name: "Miluše Prytoluková", maiden: "Poležalová", gender: "F", birth: "27. 1. 1953, Bečov u Mostu", death: "", place: "Bečov u Mostu", fatherId: "I1", motherId: "I2", spouseIds: ["I4", "I500001"], note: "Sňatek 24. 4. 1971 (Bečov u Mostu) s Vladislavem Prytolukem; sňatek 3. 8. 2019 (Louny) s Jaroslavem Pudrem.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTk2NjExYjU4MzRhOTU1OTVlNzBiYTk0M2ZkYWU1ZDU0MWI0MTU1ZDQwYzMxZjE4NTgxODY1NWI5YTNmYWQ5Y2MmZT0xNzkzODA4MDAw/014/622/4791/500911_761943vq9e2vme4014392x_D.jpg" },
+        { id: "I4", name: "Vladislav Prytoluk", maiden: "Prytoluk", gender: "M", birth: "9. 1. 1949", death: "13. 1. 2010", place: "", fatherId: "I40", motherId: "I41", spouseIds: ["I3"], note: "Sňatek 24. 4. 1971 v Bečově u Mostu.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTNiMTg0NDhkNmJiMDEyZjlmMTcyODIxOThhMDJmMWRkNTQ0YjMzYjFhYjQ0NmIwNGQ3OGYxNTg5NTFhYzE1MzQmZT0xNzkzODA4MDAw/014/622/4791/500621_482706q3464od36cqa7me2_D.jpg" },
+        { id: "I5", name: "Vladimír Poležal", maiden: "Poležal", gender: "M", birth: "4. 3. 1946", death: "", place: "", fatherId: "I1", motherId: "I2", spouseIds: ["I22"], note: "", photo: "" },
+        { id: "I6", name: "Jaroslav Poležal", maiden: "Poležal", gender: "M", birth: "17. 2. 1948", death: "", place: "", fatherId: "I1", motherId: "I2", spouseIds: ["I24"], note: "", photo: "" },
+        { id: "I7", name: "Marie Molatová", maiden: "Poležalová", gender: "F", birth: "28. 3. 1949", death: "", place: "", fatherId: "I1", motherId: "I2", spouseIds: ["I27", "I72", "I102"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTRmMWI3MjU3ZmFkOGQxMWYyYmMzMDI0NzQ4Y2MzZGI3YmNhYjkwMDc4NGFmYzA0NzBmZGQwNjUyMjUyZjUzMDYmZT0xNzkzODA4MDAw/014/622/4791/500391_373542f24ae5daf524i60b_Z.jpg" },
+        { id: "I8", name: "Anna Hlaváčová", maiden: "Poležalová", gender: "F", birth: "17. 10. 1950", death: "", place: "", fatherId: "I1", motherId: "I2", spouseIds: ["I32"], note: "", photo: "" },
+        { id: "I9", name: "Vladislav Prytoluk", maiden: "Prytoluk", gender: "M", birth: "14. 4. 1972", death: "", place: "Žatec", fatherId: "I4", motherId: "I3", spouseIds: ["I13", "I15"], note: "Sňatek 10. 10. 1992 s Vlastou Pojerovou; druhé manželství s Alenou Liškovou.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWY2MDFmOWU1OTAyNGVhZmY3Y2UzNWY2M2YyZTUwZDllMThhYWU3YTQ5OWVkODJlZjFiMzJmZGY2YmVjMTE3OGYmZT0xNzkzODA4MDAw/014/622/4791/500920_4379185deck377a0v1z49j_G.jpg" },
+        { id: "I10", name: "Bohuslava Kubátová", maiden: "Prytoluková", gender: "F", birth: "24. 12. 1974", death: "", place: "", fatherId: "I4", motherId: "I3", spouseIds: ["I16"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTY0NmE0OWM0ZTUwYzY0Y2MxYWIxZTIwN2RkNzlhOTNjNTY2MDI3NmU0ODI1NjYzMjc0YTJlMDM3YjAxMzFiZTkmZT0xNzkzODA4MDAw/014/622/4791/500291_85435024yu00d4aaib2470_D.jpg" },
+        { id: "I11", name: "Rostislav Prytoluk", maiden: "Prytoluk", gender: "M", birth: "31. 10. 1976, Žatec", death: "", place: "Žatec", fatherId: "I4", motherId: "I3", spouseIds: ["I500004"], note: "Sňatek 5. 10. 1996 v Libochovicích.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWQ2MTkxNDRhMGE2MmY1ZDIyNzJiNWNmMDNkMzZkMTk5ZTNhZGI1ZDdiNzFmOTM4YjhkMTZmZDU0ZWQxOTg2OWEmZT0xNzkzODA4MDAw/014/622/4791/500311_202896142w320sta2e8d0b_Z.jpg" },
+        { id: "I12", name: "Jakub Prytoluk", maiden: "Prytoluk", gender: "M", birth: "20. 6. 1994, Žatec", death: "", place: "Chomutov / Žatec", fatherId: "I9", motherId: "I13", spouseIds: [], note: "Narozen v Žatci, bydliště Chomutov.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTljNDJiOGVlOTJiYWU1Njc3ODRlNDNmZDU3ZTRlNGE0OTI2YjEzMTEyNzEzNDdlMjYyMTkzMDFiZGQ4MWU0ZjUmZT0xNzkzODA4MDAw/014/622/4791/500918_446683ede645bcvk6147p1_G.jpg" },
+        { id: "I13", name: "Vlasta Schauerová", maiden: "Pojerová", gender: "F", birth: "14. 6. 1973", death: "", place: "Chomutov", fatherId: "I500007", motherId: "I500006", spouseIds: ["I9", "I500034"], note: "1. sňatek 10. 10. 1992 (Vladislav Prytoluk), 2. sňatek 31. 12. 2002 v Nezabylicích (Vítězslav Schauer).", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTgxZjE0ZGUzMzU2MjRmNDgyZGUxNzZiMTc0MWFkMTYwZTk0NTU0NThhZjQwN2E1OGZiMTgxOTY0NzBiNDY4YTQmZT0xNzkzODA4MDAw/014/622/4791/500919_6168605d3b1vx5oe6k7ci7_X.jpg" },
+        { id: "I14", name: "Vladislav Prytoluk ml.", maiden: "Prytoluk", gender: "M", birth: "5. 5. 2006", death: "", place: "", fatherId: "I9", motherId: "I15", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWEwNzU3OTQ2OTBiNjc0YjliOTUxMGFkYWJhZWVjNjcyM2IyOTRmMTU5MGQyNzZkODgwMTE4MWQ4ZjIyOThmMTYmZT0xNzkzODA4MDAw/014/622/4791/500331_36611448yeacz24fd4y2id_D.jpg" },
+        { id: "I15", name: "Alena Karlovská", maiden: "Lišková", gender: "F", birth: "18. 3. 1972, Žatec", death: "", place: "Žatec", fatherId: "I88", motherId: "I89", spouseIds: ["I9", "I92"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTc3MzEyOGEyNTg1NTk3MWQ5NzQ5MGEzM2I0MTc2ZjI5MmJjMjAxNDkwZmRiN2RmOTVhNjAwYTM3NTQ0YmY2NWImZT0xNzkzODA4MDAw/014/622/4791/500791_659803bd0fc4261f5ncq92_Z.jpg" },
+        { id: "I16", name: "Stanislav Kubát", maiden: "Kubát", gender: "M", birth: "28. 2. 1970", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I10"], note: "", photo: "" },
+        { id: "I17", name: "Eliška Kubátová", maiden: "Kubátová", gender: "F", birth: "30. 3. 2003", death: "", place: "", fatherId: "I16", motherId: "I10", spouseIds: [], note: "", photo: "" },
+        { id: "I19", name: "Lukáš Prytoluk", maiden: "Prytoluk", gender: "M", birth: "25. 1. 2001, Žatec", death: "", place: "Žatec", fatherId: "I11", motherId: "I500004", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTExYmE5MDM3YmVhYjM0YTQ5OWRlMmQ2YTI3Mjg3MTcyNjFhNmZmNjAzMDAyN2Y1Y2Y2NTU2MTM4MzYyNDljYzkmZT0xNzkzODA4MDAw/014/622/4791/500938_452989efed979os8t45ax1_W.jpg" },
+        { id: "I20", name: "Lucie Prytoluková", maiden: "Prytoluková", gender: "F", birth: "18. 11. 2004", death: "", place: "", fatherId: "I11", motherId: "I500004", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWFhYjQ3NzMwMmI4N2MwMDk1ZTFkMDk3NDc2YzI4MzZkY2M1ODI0MGUyNzMyMzcwZDFlYTVlZTIyMzQyZjk5N2MmZT0xNzkzODA4MDAw/014/622/4791/500923_5516057dw9d579c8d0g528_W.jpg" },
+        { id: "I21", name: "Soňa Poležalová", maiden: "Poležalová", gender: "F", birth: "", death: "", place: "", fatherId: "I5", motherId: "I22", spouseIds: [], note: "", photo: "" },
+        { id: "I22", name: "Květa Poležalová", maiden: "Ramešová", gender: "F", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I5"], note: "", photo: "" },
+        { id: "I23", name: "Monika Poležalová", maiden: "Poležalová", gender: "F", birth: "", death: "", place: "", fatherId: "I5", motherId: "I22", spouseIds: [], note: "", photo: "" },
+        { id: "I24", name: "Jana Poležalová", maiden: "Simandlová", gender: "F", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I6"], note: "", photo: "" },
+        { id: "I25", name: "Jana Heřtová", maiden: "Poležalová", gender: "F", birth: "", death: "", place: "", fatherId: "I6", motherId: "I24", spouseIds: [], note: "", photo: "" },
+        { id: "I27", name: "Oldřich Trybula", maiden: "Trybula", gender: "M", birth: "", death: "Zemřel", place: "", fatherId: "", motherId: "", spouseIds: ["I7"], note: "", photo: "" },
+        { id: "I28", name: "Marie Trybulová", maiden: "Trybulová", gender: "F", birth: "23. 5. 1968", death: "", place: "", fatherId: "I27", motherId: "I7", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTA5ZmZiNjA3MzIzY2JlZDVlNTQ2ODZlYmViZmJhMzllZjI3NWM0NzNiMzU3NGNhMTdhNjZlNWRhOWViZjk5ZjYmZT0xNzkzODA4MDAw/014/622/4791/500421_2153324ss6215w1zb95ead_Z.jpg" },
+        { id: "I29", name: "Karin Černeková", maiden: "Trybulová", gender: "F", birth: "1. 9. 1969", death: "", place: "", fatherId: "I27", motherId: "I7", spouseIds: ["I55", "I57"], note: "", photo: "" },
+        { id: "I30", name: "Michaela Sopková", maiden: "Trybulová", gender: "F", birth: "4. 2. 1975", death: "", place: "", fatherId: "I27", motherId: "I7", spouseIds: ["I37"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTQwYzA1NGY1ZjE3ZDdiMTE3OTdmM2IzNjIxYmI5ZDJhYmJlZGMyMjk5OWY1MThjNTU4OTExZWIxYzMxMDdlNTAmZT0xNzkzODA4MDAw/014/622/4791/500141_346560rannt122a41f4d2z_Z.jpg" },
+        { id: "I31", name: "Denisa Farkašová", maiden: "Molatová", gender: "F", birth: "20. 9. 1983", death: "", place: "", fatherId: "I72", motherId: "I7", spouseIds: ["I39"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTU4ZTY3NzEzZDQ5MjE3MTYwYzQwMzZhZTQ1MDIyYTdkZjEzMjE0Yjg4N2I1ZWQ2ZDRkMjI2ZTFhM2VkNzRhYzAmZT0xNzkzODA4MDAw/014/622/4791/500011_6165009a4vc4d2u1a272xb_D.jpg" },
+        { id: "I32", name: "Václav Hlaváč", maiden: "Hlaváč", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I8"], note: "", photo: "" },
+        { id: "I33", name: "Petr Hlaváč", maiden: "Hlaváč", gender: "M", birth: "25. 1. 1970", death: "", place: "", fatherId: "I32", motherId: "I8", spouseIds: [], note: "", photo: "" },
+        { id: "I34", name: "Radek Hlaváč", maiden: "Hlaváč", gender: "M", birth: "9. 4. 1972", death: "", place: "", fatherId: "I32", motherId: "I8", spouseIds: [], note: "", photo: "" },
+        { id: "I35", name: "Jiří Hlaváč", maiden: "Hlaváč", gender: "M", birth: "31. 12. 1986", death: "", place: "", fatherId: "I32", motherId: "I8", spouseIds: [], note: "", photo: "" },
+        { id: "I36", name: "Petr Sopka ml.", maiden: "Sopka", gender: "M", birth: "5. 6. 1995", death: "", place: "", fatherId: "I37", motherId: "I30", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTliMmZiMGE1ZGQyMzUyNjE1NDc4MGU3YzBhZWUyNGNhY2ZiNGY1ZDE5NjYxODAzNzI5ZTZjYTNjMWYxZmNmNTEmZT0xNzkzODA4MDAw/014/622/4791/500121_394757d2ae4faw61l37l3r_Z.jpg" },
+        { id: "I37", name: "Petr Sopka", maiden: "Sopka", gender: "M", birth: "6. 12. 1959", death: "", place: "", fatherId: "I81", motherId: "I79", spouseIds: ["I30"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTQ3ZGViZDAwNWU4NTNiODUyODgyYjlmYTg1YzEyMTZlOTY5YTNkMTZhZWMxNWViOTU3NzUwNDQxZjZmNDMxZTYmZT0xNzkzODA4MDAw/014/622/4791/500101_08495342a3ac4drfs20t1d_D.jpg" },
+        { id: "I39", name: "Jan Farkaš", maiden: "Farkaš", gender: "M", birth: "14. 9. 1981", death: "", place: "", fatherId: "I59", motherId: "I58", spouseIds: ["I31"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTNmNDE3ZjdkZmYwYzQ2M2YyMzQ1NWM3ZThjMTUxODRiYTM3ZWZlYWJjNWZlODIzNDc0ZTBmN2E5MjIyZDg4ODUmZT0xNzkzODA4MDAw/014/622/4791/500031_707446a74e1ebt2a1czo4d_D.jpg" },
+        { id: "I40", name: "Vladimír Prytoluk", maiden: "Prytoluk", gender: "M", birth: "24. 11. 1924, Teremno, Luck (Volyň)", death: "8. 11. 1992, Postoloprty", place: "Teremno (Volyň) / Postoloprty", fatherId: "I45", motherId: "I46", spouseIds: ["I41"], note: "Narozen v obci Teremno u Lucku na Volyni, zemřel v Postoloprtech.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTIzNzFmZTU3ZDUwM2RhMmY4ZmIzM2RmZmJhZjU5MjQ2YTE1ZTlmOWQzNTcwZjU0NTYwNDVmYjNhYThiMjZiZTUmZT0xNzkzODA4MDAw/014/622/4791/500741_0362871lr2bddbc157s4bb_D.jpg" },
+        { id: "I41", name: "Emilie Prytoluková", maiden: "Camprová", gender: "F", birth: "1. 7. 1925, Dlouhé Pole (Volyň)", death: "13. 1. 1995, Postoloprty", place: "Dlouhé Pole (Volyň) / Postoloprty", fatherId: "I47", motherId: "I500002", spouseIds: ["I40"], note: "Narozena v obci Dlouhé Pole na Volyni, zemřela v Postoloprtech.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWQzNmMzZDlkYzc0NTVjZGZkY2M3M2QwNWE5YTg0NzU1N2Y4Zjc3YTJjZjljOWI5NjY2ZTkxNzU1NWFiZTczNDYmZT0xNzkzODA4MDAw/014/622/4791/500761_221550s4c2kv759s1bbd9e_D.jpg" },
+        { id: "I42", name: "Miluše Kalayová", maiden: "Prytoluková", gender: "F", birth: "23. 11. 1946", death: "", place: "", fatherId: "I40", motherId: "I41", spouseIds: [], note: "", photo: "" },
+        { id: "I43", name: "Libuše Kořánová", maiden: "Prytoluková", gender: "F", birth: "16. 6. 1952", death: "", place: "", fatherId: "I40", motherId: "I41", spouseIds: [], note: "", photo: "" },
+        { id: "I44", name: "Marie Benyová", maiden: "Prytoluková", gender: "F", birth: "13. 1. 1955", death: "", place: "", fatherId: "I40", motherId: "I41", spouseIds: [], note: "", photo: "" },
+        { id: "I45", name: "Fedor Prytoluk", maiden: "Prytoluk", gender: "M", birth: "1896", death: "1968", place: "Volyň", fatherId: "", motherId: "", spouseIds: ["I46"], note: "", photo: "" },
+        { id: "I46", name: "Anna Prytoluková", maiden: "Dokoupilová", gender: "F", birth: "1898", death: "1992", place: "Volyň", fatherId: "", motherId: "", spouseIds: ["I45"], note: "", photo: "" },
+        { id: "I47", name: "Rostislav Campr", maiden: "Campr", gender: "M", birth: "okolo 1. 1. 1882, Dlouhé Pole (Volyň)", death: "Zemřel", place: "Dlouhé Pole (Volyň)", fatherId: "", motherId: "", spouseIds: ["I500002"], note: "", photo: "" },
+        { id: "I48", name: "Semjon Poležal", maiden: "Poležal", gender: "M", birth: "", death: "1966", place: "", fatherId: "", motherId: "", spouseIds: ["I52"], note: "", photo: "" },
+        { id: "I50", name: "p. Osobov", maiden: "Osobov", gender: "M", birth: "", death: "Zemřel", place: "", fatherId: "", motherId: "", spouseIds: ["I51"], note: "Otec Marie Osobové (*1923).", photo: "" },
+        { id: "I51", name: "paní Osobová", maiden: "", gender: "F", birth: "", death: "Zemřela", place: "", fatherId: "", motherId: "", spouseIds: ["I50"], note: "Matka Marie Osobové (*1923).", photo: "" },
+        { id: "I52", name: "Eva Poležalová", maiden: "Bombová", gender: "F", birth: "", death: "Zemřela", place: "", fatherId: "", motherId: "", spouseIds: ["I48"], note: "", photo: "" },
+        { id: "I53", name: "Klára Farkašová", maiden: "Farkašová", gender: "F", birth: "15. 9. 2010", death: "", place: "", fatherId: "I39", motherId: "I31", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTdhNjYyYjc1YzcyMDE4YWYyNmZiYmIwODI5NzQ5NDZlNTYwMjI4ZjQzNDMzNjU3Zjg4MGMwOTAxMDczNjAwZGEmZT0xNzkzODA4MDAw/014/622/4791/500051_247272b4j147id3o2d0acd_Z.jpg" },
+        { id: "I54", name: "Michael Abeni", maiden: "Abeni", gender: "M", birth: "5. 11. 1989", death: "", place: "", fatherId: "I55", motherId: "I29", spouseIds: [], note: "", photo: "" },
+        { id: "I55", name: "Walter Abeni", maiden: "Abeni", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I29"], note: "", photo: "" },
+        { id: "I56", name: "Zuzana Černeková", maiden: "Černeková", gender: "F", birth: "26. 4. 1994", death: "", place: "", fatherId: "I57", motherId: "I29", spouseIds: [], note: "", photo: "" },
+        { id: "I57", name: "Antonín Černek", maiden: "Černek", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I29"], note: "", photo: "" },
+        { id: "I58", name: "Libuše Farkašová", maiden: "Tobolíková", gender: "F", birth: "15. 8. 1946", death: "", place: "", fatherId: "I77", motherId: "I78", spouseIds: ["I59"], note: "", photo: "" },
+        { id: "I59", name: "Jan Farkaš st.", maiden: "Farkaš", gender: "M", birth: "25. 7. 1942", death: "Zemřel", place: "", fatherId: "I75", motherId: "I76", spouseIds: ["I58"], note: "", photo: "" },
+        { id: "I60", name: "Jana Filáková", maiden: "Farkašová", gender: "F", birth: "", death: "", place: "", fatherId: "I59", motherId: "I58", spouseIds: ["I62"], note: "", photo: "" },
+        { id: "I61", name: "Eva Kasalová", maiden: "Farkašová", gender: "F", birth: "", death: "", place: "", fatherId: "I59", motherId: "I58", spouseIds: ["I66"], note: "", photo: "" },
+        { id: "I62", name: "Jiří Filák", maiden: "Filák", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I60"], note: "", photo: "" },
+        { id: "I63", name: "David Filák", maiden: "Filák", gender: "M", birth: "", death: "", place: "", fatherId: "I62", motherId: "I60", spouseIds: ["I70"], note: "", photo: "" },
+        { id: "I64", name: "Pavlína Filáková", maiden: "Filáková", gender: "F", birth: "", death: "", place: "", fatherId: "I62", motherId: "I60", spouseIds: [], note: "", photo: "" },
+        { id: "I65", name: "Radek Kasala ml.", maiden: "Kasala", gender: "M", birth: "", death: "", place: "", fatherId: "I66", motherId: "I61", spouseIds: [], note: "", photo: "" },
+        { id: "I66", name: "Radek Kasala", maiden: "Kasala", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I61"], note: "", photo: "" },
+        { id: "I67", name: "Dušan Kasala", maiden: "Kasala", gender: "M", birth: "", death: "", place: "", fatherId: "I66", motherId: "I61", spouseIds: [], note: "", photo: "" },
+        { id: "I68", name: "Radka Kasalová", maiden: "Kasalová", gender: "F", birth: "", death: "", place: "", fatherId: "I66", motherId: "I61", spouseIds: [], note: "", photo: "" },
+        { id: "I69", name: "Eva Kasalová ml.", maiden: "Kasalová", gender: "F", birth: "", death: "", place: "", fatherId: "I66", motherId: "I61", spouseIds: [], note: "", photo: "" },
+        { id: "I70", name: "Veronika Filáková", maiden: "", gender: "F", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I63"], note: "", photo: "" },
+        { id: "I71", name: "Sara Filáková", maiden: "Filáková", gender: "F", birth: "", death: "", place: "", fatherId: "I63", motherId: "I70", spouseIds: [], note: "", photo: "" },
+        { id: "I72", name: "Alois Molata ml.", maiden: "Molata", gender: "M", birth: "15. 2. 1950", death: "25. 7. 2000", place: "", fatherId: "I73", motherId: "I74", spouseIds: ["I7"], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTM5MmExMjM0N2YzNTUyNWQ4OTdlYmNkMGQwYTFkNzljNDA4ODFlYjk5NmEyMmYyNjhlMjlmN2FhYjcxMTU4OGEmZT0xNzkzODA4MDAw/014/622/4791/500481_411383241d64gbfe945a83_Z.jpg" },
+        { id: "I73", name: "Alois Molata st.", maiden: "Molata", gender: "M", birth: "", death: "Zemřel", place: "", fatherId: "", motherId: "", spouseIds: ["I74"], note: "", photo: "" },
+        { id: "I74", name: "Štěpánka Molatová", maiden: "Zielinková", gender: "F", birth: "", death: "Zemřela", place: "", fatherId: "", motherId: "", spouseIds: ["I73"], note: "", photo: "" },
+        { id: "I75", name: "Jan Vrabčan", maiden: "Vrabčan", gender: "M", birth: "", death: "Zemřel", place: "", fatherId: "", motherId: "", spouseIds: ["I76"], note: "", photo: "" },
+        { id: "I76", name: "Anna Vrabčanová", maiden: "Farkašová", gender: "F", birth: "", death: "Zemřela", place: "", fatherId: "", motherId: "", spouseIds: ["I75"], note: "", photo: "" },
+        { id: "I77", name: "Alois Tobolík", maiden: "Tobolík", gender: "M", birth: "", death: "Zemřel", place: "", fatherId: "", motherId: "", spouseIds: ["I78"], note: "", photo: "" },
+        { id: "I78", name: "Františka Tobolíková", maiden: "Tobolíková", gender: "F", birth: "", death: "Zemřela", place: "", fatherId: "", motherId: "", spouseIds: ["I77"], note: "", photo: "" },
+        { id: "I79", name: "Zdenka Sopková", maiden: "Lepíková", gender: "F", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I81"], note: "", photo: "" },
+        { id: "I80", name: "Dana Marešová", maiden: "Marešová", gender: "F", birth: "20. 7. 1958", death: "", place: "", fatherId: "I81", motherId: "I79", spouseIds: [], note: "", photo: "" },
+        { id: "I81", name: "Jozef Sopka", maiden: "Sopka", gender: "M", birth: "5. 12. 1935", death: "2008", place: "", fatherId: "", motherId: "", spouseIds: ["I79"], note: "", photo: "" },
+        { id: "I82", name: "Kateřina Špaková", maiden: "Sopková", gender: "F", birth: "25. 4. 1986", death: "", place: "", fatherId: "I37", motherId: "I30", spouseIds: ["I83"], note: "", photo: "" },
+        { id: "I83", name: "Michal Špak", maiden: "Špak", gender: "M", birth: "28. 12. 1979", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I82"], note: "", photo: "" },
+        { id: "I85", name: "Ondřej Špak", maiden: "Špak", gender: "M", birth: "22. 6. 2007", death: "", place: "", fatherId: "I83", motherId: "I82", spouseIds: [], note: "", photo: "" },
+        { id: "I86", name: "Vojtěch Špak", maiden: "Špak", gender: "M", birth: "", death: "", place: "", fatherId: "I83", motherId: "I82", spouseIds: [], note: "", photo: "" },
+        { id: "I87", name: "Anežka Špaková", maiden: "Špaková", gender: "F", birth: "18. 3. 2010", death: "", place: "", fatherId: "I83", motherId: "I82", spouseIds: [], note: "", photo: "" },
+        { id: "I88", name: "Miroslav Liška", maiden: "Liška", gender: "M", birth: "28. 9. 1947", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I89"], note: "", photo: "" },
+        { id: "I89", name: "Cecilie Lišková", maiden: "Gabajová", gender: "F", birth: "30. 11. 1950", death: "", place: "", fatherId: "I96", motherId: "I95", spouseIds: ["I88"], note: "", photo: "" },
+        { id: "I90", name: "Miroslava Krtičková", maiden: "Lišková", gender: "F", birth: "1. 8. 1980", death: "", place: "", fatherId: "I88", motherId: "I89", spouseIds: [], note: "", photo: "" },
+        { id: "I91", name: "Jana Kořánová", maiden: "Lišková", gender: "F", birth: "30. 3. 1973", death: "", place: "", fatherId: "I88", motherId: "I89", spouseIds: [], note: "", photo: "" },
+        { id: "I92", name: "Josef Karlovský", maiden: "Karlovský", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I15"], note: "", photo: "" },
+        { id: "I93", name: "Veronika Karlovská", maiden: "Karlovská", gender: "F", birth: "3. 6. 1992", death: "", place: "", fatherId: "I92", motherId: "I15", spouseIds: [], note: "", photo: "" },
+        { id: "I94", name: "Pavlína Karlovská", maiden: "Karlovská", gender: "F", birth: "21. 3. 1997", death: "", place: "", fatherId: "I92", motherId: "I15", spouseIds: [], note: "", photo: "" },
+        { id: "I95", name: "Melánie Gabajová", maiden: "Raičanová", gender: "F", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I96"], note: "", photo: "" },
+        { id: "I96", name: "Valentýn Gabaj", maiden: "Gabaj", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I95"], note: "", photo: "" },
+        { id: "I98", name: "Radek Molata", maiden: "Molata", gender: "M", birth: "", death: "", place: "", fatherId: "I72", motherId: "", spouseIds: [], note: "", photo: "" },
+        { id: "I101", name: "Martina Málková", maiden: "Poležalová", gender: "F", birth: "1. 5. 1979", death: "", place: "", fatherId: "I6", motherId: "I24", spouseIds: ["I106"], note: "", photo: "" },
+        { id: "I102", name: "Libor Kotek", maiden: "Kotek", gender: "M", birth: "", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I7"], note: "", photo: "" },
+        { id: "I103", name: "Jan Kotek", maiden: "Kotek", gender: "M", birth: "", death: "", place: "", fatherId: "I102", motherId: "", spouseIds: [], note: "", photo: "" },
+        { id: "I105", name: "Rostislav Prytoluk ml.", maiden: "Prytoluk", gender: "M", birth: "14. 3. 1999", death: "1. 9. 2001", place: "", fatherId: "I11", motherId: "I500004", spouseIds: [], note: "", photo: "" },
+        { id: "I106", name: "Michal Málek", maiden: "Málek", gender: "M", birth: "10. 1. 1973", death: "", place: "", fatherId: "", motherId: "", spouseIds: ["I101"], note: "", photo: "" },
+        { id: "I107", name: "Michael Málek", maiden: "Málek", gender: "M", birth: "23. 9. 2008", death: "", place: "", fatherId: "I106", motherId: "I101", spouseIds: [], note: "", photo: "" },
+        { id: "I108", name: "Martin Málek", maiden: "Málek", gender: "M", birth: "11. 10. 2003", death: "", place: "", fatherId: "I106", motherId: "I101", spouseIds: [], note: "", photo: "" },
+        { id: "I500001", name: "Jaroslav Pudr", maiden: "Pudr", gender: "M", birth: "22. 1. 1948, Žatec", death: "", place: "Žatec / Louny", fatherId: "", motherId: "", spouseIds: ["I3"], note: "Sňatek 3. 8. 2019 v Lounech.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPTlmOTViYTJjYTkyZTM5NDRkYjdmMWIwNWNlNjkyMGE1MDBmMzQ4MjRkYWI1YzI3YTg0Y2E3M2YwMGY4MGQyYjMmZT0xNzkzODA4MDAw/014/622/4791/500921_351903194uqd3t757e11c7_J.jpg" },
+        { id: "I500002", name: "Anna Camprová", maiden: "Křenčilová", gender: "F", birth: "", death: "Zemřela", place: "Dlouhé Pole (Volyň)", fatherId: "", motherId: "", spouseIds: ["I47"], note: "", photo: "" },
+        { id: "I500004", name: "Manželka R. Prytoluka", maiden: "", gender: "F", birth: "", death: "", place: "Libochovice", fatherId: "", motherId: "", spouseIds: ["I11"], note: "Sňatek 5. 10. 1996 v Libochovicích.", photo: "" },
+        { id: "I500006", name: "Vlasta Pojerová", maiden: "Ženíšková", gender: "F", birth: "4. 6. 1948", death: "", place: "Česko", fatherId: "I500014", motherId: "I500015", spouseIds: ["I500007"], note: "", photo: "" },
+        { id: "I500007", name: "Milan Pojer", maiden: "Pojer", gender: "M", birth: "5. 11. 1949", death: "2010", place: "Česko", fatherId: "I500008", motherId: "I500009", spouseIds: ["I500006"], note: "", photo: "" },
+        { id: "I500008", name: "Bohuslav Pojer", maiden: "Pojer", gender: "M", birth: "16. 7. 1916, Blatná", death: "Zemřel", place: "Blatná", fatherId: "I500010", motherId: "I500011", spouseIds: ["I500009"], note: "", photo: "" },
+        { id: "I500009", name: "Milada Pojerová", maiden: "Stehnová", gender: "F", birth: "14. 3. 1921, Hluboká", death: "5. 6. 2013, Havlíčkův Brod", place: "Hluboká / Havlíčkův Brod", fatherId: "I500012", motherId: "I500013", spouseIds: ["I500008"], note: "", photo: "" },
+        { id: "I500010", name: "František Pojer", maiden: "Pojer", gender: "M", birth: "15. 6. 1882, Oselec (Horažďovice)", death: "Zemřel", place: "Oselec / Blatná", fatherId: "", motherId: "", spouseIds: ["I500011"], note: "", photo: "" },
+        { id: "I500011", name: "Marie Pojerová", maiden: "Libé", gender: "F", birth: "26. 7. 1875, Blatná", death: "Zemřela", place: "Blatná", fatherId: "", motherId: "", spouseIds: ["I500010"], note: "", photo: "" },
+        { id: "I500012", name: "Josef Stehno", maiden: "Stehno", gender: "M", birth: "", death: "Zemřel", place: "Hluboká", fatherId: "", motherId: "", spouseIds: ["I500013"], note: "", photo: "" },
+        { id: "I500013", name: "Marie Stehnová", maiden: "Marková", gender: "F", birth: "", death: "Zemřela", place: "Hluboká", fatherId: "", motherId: "", spouseIds: ["I500012"], note: "", photo: "" },
+        { id: "I500014", name: "Josef Ženíšek ml.", maiden: "Ženíšek", gender: "M", birth: "22. 4. 1912, Bedřichov", death: "1979, Karlovy Vary", place: "Bedřichov / Karlovy Vary", fatherId: "I500018", motherId: "I500019", spouseIds: ["I500015"], note: "Pohřben v Karlových Varech.", photo: "" },
+        { id: "I500015", name: "Anežka Ženíšková", maiden: "Šittlerová", gender: "F", birth: "21. 10. 1924, Šellenberk", death: "19. 1. 2014, Karlovy Vary", place: "Šellenberk / Karlovy Vary", fatherId: "I500017", motherId: "I500016", spouseIds: ["I500014"], note: "Pohřbena v Karlových Varech.", photo: "" },
+        { id: "I500016", name: "Petronila Šittlerová", maiden: "Šafářová", gender: "F", birth: "Mašovice", death: "Zemřela", place: "Mašovice", fatherId: "", motherId: "", spouseIds: ["I500017"], note: "", photo: "" },
+        { id: "I500017", name: "František Šittler", maiden: "Šittler", gender: "M", birth: "", death: "Zemřel", place: "Šellenberk", fatherId: "", motherId: "", spouseIds: ["I500016"], note: "", photo: "" },
+        { id: "I500018", name: "Josef Ženíšek st.", maiden: "Ženíšek", gender: "M", birth: "14. 3. 1883, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500044", motherId: "I500043", spouseIds: ["I500019"], note: "", photo: "" },
+        { id: "I500019", name: "Františka Ženíšková", maiden: "", gender: "F", birth: "14. 11. 1884, Roučkovice", death: "Zemřela", place: "Roučkovice / Bedřichov", fatherId: "", motherId: "", spouseIds: ["I500018"], note: "", photo: "" },
+        { id: "I500020", name: "Marie Michálková", maiden: "Ženíšková", gender: "F", birth: "3. 6. 1946", death: "", place: "", fatherId: "I500014", motherId: "I500015", spouseIds: [], note: "", photo: "" },
+        { id: "I500021", name: "Josef Ženíšek (*1961)", maiden: "Ženíšek", gender: "M", birth: "září 1961", death: "", place: "", fatherId: "I500014", motherId: "I500015", spouseIds: [], note: "", photo: "" },
+        { id: "I500022", name: "Petr Pojer", maiden: "Pojer", gender: "M", birth: "1. 3. 1972, Cheb", death: "", place: "Cheb", fatherId: "I500007", motherId: "I500006", spouseIds: [], note: "", photo: "" },
+        { id: "I500023", name: "Józef Campr", maiden: "Campr", gender: "M", birth: "20. 8. 1921, Polsko/Volyň", death: "1. 6. 2015", place: "Polsko", fatherId: "I47", motherId: "I500002", spouseIds: ["I500024"], note: "Bratr Emilie a Vladimíra Camprových.", photo: "" },
+        { id: "I500024", name: "Helena Campr", maiden: "Tarnawska", gender: "F", birth: "1926, Polsko", death: "2008", place: "Polsko", fatherId: "I500028", motherId: "I500029", spouseIds: ["I500023"], note: "", photo: "" },
+        { id: "I500025", name: "Józef Campr ml.", maiden: "Campr", gender: "M", birth: "1948", death: "2018", place: "Polsko", fatherId: "I500023", motherId: "I500024", spouseIds: [], note: "", photo: "" },
+        { id: "I500026", name: "Stanisław Campr", maiden: "Campr", gender: "M", birth: "1958", death: "2017", place: "Polsko", fatherId: "I500023", motherId: "I500024", spouseIds: [], note: "", photo: "" },
+        { id: "I500028", name: "Bronisław Tarnawski", maiden: "Tarnawski", gender: "M", birth: "1887", death: "Zemřel", place: "Polsko", fatherId: "", motherId: "I500031", spouseIds: ["I500029"], note: "", photo: "" },
+        { id: "I500029", name: "Łucja Tarnawska", maiden: "Anyszkiewicz", gender: "F", birth: "1903", death: "1990", place: "Polsko", fatherId: "", motherId: "", spouseIds: ["I500028"], note: "", photo: "" },
+        { id: "I500031", name: "Joanna Tarnawska", maiden: "Podgórska", gender: "F", birth: "", death: "Zemřela", place: "Polsko", fatherId: "", motherId: "", spouseIds: [], note: "", photo: "" },
+        { id: "I500033", name: "Vladimír (Rostislav) Campr", maiden: "Campr", gender: "M", birth: "20. 11. 1919, Dlouhé Pole, Volyň", death: "Žatec", place: "Dlouhé Pole (Volyň) / Žatec", fatherId: "I47", motherId: "I500002", spouseIds: [], note: "Svobodník Campr Vladimír (Rostislav). Velitel družstva, kmen. čís. 250/m, Buzuluk 14. 2. 1942. Sokolovo - Čs. medaile Za chrabrost před nepřítelem, 1945 - rotmistr, velitel čety 1. roty 3. polního praporu 1. čs. samostatné brigády, 1948 - Sokolovská pamětní medaile, podporučík.", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWRlMjc1MTJjYjBiNzJkOWZlZTQ3M2ZkMDJjY2VmNzllZDY1ZGRhZTQ0NmNjODg4OWM4ZTUzM2M4NGFlNGY5YTkmZT0xNzkzODA4MDAw/014/622/4791/500940_876308c6116a5f17btbj8e_A.jpg" },
+        { id: "I500034", name: "Vítězslav Schauer", maiden: "Schauer", gender: "M", birth: "23. 2. 1980", death: "", place: "Nezabylice", fatherId: "", motherId: "", spouseIds: ["I13"], note: "Sňatek 31. 12. 2002 v Nezabylicích.", photo: "" },
+        { id: "I500035", name: "Lucie Schauerová", maiden: "Schauerová", gender: "F", birth: "7. 1. 2003, Chomutov", death: "", place: "Chomutov", fatherId: "I500034", motherId: "I13", spouseIds: [], note: "", photo: "https://sites-cf.mhcache.com/e/1/az1zaXRlc192MSZzPWNkOGQ3ODlhZjA4YTY5YjlhOWRlOWQwZWZlOWI4NzlmMzZhOTk5OWViYzRhYjE1NWZiNzQ0NzYxOWJkMjU0MjcmZT0xNzkzODA4MDAw/014/622/4791/500942_442096ujl66aegqa7507c5_A.jpg" },
+        { id: "I500036", name: "Václav Pojer", maiden: "Pojer", gender: "M", birth: "2. 2. 1908, Blatná", death: "Zemřel", place: "Blatná", fatherId: "I500010", motherId: "I500011", spouseIds: [], note: "", photo: "" },
+        { id: "I500037", name: "Karolína Pojerová", maiden: "Pojerová", gender: "F", birth: "25. 1. 1912, Blatná", death: "Zemřela", place: "Blatná", fatherId: "I500010", motherId: "I500011", spouseIds: [], note: "", photo: "" },
+        { id: "I500038", name: "František Pojer ml.", maiden: "Pojer", gender: "M", birth: "31. 5. 1913, Blatná", death: "Zemřel", place: "Blatná", fatherId: "I500010", motherId: "I500011", spouseIds: [], note: "", photo: "" },
+        { id: "I500039", name: "Emilie Pojerová", maiden: "Pojerová", gender: "F", birth: "21. 11. 1914, Blatná", death: "Zemřela", place: "Blatná", fatherId: "I500010", motherId: "I500011", spouseIds: [], note: "", photo: "" },
+        { id: "I500040", name: "Jaroslav Ženíšek", maiden: "Ženíšek", gender: "M", birth: "15. 4. 1909, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500018", motherId: "I500019", spouseIds: [], note: "", photo: "" },
+        { id: "I500041", name: "Bedřich Ženíšek", maiden: "Ženíšek", gender: "M", birth: "5. 7. 1914, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500018", motherId: "I500019", spouseIds: [], note: "", photo: "" },
+        { id: "I500042", name: "Marie Nekovářová", maiden: "Ženíšková", gender: "F", birth: "3. 9. 1920, Bedřichov", death: "2002", place: "Bedřichov", fatherId: "I500018", motherId: "I500019", spouseIds: ["I500068"], note: "", photo: "" },
+        { id: "I500043", name: "Františka Ženíšková", maiden: "Plášilová", gender: "F", birth: "18. 9. 1857, Zlátenka", death: "Zemřela", place: "Zlátenka / Bedřichov", fatherId: "I500066", motherId: "I500067", spouseIds: ["I500044"], note: "Sňatek 14. 2. 1882 ve Zlátence.", photo: "" },
+        { id: "I500044", name: "František Ženíšek", maiden: "Ženíšek", gender: "M", birth: "21. 3. 1857, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: ["I500043"], note: "Sňatek 14. 2. 1882 ve Zlátence.", photo: "" },
+        { id: "I500045", name: "Jozef Ženíšek (*1812)", maiden: "Ženíšek", gender: "M", birth: "1812, Bedřichov", death: "26. 12. 1886, Bedřichov", place: "Bedřichov", fatherId: "I500047", motherId: "I500048", spouseIds: ["I500046"], note: "", photo: "" },
+        { id: "I500046", name: "Barbora Ženíšková", maiden: "Dománková", gender: "F", birth: "12. 12. 1833, Německá Lhota", death: "17. 4. 1910, Bedřichov", place: "Německá Lhota / Bedřichov", fatherId: "", motherId: "", spouseIds: ["I500045"], note: "", photo: "" },
+        { id: "I500047", name: "Vácslav Ženíšek (*1786)", maiden: "Ženíšek", gender: "M", birth: "1786, Bedřichov", death: "10. 11. 1869, Bedřichov", place: "Bedřichov", fatherId: "", motherId: "", spouseIds: ["I500048"], note: "Nejstarší dohledaný předek větve Ženíšků v Bedřichově (*1786).", photo: "" },
+        { id: "I500048", name: "Marie Ženíšková", maiden: "Nekovářová", gender: "F", birth: "1792, Bedřichov", death: "25. 1. 1865, Bedřichov", place: "Bedřichov", fatherId: "I500049", motherId: "", spouseIds: ["I500047"], note: "", photo: "" },
+        { id: "I500049", name: "Jan Nekovář (18. stol.)", maiden: "Nekovář", gender: "M", birth: "před 1775, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "", motherId: "", spouseIds: [], note: "Otec Marie Nekovářové (*1792).", photo: "" },
+        { id: "I500050", name: "Josefa Novotná", maiden: "Ženíšková", gender: "F", birth: "1815", death: "Zemřela", place: "Bedřichov", fatherId: "I500047", motherId: "I500048", spouseIds: [], note: "", photo: "" },
+        { id: "I500051", name: "Florian Ženíšek", maiden: "Ženíšek", gender: "M", birth: "5. 6. 1827, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500047", motherId: "I500048", spouseIds: [], note: "", photo: "" },
+        { id: "I500052", name: "Jan Ženíšek (*1837)", maiden: "Ženíšek", gender: "M", birth: "okolo 1837, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500047", motherId: "I500048", spouseIds: [], note: "", photo: "" },
+        { id: "I500053", name: "Marie Musilová", maiden: "Ženíšková", gender: "F", birth: "1854, Bedřichov", death: "Zemřela", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: ["I500054"], note: "Sňatek 27. 1. 1874 v Bedřichově.", photo: "" },
+        { id: "I500054", name: "Vácslav Musil", maiden: "Musil", gender: "M", birth: "1849, Rovná", death: "Zemřel", place: "Rovná", fatherId: "", motherId: "", spouseIds: ["I500053"], note: "", photo: "" },
+        { id: "I500055", name: "Viktorie Ženíšková", maiden: "Ženíšková", gender: "F", birth: "19. 12. 1861, Bedřichov", death: "Zemřela", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: [], note: "", photo: "" },
+        { id: "I500056", name: "Barbora Hrubešová", maiden: "Ženíšková", gender: "F", birth: "12. 4. 1864, Bedřichov", death: "Zemřela", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: ["I500057"], note: "Sňatek 20. 11. 1883 v Bedřichově.", photo: "" },
+        { id: "I500057", name: "Josef Hrubeš", maiden: "Hrubeš", gender: "M", birth: "Zhořec", death: "Zemřel", place: "Zhořec", fatherId: "", motherId: "", spouseIds: ["I500056"], note: "", photo: "" },
+        { id: "I500058", name: "Josefa Veselá", maiden: "Ženíšková", gender: "F", birth: "1. 11. 1865", death: "Zemřela", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: ["I500059"], note: "Sňatek 19. 7. 1887 v Bedřichově.", photo: "" },
+        { id: "I500059", name: "Jan Veselý", maiden: "Veselý", gender: "M", birth: "24. 6. 1859, Dolní Huť", death: "Zemřel", place: "Dolní Huť", fatherId: "", motherId: "", spouseIds: ["I500058"], note: "", photo: "" },
+        { id: "I500060", name: "Jan Veselý ml.", maiden: "Veselý", gender: "M", birth: "18. 5. 1903, Mezimostí n. L.", death: "Zemřel", place: "Mezimostí, Veselí nad Lužnicí", fatherId: "I500059", motherId: "I500058", spouseIds: [], note: "", photo: "" },
+        { id: "I500061", name: "Cecilie Veselá", maiden: "Veselá", gender: "F", birth: "14. 11. 1904, Mezimostí n. L.", death: "Zemřela", place: "Mezimostí, Veselí nad Lužnicí", fatherId: "I500059", motherId: "I500058", spouseIds: [], note: "", photo: "" },
+        { id: "I500062", name: "Karel Veselý", maiden: "Veselý", gender: "M", birth: "16. 10. 1906, Mezimostí n. L.", death: "Zemřel", place: "Mezimostí, Veselí nad Lužnicí", fatherId: "I500059", motherId: "I500058", spouseIds: [], note: "", photo: "" },
+        { id: "I500063", name: "Jan Ženíšek (*1868)", maiden: "Ženíšek", gender: "M", birth: "4. 12. 1868, Bedřichov", death: "Zemřel", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: [], note: "", photo: "" },
+        { id: "I500064", name: "Kateřina Dvořáková", maiden: "Ženíšková", gender: "F", birth: "6. 8. 1873, Bedřichov", death: "Zemřela", place: "Bedřichov", fatherId: "I500045", motherId: "I500046", spouseIds: ["I500065"], note: "Sňatek 31. 7. 1894.", photo: "" },
+        { id: "I500065", name: "Josef Dvořák", maiden: "Dvořák", gender: "M", birth: "19. 3. 1851, Zahrádka", death: "Zemřel", place: "Zahrádka", fatherId: "", motherId: "", spouseIds: ["I500064"], note: "", photo: "" },
+        { id: "I500066", name: "Jan Plášil", maiden: "Plášil", gender: "M", birth: "", death: "Zemřel", place: "Zlátenka", fatherId: "", motherId: "", spouseIds: ["I500067"], note: "", photo: "" },
+        { id: "I500067", name: "Majdalena Plášilová", maiden: "Hanyková", gender: "F", birth: "Leskovice", death: "Zemřela", place: "Leskovice / Zlátenka", fatherId: "", motherId: "", spouseIds: ["I500066"], note: "", photo: "" },
+        { id: "I500068", name: "František Nekovář", maiden: "Nekovář", gender: "M", birth: "19. 11. 1910, Bedřichov", death: "15. 5. 1977, Pelhřimov", place: "Bedřichov / Pelhřimov", fatherId: "I500069", motherId: "I500070", spouseIds: ["I500042"], note: "", photo: "" },
+        { id: "I500069", name: "Jan Nekovář (*1881)", maiden: "Nekovář", gender: "M", birth: "1881", death: "Nezvěstný", place: "Hartlíkov", fatherId: "", motherId: "", spouseIds: ["I500070"], note: "V matrikách veden jako nezvěstný.", photo: "" },
+        { id: "I500070", name: "Kristina Nekovářová", maiden: "Janurová", gender: "F", birth: "26. 5. 1884, Hartlíkov", death: "listopad 1964", place: "Hartlíkov", fatherId: "I500072", motherId: "I500073", spouseIds: ["I500069"], note: "", photo: "" },
+        { id: "I500071", name: "Jan Nekovář (*1906)", maiden: "Nekovář", gender: "M", birth: "26. 5. 1906, Hartlíkov", death: "Zemřel", place: "Hartlíkov", fatherId: "I500069", motherId: "I500070", spouseIds: [], note: "", photo: "" },
+        { id: "I500072", name: "p. Janura", maiden: "Janura", gender: "M", birth: "", death: "Zemřel", place: "Hartlíkov", fatherId: "", motherId: "", spouseIds: ["I500073"], note: "", photo: "" },
+        { id: "I500073", name: "paní Janurová", maiden: "Janurová", gender: "F", birth: "", death: "Zemřela", place: "Hartlíkov", fatherId: "", motherId: "", spouseIds: ["I500072"], note: "", photo: "" },
+        { id: "I500074", name: "Antonie Janurová", maiden: "Janurová", gender: "F", birth: "17. 2. 1901, Hartlíkov", death: "Zemřela", place: "Hartlíkov", fatherId: "I500072", motherId: "I500073", spouseIds: [], note: "", photo: "" },
+        { id: "I500076", name: "Jiří Kašpar", maiden: "Kašpar", gender: "M", birth: "19. 7. 1946, Kozolupy", death: "5. 7. 2012, Praha", place: "Kozolupy / Praha", fatherId: "", motherId: "", spouseIds: [], note: "", photo: "" },
+        { id: "I500077", name: "Ladislav Ženíšek", maiden: "Ženíšek", gender: "M", birth: "16. 3. 1926", death: "15. 9. 2011, Písek", place: "Písek", fatherId: "I500018", motherId: "I500019", spouseIds: ["I500078"], note: "", photo: "" },
+        { id: "I500078", name: "Anna Ženíšková", maiden: "Nečasová", gender: "F", birth: "29. 12. 1927, Kloub", death: "25. 2. 2007, Písek", place: "Kloub / Písek", fatherId: "I500082", motherId: "I500083", spouseIds: ["I500077"], note: "", photo: "" },
+        { id: "I500080", name: "Miroslav Konvičný", maiden: "Konvičný", gender: "M", birth: "10. 8. 1950, Malá Lhota", death: "31. 10. 2017, Písek", place: "Malá Lhota / Písek", fatherId: "I500081", motherId: "", spouseIds: [], note: "", photo: "" },
+        { id: "I500081", name: "Josef Konvičný", maiden: "Konvičný", gender: "M", birth: "16. 12. 1918", death: "4. 2. 1990", place: "", fatherId: "", motherId: "", spouseIds: [], note: "", photo: "" },
+        { id: "I500082", name: "František Nečas", maiden: "Nečas", gender: "M", birth: "1. 1. 1895, Albrechtice", death: "1937", place: "Albrechtice", fatherId: "", motherId: "", spouseIds: ["I500083"], note: "", photo: "" },
+        { id: "I500083", name: "Růžena Nečasová", maiden: "Polanská", gender: "F", birth: "19. 6. 1895, Kloub", death: "1933", place: "Kloub", fatherId: "I500087", motherId: "I500088", spouseIds: ["I500082"], note: "", photo: "" },
+        { id: "I500084", name: "Jaroslav Nečas", maiden: "Nečas", gender: "M", birth: "", death: "Zemřel", place: "Kloub", fatherId: "I500082", motherId: "I500083", spouseIds: [], note: "", photo: "" },
+        { id: "I500085", name: "Václav Nečas", maiden: "Nečas", gender: "M", birth: "", death: "Zemřel", place: "Kloub", fatherId: "I500082", motherId: "I500083", spouseIds: [], note: "", photo: "" },
+        { id: "I500086", name: "Marie Nečasová", maiden: "Nečasová", gender: "F", birth: "", death: "Zemřela", place: "Kloub", fatherId: "I500082", motherId: "I500083", spouseIds: [], note: "", photo: "" },
+        { id: "I500087", name: "František Polanský", maiden: "Polanský", gender: "M", birth: "28. 11. 1852, Kloub", death: "6. 11. 1914, Kloub", place: "Kloub", fatherId: "", motherId: "", spouseIds: ["I500088"], note: "Sňatek 24. 2. 1879.", photo: "" },
+        { id: "I500088", name: "Marie Polanská", maiden: "Kačírková", gender: "F", birth: "30. 6. 1857, Albrechtice", death: "12. 7. 1928", place: "Albrechtice / Kloub", fatherId: "", motherId: "", spouseIds: ["I500087"], note: "", photo: "" },
+        { id: "I500089", name: "Antonín Polanský", maiden: "Polanský", gender: "M", birth: "18. 4. 1890, Kloub", death: "Zemřel", place: "Kloub", fatherId: "I500087", motherId: "I500088", spouseIds: [], note: "", photo: "" },
+        { id: "I500090", name: "Václav Polanský", maiden: "Polanský", gender: "M", birth: "18. 8. 1892, Kloub", death: "Zemřel", place: "Kloub", fatherId: "I500087", motherId: "I500088", spouseIds: [], note: "", photo: "" },
+        { id: "I500091", name: "Terezie Nečasová", maiden: "Polanská", gender: "F", birth: "5. 10. 1898, Kloub", death: "Zemřela", place: "Kloub / Protivín", fatherId: "I500087", motherId: "I500088", spouseIds: ["I500092"], note: "Sňatek 3. 1. 1931 v Protivíně.", photo: "" },
+        { id: "I500092", name: "Josef Nečas", maiden: "Nečas", gender: "M", birth: "22. 4. 1908, Albrechtice", death: "", place: "Albrechtice / Protivín", fatherId: "", motherId: "", spouseIds: ["I500091"], note: "", photo: "" },
+        { id: "I500093", name: "Marie Krejčová", maiden: "Polanská", gender: "F", birth: "24. 6. 1878, Albrechtice", death: "6. 3. 1963", place: "Albrechtice", fatherId: "I500087", motherId: "I500088", spouseIds: [], note: "", photo: "" },
+        { id: "I500094", name: "Josefa Černá", maiden: "Šittlerová", gender: "F", birth: "14. 3. 1914", death: "15. 2. 1992", place: "", fatherId: "I500017", motherId: "I500016", spouseIds: ["I500095"], note: "", photo: "" },
+        { id: "I500095", name: "František Černý", maiden: "Černý", gender: "M", birth: "8. 6. 1912", death: "6. 12. 1975", place: "", fatherId: "", motherId: "", spouseIds: ["I500094"], note: "", photo: "" },
+        { id: "I500096", name: "Miroslav Černý", maiden: "Černý", gender: "M", birth: "30. 8. 1936", death: "9. 7. 2009", place: "", fatherId: "I500095", motherId: "I500094", spouseIds: [], note: "", photo: "" }
+      ],
+      stories: [
+        {
+          id: "st-volyn",
+          title: "Volyňští Češi v rodokmenu: Rod Prytoluků a Camprů (Teremno a Dlouhé Pole)",
+          period: "1882–1948",
+          content: "Významná část otcovské linie pochází z Volyně. Vladimír Prytoluk (* 24. 11. 1924) se narodil v obci Teremno u Lucku (syn Fedora Prytoluka *1896 a Anny Dokoupilové *1898) a jeho manželka Emilie roz. Camprová (* 1. 7. 1925) v obci Dlouhé Pole (dcera Rostislava Campra *1882 a Anny Křenčilové). Po 2. světové válce se rodina usadila na Žatecku a v Postoloprtech."
+        },
+        {
+          id: "st-sokolovo",
+          title: "Podporučík Vladimír (Rostislav) Campr (* 1919) – Hrdina od Sokolova",
+          period: "1942–1948",
+          content: "Bratr babičky Emilie, Vladimír Campr (* 20. 11. 1919, Dlouhé Pole, Volyň), vstoupil 14. 2. 1942 v Buzuluku do čs. jednotky (kmenové číslo 250/m). Bojoval u Sokolova, kde získal Čs. medaili Za chrabrost před nepřítelem. V roce 1945 sloužil v hodnosti rotmistra jako velitel čety 1. roty 3. polního praporu 1. čs. samostatné brigády. V roce 1948 obdržel Sokolovskou pamětní medaili a hodnost podporučíka."
+        },
+        {
+          id: "st-bedrichov",
+          title: "Jihočeská a pelhřimovská větev Ženíšků, Pojerů a Polanských",
+          period: "1786–20. století",
+          content: "Z matčiny strany (Vlasta Pojerová * 1973) sahají kořeny hluboko do jižních Čech a na Pelhřimovsko/Pacovsko. Rod Pojerů pochází z Blatné a Oselce u Horažďovic (František Pojer * 1882 a Marie Libé * 1875). Větev Ženíšků v Bedřichově je zmapována až k Vácslavu Ženíškovi (* 1786 – † 1869) a Janu Nekovářovi z 18. století."
+        }
+      ]
+    };
+
+    let appData = structuredClone(gedcomFamilyData);
+    let selectedPersonId = "I12";
+    let sosaMap = {}; // Mapa sosaNumber -> personObj pro aktuální střed
+    let searchFilter = "";
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      checkLockStatus();
+      await loadFromCloud();
+    });
+
+    // ==================== CLOUD SYNCHRONIZACE (JSONBIN) ====================
+    function updateSyncStatus(state, text) {
+      const el = document.getElementById('syncStatus');
+      if (!el) return;
+      if (state === 'loading') {
+        el.className = "hidden sm:flex items-center gap-2 bg-amber-950/90 text-amber-400 border border-amber-800/60 px-3 py-1.5 rounded-full text-xs";
+        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span><span>${text}</span>`;
+      } else if (state === 'success') {
+        el.className = "hidden sm:flex items-center gap-2 bg-emerald-950/90 text-emerald-400 border border-emerald-800/60 px-3 py-1.5 rounded-full text-xs";
+        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>${text}</span>`;
+      } else {
+        el.className = "hidden sm:flex items-center gap-2 bg-rose-950/90 text-rose-400 border border-rose-800/60 px-3 py-1.5 rounded-full text-xs";
+        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>${text}</span>`;
+      }
+    }
+
+    async function loadFromCloud() {
+      updateSyncStatus('loading', 'Načítám cloud...');
+      try {
+        const response = await fetch(`${JSONBIN_URL}/latest`, {
+          headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
+        });
+        if (!response.ok) throw new Error('Chyba JSONBin');
+
+        const resData = await response.json();
+        const record = resData.record || {};
+        fullCloudRecord = record;
+
+        // Pokud jsou v cloudu ještě stará fiktivní data (Novákovi - 15 osob), rovnou je nahradíme našimi 133 lidmi z GEDCOMu!
+        if (record.familyTree && Array.isArray(record.familyTree.people) && record.familyTree.people.length > 30 && record.familyTree.people[0].id) {
+          appData = record.familyTree;
+        } else {
+          appData = structuredClone(gedcomFamilyData);
+          await saveToCloud(false);
         }
 
-        async function loadStorage() {
-            updateSyncStatus('loading', 'Načítám...');
-            try {
-                const response = await fetch(`${JSONBIN_URL}/latest`, {
-                    headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
-                });
-                if (response.ok) {
-                    const resData = await response.json();
-                    let record = resData.record;
-                    
-                    projects = record.projects || demoProjects;
-                    members = record.members || demoMembers;
-                    ideas = record.ideas || demoIdeas;
-                    historyLog = record.historyLog || [];
+        selectedPersonId = appData.config.rootId || "I12";
+        applyHeaderAndLockConfig();
+        renderAll();
+        updateSyncStatus('success', 'Cloud připojen');
+      } catch (err) {
+        console.error(err);
+        appData = structuredClone(gedcomFamilyData);
+        selectedPersonId = appData.config.rootId || "I12";
+        applyHeaderAndLockConfig();
+        renderAll();
+        updateSyncStatus('error', 'Lokální režim');
+      }
+    }
 
-                    if (!currentProjectId && projects.length > 0) {
-                        currentProjectId = projects[0].id;
-                    }
+    async function saveToCloud(renderUI = true) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      applyHeaderAndLockConfig();
+      if (renderUI) renderAll();
 
-                    updateSyncStatus('success', 'Cloud OK');
-                    render();
-                } else {
-                    throw new Error('Chyba načítání');
-                }
-            } catch (err) {
-                console.error(err);
-                updateSyncStatus('error', 'Offline režim');
-                projects = demoProjects;
-                members = demoMembers;
-                ideas = demoIdeas;
-                currentProjectId = projects[0].id;
-                render();
-            }
+      updateSyncStatus('loading', 'Ukládám do cloudu...');
+      try {
+        let payloadToSave = {};
+        if (fullCloudRecord && typeof fullCloudRecord === 'object' && !Array.isArray(fullCloudRecord)) {
+          payloadToSave = { ...fullCloudRecord, familyTree: appData };
+        } else {
+          payloadToSave = { familyTree: appData };
         }
 
-        async function saveStorage() {
-            updateSyncStatus('loading', 'Ukládám...');
-            try {
-                const response = await fetch(JSONBIN_URL, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': JSONBIN_MASTER_KEY
-                    },
-                    body: JSON.stringify({ projects, members, ideas, historyLog })
-                });
-                if (response.ok) {
-                    updateSyncStatus('success', 'Cloud OK');
-                } else {
-                    throw new Error('Chyba ukládání');
-                }
-            } catch (err) {
-                console.error(err);
-                updateSyncStatus('error', 'Chyba cloudu');
-            }
-            render();
-        }
-
-        function updateSyncStatus(state, text) {
-            const indicator = document.getElementById('sync-indicator');
-            const spanText = document.getElementById('sync-text');
-            if (!indicator) return;
-            if (state === 'loading') {
-                indicator.className = "w-2 h-2 rounded-full bg-amber-500 animate-ping";
-                spanText.innerText = text;
-            } else if (state === 'success') {
-                indicator.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
-                spanText.innerText = text;
-            } else {
-                indicator.className = "w-2 h-2 rounded-full bg-rose-500";
-                spanText.innerText = text;
-            }
-        }
-
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark') ? '1' : '0');
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('darkMode') === '1') {
-                document.documentElement.classList.add('dark');
-            }
-            loadStorage();
+        const response = await fetch(JSONBIN_URL, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': JSONBIN_MASTER_KEY
+          },
+          body: JSON.stringify(payloadToSave)
         });
 
-        function render() {
-            updateProjectSelector();
-            renderStats();
-            renderDashboard();
-            renderKanban();
-            renderAllTasks();
-            renderGlobalShop();
-            renderIdeas();
-            renderBudget();
-            renderNotes();
-            renderMembersList();
-            renderHistoryList();
-            updateTaskAssigneeSelect();
-            updateMemberFilterSelect();
-            lucide.createIcons();
+        if (response.ok) {
+          fullCloudRecord = payloadToSave;
+          updateSyncStatus('success', 'Uloženo v cloudu');
+        } else {
+          throw new Error('Nelze uložit');
         }
+      } catch (err) {
+        console.error(err);
+        updateSyncStatus('error', 'Chyba ukládání');
+      }
+    }
 
-        function renderStats() {
-            document.getElementById('stat-active-projects').innerText = projects.length;
-            let totalTasks = 0, doneTasks = 0, totalBudget = 0, totalSpent = 0;
+    async function overwriteCloudWithGedcom() {
+      appData = structuredClone(gedcomFamilyData);
+      selectedPersonId = "I12";
+      await saveToCloud(true);
+      alert("Všech 133 osob z vašeho souboru Poležalová Family Tree.ged bylo uloženo do JSONBin cloudu!");
+    }
 
-            projects.forEach(p => {
-                totalBudget += Number(p.budget || 0);
-                (p.tasks || []).forEach(t => {
-                    totalTasks++;
-                    if (t.status === 'done') doneTasks++;
-                });
-                (p.materials || []).forEach(m => {
-                    if (m.purchased) totalSpent += Number(m.actualPrice || m.plannedPrice || 0);
-                });
-            });
+    function applyHeaderAndLockConfig() {
+      if (appData && appData.config) {
+        document.getElementById('familyTitleHeader').innerText = appData.config.title || "Rodinný rodokmen";
+        document.getElementById('lockQuestionText').innerText = appData.config.question || "Kontrolní otázka:";
+      }
+    }
 
-            const percentDone = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
-            document.getElementById('stat-tasks-done').innerText = `${percentDone}%`;
-            document.getElementById('stat-total-budget').innerText = `${totalBudget.toLocaleString('cs-CZ')} Kč`;
-            document.getElementById('stat-total-spent').innerText = `${totalSpent.toLocaleString('cs-CZ')} Kč`;
+    // ==================== KONTROLA RODINNÉ OTÁZKY ====================
+    function checkLockStatus() {
+      if (sessionStorage.getItem(UNLOCK_KEY) === 'true') {
+        document.getElementById('lockScreen').classList.add('hidden');
+      }
+    }
+
+    function unlockSite(e) {
+      e.preventDefault();
+      const input = document.getElementById('lockAnswerInput').value.trim().toLowerCase();
+      const expected = (appData.config.answer || 'Poležalová').trim().toLowerCase();
+      const normalize = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (normalize(input) === normalize(expected) || normalize(input) === 'polezalova' || normalize(input) === 'novakova') {
+        sessionStorage.setItem(UNLOCK_KEY, 'true');
+        document.getElementById('lockScreen').classList.add('hidden');
+      } else {
+        document.getElementById('lockError').classList.remove('hidden');
+      }
+    }
+
+    // ==================== VÝPOČET SOSA STROMU OD VYBRANÉ OSOBY ====================
+    function buildSosaMap(rootId) {
+      sosaMap = {};
+      const rootPerson = getPersonById(rootId);
+      if (!rootPerson) return;
+
+      function traverse(person, sosaNum, depth) {
+        if (!person || depth > 7) return;
+        sosaMap[sosaNum] = person;
+        if (person.fatherId) {
+          const father = getPersonById(person.fatherId);
+          if (father) traverse(father, sosaNum * 2, depth + 1);
         }
-
-        function updateProjectSelector() {
-            const select = document.getElementById('project-select');
-            select.innerHTML = '';
-            if (projects.length === 0) {
-                select.innerHTML = '<option value="">Žádné projekty</option>';
-                currentProjectId = null;
-                return;
-            }
-            projects.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.innerText = p.name;
-                if (p.id === currentProjectId) opt.selected = true;
-                select.appendChild(opt);
-            });
+        if (person.motherId) {
+          const mother = getPersonById(person.motherId);
+          if (mother) traverse(mother, sosaNum * 2 + 1, depth + 1);
         }
+      }
 
-        function switchTab(tab) {
-            activeTab = tab;
-            ['dashboard', 'kanban', 'alltasks', 'globalshop', 'ideas', 'budget', 'notes', 'search'].forEach(t => {
-                const el = document.getElementById(`view-${t}`);
-                if (!el) return;
-                const btn = document.getElementById(`tab-${t}`);
-                if (t === tab) {
-                    el.classList.remove('hidden');
-                    if (btn) {
-                        btn.classList.add('bg-white', 'dark:bg-slate-700', 'text-brand-600', 'dark:text-white', 'shadow-sm');
-                        btn.classList.remove('text-slate-600', 'dark:text-slate-400');
-                    }
-                } else {
-                    el.classList.add('hidden');
-                    if (btn) {
-                        btn.classList.remove('bg-white', 'dark:bg-slate-700', 'text-brand-600', 'dark:text-white', 'shadow-sm');
-                        btn.classList.add('text-slate-600', 'dark:text-slate-400');
-                    }
-                }
-            });
+      traverse(rootPerson, 1, 1);
+    }
+
+    function getPersonById(id) {
+      return (appData.people || []).find(p => p.id === id);
+    }
+
+    function changeRootPerson(newRootId) {
+      appData.config.rootId = newRootId;
+      selectedPersonId = newRootId;
+      renderAll();
+    }
+
+    // ==================== PŘEPÍNÁNÍ ZÁLOŽEK ====================
+    function switchTab(tabId) {
+      ['fan', 'tree', 'people', 'stories', 'places'].forEach(t => {
+        const view = document.getElementById(`view-${t}`);
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tabId) {
+          view.classList.remove('hidden');
+          btn.className = "tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white shadow-sm whitespace-nowrap";
+        } else {
+          view.classList.add('hidden');
+          btn.className = "tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap";
         }
+      });
+    }
 
-        function switchProject(id) {
-            currentProjectId = id;
-            render();
-        }
+    // ==================== HLAVNÍ VYKRESLENÍ ====================
+    function renderAll() {
+      const rootId = appData.config.rootId || "I12";
+      buildSosaMap(rootId);
 
-        // Global Search
-        function handleGlobalSearch(query) {
-            const q = query.trim().toLowerCase();
-            if (!q) {
-                switchTab('dashboard');
-                return;
-            }
-            switchTab('search');
-            const container = document.getElementById('search-results-container');
-            container.innerHTML = '';
+      document.getElementById('navCountPeople').innerText = (appData.people || []).length;
+      populateRootSelect(rootId);
+      populateSurnameFilter();
+      renderFanChart();
+      renderTreeGenerations();
+      renderPeopleList();
+      renderStories();
+      renderPlacesAndStats();
+      renderPersonDetail(selectedPersonId);
+    }
 
-            let results = [];
-            projects.forEach(p => {
-                if (p.name.toLowerCase().includes(q) || (p.description && p.description.toLowerCase().includes(q))) {
-                    results.Type = 'Projekt';
-                    results.push({ type: 'Projekt', title: p.name, desc: p.description, projId: p.id });
-                }
-                (p.tasks || []).forEach(t => {
-                    if (t.title.toLowerCase().includes(q)) {
-                        results.push({ type: 'Úkol', title: t.title, desc: `Projekt: ${p.name}`, projId: p.id });
-                    }
-                });
-                (p.materials || []).forEach(m => {
-                    if (m.name.toLowerCase().includes(q)) {
-                        results.push({ type: 'Materiál', title: m.name, desc: `Projekt: ${p.name} (${m.plannedPrice} Kč)`, projId: p.id });
-                    }
-                });
-            });
+    function populateRootSelect(currentRootId) {
+      const select = document.getElementById('rootPersonSelect');
+      const prioritized = ["I12", "I9", "I13", "I3", "I4", "I500006", "I500007", "I1", "I2", "I40", "I41", "I500014", "I500018"];
+      const sorted = [...appData.people].sort((a, b) => {
+        const ia = prioritized.indexOf(a.id);
+        const ib = prioritized.indexOf(b.id);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return a.name.localeCompare(b.name, 'cs');
+      });
 
-            if (results.length === 0) {
-                container.innerHTML = `<p class="text-sm text-slate-400 text-center py-8">Nic nenalezeno pro výraz "${query}".</p>`;
-                return;
-            }
+      select.innerHTML = sorted.map(p => {
+        const yearMatch = (p.birth || '').match(/\b(1[789]\d\d|20\d\d)\b/);
+        const yr = yearMatch ? ` (*${yearMatch[0]})` : '';
+        return `<option value="${p.id}" ${p.id === currentRootId ? 'selected' : ''}>${p.name}${yr}</option>`;
+      }).join('');
+    }
 
-            results.forEach(r => {
-                const div = document.createElement('div');
-                div.className = "bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex justify-between items-center gap-4 hover:border-brand-500 transition cursor-pointer";
-                div.onclick = () => { openProjectDetail(r.projId, 'kanban'); };
-                div.innerHTML = `
-                    <div>
-                        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300">${r.type}</span>
-                        <h4 class="font-bold text-slate-800 dark:text-white text-base mt-1">${r.title}</h4>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">${r.desc || ''}</p>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i>
-                `;
-                container.appendChild(div);
-            });
-            lucide.createIcons();
-        }
+    function populateSurnameFilter() {
+      const sel = document.getElementById('surnameFilter');
+      const currentVal = sel.value;
+      const surnames = new Set();
+      appData.people.forEach(p => {
+        if (p.maiden) surnames.add(p.maiden);
+      });
+      const sorted = [...surnames].sort((a, b) => a.localeCompare(b, 'cs'));
+      sel.innerHTML = `<option value="">Všechna příjmení (${appData.people.length})</option>` +
+        sorted.map(s => `<option value="${s}" ${s === currentVal ? 'selected' : ''}>${s}</option>`).join('');
+    }
 
-        function renderDashboard() {
-            const container = document.getElementById('projects-grid');
-            container.innerHTML = '';
-            if (projects.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700"><h3 class="text-slate-700 dark:text-slate-300 font-bold">Žádné projekty</h3></div>`;
-                return;
-            }
-            projects.forEach(p => {
-                const totalTasks = (p.tasks || []).length;
-                const doneTasks = (p.tasks || []).filter(t => t.status === 'done').length;
-                const taskPercent = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+    // ==================== 1. SVG VĚJÍŘ PŘEDKŮ ====================
+    function polarToCartesian(cx, cy, r, angleDeg) {
+      const rad = (angleDeg * Math.PI) / 180.0;
+      return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+    }
 
-                const card = document.createElement('div');
-                card.className = "bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition";
-                
-                let imageHtml = '';
-                if (p.imageUrl) {
-                    imageHtml = `<div class="h-40 w-full overflow-hidden bg-slate-100 dark:bg-slate-800"><img src="${p.imageUrl}" alt="${p.name}" class="w-full h-full object-cover"></div>`;
-                }
+    function createAnnularSectorPath(cx, cy, rInner, rOuter, startAngle, endAngle) {
+      const p1 = polarToCartesian(cx, cy, rOuter, startAngle);
+      const p2 = polarToCartesian(cx, cy, rOuter, endAngle);
+      const p3 = polarToCartesian(cx, cy, rInner, endAngle);
+      const p4 = polarToCartesian(cx, cy, rInner, startAngle);
+      const largeArc = endAngle - startAngle <= 180 ? "0" : "1";
 
-                card.innerHTML = `
-                    <div>
-                        ${imageHtml}
-                        <div class="p-5">
-                            <div class="flex justify-between items-start gap-2 mb-2">
-                                <h3 class="font-bold text-slate-900 dark:text-white text-lg leading-snug">${p.name}</h3>
-                                <div class="flex items-center gap-1">
-                                    <button onclick="editProject('${p.id}')" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-                                    <button onclick="deleteProject('${p.id}')" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                </div>
-                            </div>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">${p.description || 'Bez popisu'}</p>
-                            <div class="space-y-1.5 mb-4">
-                                <div class="flex justify-between text-xs font-semibold">
-                                    <span class="text-slate-600 dark:text-slate-400">Úkoly (${doneTasks}/${totalTasks})</span>
-                                    <span class="text-brand-600 dark:text-brand-400">${taskPercent}%</span>
-                                </div>
-                                <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                                    <div class="bg-brand-500 h-full rounded-full" style="width: ${taskPercent}%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-5 pt-0 flex gap-2">
-                        <button onclick="openProjectDetail('${p.id}', 'kanban')" class="flex-1 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5"><i data-lucide="kanban" class="w-3.5 h-3.5"></i> Úkoly</button>
-                        <button onclick="openProjectDetail('${p.id}', 'budget')" class="flex-1 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5"><i data-lucide="receipt" class="w-3.5 h-3.5"></i> Rozpočet</button>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
+      return [
+        "M", p1.x, p1.y,
+        "A", rOuter, rOuter, 0, largeArc, 1, p2.x, p2.y,
+        "L", p3.x, p3.y,
+        "A", rInner, rInner, 0, largeArc, 0, p4.x, p4.y,
+        "Z"
+      ].join(" ");
+    }
 
-        function openProjectDetail(id, tab) {
-            currentProjectId = id;
-            updateProjectSelector();
-            switchTab(tab);
-            render();
-        }
+    function renderFanChart() {
+      const svg = document.getElementById('fanChartSvg');
+      svg.innerHTML = '';
 
-        function renderKanban() {
-            const project = projects.find(p => p.id === currentProjectId);
-            const titleEl = document.getElementById('kanban-project-title');
-            const colTodo = document.getElementById('col-todo');
-            const colInprogress = document.getElementById('col-inprogress');
-            const colDone = document.getElementById('col-done');
+      const rings = [
+        { gen: 1, rIn: 60, rOut: 142, items: [2, 3] },
+        { gen: 2, rIn: 142, rOut: 240, items: [4, 5, 6, 7] },
+        { gen: 3, rIn: 240, rOut: 350, items: [8, 9, 10, 11, 12, 13, 14, 15] }
+      ];
 
-            colTodo.innerHTML = ''; colInprogress.innerHTML = ''; colDone.innerHTML = '';
-            if (!project) { titleEl.innerText = "Vyberte projekt"; return; }
-            titleEl.innerText = project.name;
+      rings.forEach(ring => {
+        const count = ring.items.length;
+        const angleStep = 180 / count;
 
-            let cTodo = 0, cInprogress = 0, cDone = 0;
-            (project.tasks || []).forEach(t => {
-                const memberObj = members.find(m => m.id === t.assignee);
-                const assigneeName = memberObj ? memberObj.name : 'Nepřiřazeno';
+        ring.items.forEach((sosa, idx) => {
+          const person = sosaMap[sosa];
+          const startAngle = -180 + idx * angleStep;
+          const endAngle = startAngle + angleStep;
+          const midAngle = (startAngle + endAngle) / 2;
+          const midRadius = (ring.rIn + ring.rOut) / 2;
 
-                const card = document.createElement('div');
-                card.className = "bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-2 group transition";
-                card.innerHTML = `
-                    <div class="flex justify-between items-start gap-2">
-                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug cursor-pointer hover:text-brand-600" onclick="editTask('${t.id}')">${t.title}</p>
-                        <div class="flex items-center gap-1">
-                            <button onclick="editTask('${t.id}')" class="text-slate-300 hover:text-brand-600 transition opacity-0 group-hover:opacity-100"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
-                            <button onclick="deleteTask('${t.id}')" class="text-slate-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center pt-2 border-t border-slate-50 dark:border-slate-800 text-xs">
-                        <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md font-medium"><i data-lucide="user" class="w-3 h-3 inline mr-1"></i>${assigneeName}</span>
-                        <div class="flex gap-1">
-                            ${t.status !== 'todo' ? `<button onclick="moveTask('${t.id}', -1)" class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-bold">←</button>` : ''}
-                            ${t.status !== 'done' ? `<button onclick="moveTask('${t.id}', 1)" class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-bold">→</button>` : ''}
-                        </div>
-                    </div>
-                `;
-                if (t.status === 'todo') { colTodo.appendChild(card); cTodo++; }
-                else if (t.status === 'inprogress') { colInprogress.appendChild(card); cInprogress++; }
-                else if (t.status === 'done') { colDone.appendChild(card); cDone++; }
-            });
-            document.getElementById('count-todo').innerText = cTodo;
-            document.getElementById('count-inprogress').innerText = cInprogress;
-            document.getElementById('count-done').innerText = cDone;
-        }
-
-        function renderAllTasks() {
-            const tbody = document.getElementById('all-tasks-tbody');
-            const selectedMember = document.getElementById('filter-member').value;
-            tbody.innerHTML = '';
-
-            let allTasksList = [];
-            projects.forEach(p => {
-                (p.tasks || []).forEach(t => {
-                    allTasksList.push({ ...t, projectName: p.name, projectId: p.id });
-                });
-            });
-
-            if (selectedMember) {
-                allTasksList = allTasksList.filter(t => t.assignee === selectedMember);
-            }
-
-            if (allTasksList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">Žádné úkoly nenalezeny.</td></tr>`;
-                return;
-            }
-
-            allTasksList.forEach(t => {
-                const memberObj = members.find(m => m.id === t.assignee);
-                const assigneeName = memberObj ? memberObj.name : 'Nepřiřazeno';
-                
-                let statusBadge = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">K udělení</span>';
-                if (t.status === 'inprogress') statusBadge = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">V procesu</span>';
-                if (t.status === 'done') statusBadge = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">Hotovo</span>';
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition border-b border-slate-100 dark:border-slate-800";
-                tr.innerHTML = `
-                    <td class="p-4">${statusBadge}</td>
-                    <td class="p-4 font-semibold text-slate-800 dark:text-slate-100 cursor-pointer hover:text-brand-600" onclick="jumpToTaskProject('${t.projectId}', '${t.id}')">${t.title}</td>
-                    <td class="p-4 text-slate-600 dark:text-slate-400 font-medium">${t.projectName}</td>
-                    <td class="p-4"><span class="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 px-2.5 py-1 rounded-full text-xs font-semibold">${assigneeName}</span></td>
-                    <td class="p-4 text-center">
-                        <button onclick="jumpToTaskProject('${t.projectId}', '${t.id}')" title="Přejít na projekt" class="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg"><i data-lucide="external-link" class="w-4 h-4"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            lucide.createIcons();
-        }
-
-        // Global Shopping List
-        function renderGlobalShop() {
-            const tbody = document.getElementById('global-shop-tbody');
-            tbody.innerHTML = '';
-            let items = [];
-
-            projects.forEach(p => {
-                (p.materials || []).forEach(m => {
-                    if (!m.purchased) {
-                        items.push({ ...m, projectName: p.name, projectId: p.id });
-                    }
-                });
-            });
-
-            if (items.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">Žádné položky k nákupu! Vše je zakoupeno.</td></tr>`;
-                return;
-            }
-
-            items.forEach(i => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition border-b border-slate-100 dark:border-slate-800";
-                tr.innerHTML = `
-                    <td class="p-4 font-semibold text-slate-800 dark:text-slate-100">${i.name}</td>
-                    <td class="p-4 text-slate-600 dark:text-slate-400 font-medium">${i.projectName}</td>
-                    <td class="p-4 text-right font-bold text-slate-900 dark:text-white">${Number(i.plannedPrice || 0).toLocaleString('cs-CZ')} Kč</td>
-                    <td class="p-4 text-center">
-                        ${i.url ? `<a href="${i.url}" target="_blank" class="inline-flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-lg font-semibold hover:underline"><i data-lucide="external-link" class="w-3 h-3"></i> Odkaz</a>` : '<span class="text-slate-300 text-xs">—</span>'}
-                    </td>
-                    <td class="p-4 text-center">
-                        <button onclick="globalBuyItem('${i.projectId}', '${i.id}')" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition shadow-sm">
-                            <i data-lucide="check" class="w-3.5 h-3.5"><span>Koupit</span></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            lucide.createIcons();
-        }
-
-        async function globalBuyItem(projId, matId) {
-            const p = projects.find(item => item.id === projId);
-            if (!p) return;
-            const m = p.materials.find(item => item.id === matId);
-            if (m) {
-                m.purchased = true;
-                m.actualPrice = m.actualPrice || m.plannedPrice;
-                logAction(`Zakoupena položka "${m.name}" v projektu "${p.name}"`);
-                await saveStorage();
-            }
-        }
-
-        // Ideas Render
-        function renderIdeas() {
-            const container = document.getElementById('ideas-grid');
-            container.innerHTML = '';
-            if (ideas.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700"><h3 class="text-slate-700 dark:text-slate-300 font-bold">Žádné nápady</h3></div>`;
-                return;
-            }
-            ideas.forEach(i => {
-                const card = document.createElement('div');
-                card.className = "bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-5 flex flex-col justify-between gap-4";
-                card.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-start gap-2 mb-2">
-                            <h3 class="font-bold text-slate-900 dark:text-white text-base">${i.title}</h3>
-                            <button onclick="deleteIdea('${i.id}')" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">${i.description || ''}</p>
-                        <span class="inline-block text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 px-2.5 py-1 rounded-full">Navrhl: ${i.author || 'Neznámý'}</span>
-                    </div>
-                    <button onclick="convertIdeaToProject('${i.id}')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
-                        <i data-lucide="arrow-right-left" class="w-3.5 h-3.5"></i> Převést na projekt
-                    </button>
-                `;
-                container.appendChild(card);
-            });
-            lucide.createIcons();
-        }
-
-        async function handleIdeaSubmit(e) {
-            e.preventDefault();
-            const title = document.getElementById('idea-title').value;
-            const description = document.getElementById('idea-desc').value;
-            const author = document.getElementById('idea-author').value || 'Někdo z rodiny';
-
-            ideas.push({ id: 'idea-' + Date.now(), title, description, author });
-            logAction(`Přidán nový nápad: "${title}"`);
-            document.getElementById('idea-title').value = '';
-            document.getElementById('idea-desc').value = '';
-            document.getElementById('idea-author').value = '';
-            closeModal('idea');
-            await saveStorage();
-        }
-
-        async function deleteIdea(id) {
-            ideas = ideas.filter(i => i.id !== id);
-            await saveStorage();
-        }
-
-        async function convertIdeaToProject(id) {
-            const idea = ideas.find(i => i.id === id);
-            if (!idea) return;
-
-            const newProj = {
-                id: 'proj-' + Date.now(),
-                name: idea.title,
-                description: idea.description,
-                budget: 5000,
-                tasks: [],
-                materials: []
-            };
-            projects.push(newProj);
-            ideas = ideas.filter(i => i.id !== id);
-            currentProjectId = newProj.id;
-            logAction(`Nápad "${idea.title}" byl převeden na aktivní projekt`);
-            switchTab('kanban');
-            await saveStorage();
-        }
-
-        function jumpToTaskProject(projId, taskId) {
-            currentProjectId = projId;
-            updateProjectSelector();
-            switchTab('kanban');
-            render();
-        }
-
-        function updateMemberFilterSelect() {
-            const select = document.getElementById('filter-member');
-            if (!select) return;
-            const currentVal = select.value;
-            select.innerHTML = '<option value="">Všichni členové</option>';
-            members.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.id;
-                opt.innerText = m.name;
-                if (m.id === currentVal) opt.selected = true;
-                select.appendChild(opt);
-            });
-        }
-
-        function updateTaskAssigneeSelect() {
-            const select = document.getElementById('task-assignee');
-            if (!select) return;
-            select.innerHTML = '<option value="">-- Nepřiřazeno --</option>';
-            members.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.id;
-                opt.innerText = m.name;
-                select.appendChild(opt);
-            });
-        }
-
-        function renderMembersList() {
-            const container = document.getElementById('members-list-container');
-            if (!container) return;
-            container.innerHTML = '';
-            if (members.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">Zatím žádní členové.</p>`;
-                return;
-            }
-            members.forEach(m => {
-                const row = document.createElement('div');
-                row.className = "flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm";
-                row.innerHTML = `
-                    <span class="font-semibold text-slate-700 dark:text-slate-200">${m.name}</span>
-                    <button onclick="deleteMember('${m.id}')" class="text-slate-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                `;
-                container.appendChild(row);
-            });
-            lucide.createIcons();
-        }
-
-        function renderHistoryList() {
-            const container = document.getElementById('history-list-container');
-            if (!container) return;
-            container.innerHTML = '';
-            if (historyLog.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Zatím žádná historie změn.</p>`;
-                return;
-            }
-            historyLog.forEach(h => {
-                const div = document.createElement('div');
-                div.className = "p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex justify-between gap-3 text-xs";
-                div.innerHTML = `
-                    <span class="text-slate-800 dark:text-slate-200">${h.text}</span>
-                    <span class="text-slate-400 whitespace-nowrap">${h.time}</span>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        async function handleAddMember(e) {
-            e.preventDefault();
-            const nameInput = document.getElementById('new-member-name');
-            const name = nameInput.value.trim();
-            if (!name) return;
-
-            members.push({ id: 'm-' + Date.now(), name });
-            logAction(`Přidán člen týmu: ${name}`);
-            nameInput.value = '';
-            await saveStorage();
-        }
-
-        async function deleteMember(id) {
-            members = members.filter(m => m.id !== id);
-            projects.forEach(p => {
-                (p.tasks || []).forEach(t => { if (t.assignee === id) t.assignee = ''; });
-            });
-            await saveStorage();
-        }
-
-        async function moveTask(taskId, direction) {
-            const project = projects.find(p => p.id === currentProjectId);
-            if (!project) return;
-            const task = project.tasks.find(t => t.id === taskId);
-            if (!task) return;
-
-            const stages = ['todo', 'inprogress', 'done'];
-            let newIndex = stages.indexOf(task.status) + direction;
-            if (newIndex >= 0 && newIndex < stages.length) {
-                task.status = stages[newIndex];
-                await saveStorage();
-            }
-        }
-
-        async function deleteTask(taskId) {
-            const project = projects.find(p => p.id === currentProjectId);
-            if (!project) return;
-            project.tasks = project.tasks.filter(t => t.id !== taskId);
-            await saveStorage();
-        }
-
-        function editTask(taskId) {
-            const project = projects.find(p => p.id === currentProjectId);
-            if (!project) return;
-            const task = project.tasks.find(t => t.id === taskId);
-            if (!task) return;
-
-            document.getElementById('task-id').value = task.id;
-            document.getElementById('task-title').value = task.title;
-            document.getElementById('task-status').value = task.status;
-            document.getElementById('task-assignee').value = task.assignee || '';
-            document.getElementById('modal-task-title-heading').innerText = "Upravit úkol";
-            openModal('task');
-        }
-
-        function renderBudget() {
-            const project = projects.find(p => p.id === currentProjectId);
-            const titleEl = document.getElementById('budget-project-title');
-            const tbody = document.getElementById('materials-list-body');
-            tbody.innerHTML = '';
-            if (!project) { titleEl.innerText = "Vyberte projekt"; return; }
-            titleEl.innerText = `${project.name} - Rozpočet a položky`;
-
-            let totalPlanned = 0, totalSpent = 0;
-            if (!project.materials || project.materials.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">Zatím nebyly přidány žádné položky.</td></tr>`;
-            }
-            (project.materials || []).forEach(m => {
-                const planned = Number(m.plannedPrice || 0);
-                const actual = Number(m.actualPrice || 0);
-                totalPlanned += planned;
-                if (m.purchased) totalSpent += (actual || planned);
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition border-b border-slate-100 dark:border-slate-800";
-                tr.innerHTML = `
-                    <td class="p-4"><button onclick="toggleMaterialPurchased('${m.id}')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${m.purchased ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400'}"><i data-lucide="${m.purchased ? 'check' : 'shopping-cart'}" class="w-3.5 h-3.5"></i>${m.purchased ? 'Zaplaceno' : 'K nákupu'}</button></td>
-                    <td class="p-4 font-semibold text-slate-800 dark:text-slate-100 cursor-pointer hover:text-brand-600" onclick="editMaterial('${m.id}')">${m.name}</td>
-                    <td class="p-4 text-right text-slate-600 dark:text-slate-400 font-medium">${planned.toLocaleString('cs-CZ')} Kč</td>
-                    <td class="p-4 text-right font-semibold ${m.purchased ? 'text-slate-900 dark:text-white' : 'text-slate-400'}">${m.purchased ? actual.toLocaleString('cs-CZ') + ' Kč' : '-'}</td>
-                    <td class="p-4 text-center">
-                        ${m.url ? `<a href="${m.url}" target="_blank" class="inline-flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-lg font-semibold hover:underline"><i data-lucide="external-link" class="w-3 h-3"></i> Odkaz</a>` : '<span class="text-slate-300 text-xs">—</span>'}
-                    </td>
-                    <td class="p-4 text-center">
-                        <div class="flex items-center justify-center gap-1">
-                            <button onclick="editMaterial('${m.id}')" class="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-                            <button onclick="deleteMaterial('${m.id}')" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            document.getElementById('materials-count').innerText = (project.materials || []).length;
-            document.getElementById('budget-planned-total').innerText = `${totalPlanned.toLocaleString('cs-CZ')} Kč`;
-            document.getElementById('budget-spent-total').innerText = `${totalSpent.toLocaleString('cs-CZ')} Kč`;
-        }
-
-        function renderNotes() {
-            const project = projects.find(p => p.id === currentProjectId);
-            const titleEl = document.getElementById('notes-project-title');
-            const notesInput = document.getElementById('project-notes-input');
-            const contactsInput = document.getElementById('project-contacts-input');
-            if (!project) { titleEl.innerText = "Vyberte projekt"; notesInput.value = ''; contactsInput.value = ''; return; }
-            titleEl.innerText = `${project.name} - Poznámky & Kontakty`;
-            notesInput.value = project.notes || '';
-            contactsInput.value = project.contacts || '';
-        }
-
-        async function saveProjectNotes() {
-            const project = projects.find(p => p.id === currentProjectId);
-            if (!project) return;
-            project.notes = document.getElementById('project-notes-input').value;
-            project.contacts = document.getElementById('project-contacts-input').value;
-            logAction(`Aktualizovány poznámky u projektu "${project.name}"`);
-            await saveStorage();
-            alert("Uloženo do cloudu!");
-        }
-
-        async function toggleMaterialPurchased(id) {
-            const project = projects.find(p => p.id === currentProjectId);
-            if (!project) return;
-            const m = project.materials.find(item => item.id === id);
-            if (m) {
-                m.purchased = !m.purchased;
-                if (m.purchased && (!m.actualPrice || m.actualPrice === 0)) m.actualPrice = m.plannedPrice;
-                await saveStorage();
-            }
-        }
-
-        function editMaterial(id) {
-            const project = projects.find(p => p.id === currentProjectId);
-            if (!project) return;
-            const m = project.materials.find(item => item.id === id);
-            if (!m) return;
-            document.getElementById('material-id').value = m.id;
-            document.getElementById('material-name').value = m.name;
-            document.getElementById('material-planned').value = m.plannedPrice;
-            document.getElementById('material-actual').value = m.actualPrice || 0;
-            document.getElementById('material-url').value = m.url || '';
-            document.getElementById('material-purchased').checked = m.purchased;
-            document.getElementById('modal-material-heading').innerText = "Upravit Položku";
-            openModal('material');
-        }
-
-        async function deleteMaterial(id) {
-            if (!confirm("Opravdu smazat?")) return;
-            const project = projects.find(p => p.id === currentProjectId);
-            if (!project) return;
-            project.materials = project.materials.filter(m => m.id !== id);
-            await saveStorage();
-        }
-
-        function openModal(type) {
-            if (type !== 'project' && type !== 'members' && type !== 'idea' && type !== 'history' && !currentProjectId) {
-                alert("Nejprve vyberte nebo vytvořte projekt.");
-                return;
-            }
-            if (type === 'task' && !document.getElementById('task-id').value) {
-                document.getElementById('modal-task-title-heading').innerText = "Nový Úkol";
-                document.getElementById('form-task').reset();
-            }
-            if (type === 'material' && !document.getElementById('material-id').value) {
-                document.getElementById('modal-material-heading').innerText = "Přidat Položku";
-            }
-            document.getElementById(`modal-${type}`).classList.remove('hidden');
-        }
-
-        function closeModal(type) {
-            document.getElementById(`modal-${type}`).classList.add('hidden');
-            if (type === 'task') {
-                document.getElementById('form-task').reset();
-                document.getElementById('task-id').value = '';
-            }
-            if (type === 'material') {
-                document.getElementById('form-material').reset();
-                document.getElementById('material-id').value = '';
-            }
-        }
-
-        async function handleProjectSubmit(e) {
-            e.preventDefault();
-            const id = document.getElementById('project-id').value;
-            const name = document.getElementById('project-name').value;
-            const description = document.getElementById('project-desc').value;
-            const imageUrl = document.getElementById('project-image').value;
-            const budget = Number(document.getElementById('project-budget').value);
-
-            if (id) {
-                const p = projects.find(item => item.id === id);
-                if (p) { p.name = name; p.description = description; p.imageUrl = imageUrl; p.budget = budget; logAction(`Upraven projekt "${name}"`); }
+          let fill = "#f3eee3";
+          let stroke = "#d5c5ab";
+          if (person) {
+            if (person.gender === "M") {
+              fill = "#d6e4f0";
+              stroke = "#9ab7d3";
             } else {
-                const newProj = { id: 'proj-' + Date.now(), name, description, imageUrl, budget, tasks: [], materials: [] };
-                projects.push(newProj);
-                currentProjectId = newProj.id;
-                logAction(`Vytvořen nový projekt "${name}"`);
+              fill = "#f5dce0";
+              stroke = "#d9a7b0";
             }
-            document.getElementById('form-project').reset();
-            document.getElementById('project-id').value = '';
-            closeModal('project');
-            await saveStorage();
+          }
+          if (person && person.id === selectedPersonId) {
+            stroke = "#8c583a";
+          }
+
+          const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          g.setAttribute("class", "fan-slice");
+          if (person) {
+            g.onclick = () => selectPersonById(person.id);
+          }
+
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("d", createAnnularSectorPath(0, 0, ring.rIn, ring.rOut, startAngle, endAngle));
+          path.setAttribute("fill", fill);
+          path.setAttribute("stroke", stroke);
+          path.setAttribute("stroke-width", person && person.id === selectedPersonId ? "3" : "1.2");
+          g.appendChild(path);
+
+          const pos = polarToCartesian(0, 0, midRadius, midAngle);
+          let textRot = midAngle + 90;
+          if (ring.gen === 3) {
+            textRot = midAngle > -90 ? midAngle : midAngle + 180;
+          }
+
+          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          text.setAttribute("x", pos.x);
+          text.setAttribute("y", pos.y);
+          text.setAttribute("text-anchor", "middle");
+          text.setAttribute("dominant-baseline", "middle");
+          text.setAttribute("transform", `rotate(${textRot}, ${pos.x}, ${pos.y})`);
+          text.setAttribute("fill", person ? "#2c221e" : "#9c8b7e");
+          text.setAttribute("font-size", ring.gen === 3 ? "9" : "10.5");
+          text.setAttribute("font-weight", "600");
+
+          const displayName = person ? person.name : `Neznámý (#${sosa})`;
+          const tspan1 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+          tspan1.setAttribute("x", pos.x);
+          tspan1.setAttribute("dy", "-0.3em");
+          tspan1.textContent = displayName.slice(0, 19);
+          text.appendChild(tspan1);
+
+          if (person) {
+            const yearMatch = (person.birth || '').match(/\b(1[789]\d\d|20\d\d)\b/);
+            const tspan2 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+            tspan2.setAttribute("x", pos.x);
+            tspan2.setAttribute("dy", "1.2em");
+            tspan2.setAttribute("font-size", "8.5");
+            tspan2.setAttribute("fill", "#6e5a4f");
+            tspan2.textContent = yearMatch ? `*${yearMatch[0]}` : (person.maiden ? `roz. ${person.maiden}` : '');
+            text.appendChild(tspan2);
+          }
+
+          g.appendChild(text);
+          svg.appendChild(g);
+        });
+      });
+
+      const rootPerson = sosaMap[1];
+      const centerG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      centerG.setAttribute("class", "fan-slice");
+      if (rootPerson) centerG.onclick = () => selectPersonById(rootPerson.id);
+
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", "0");
+      circle.setAttribute("cy", "0");
+      circle.setAttribute("r", "60");
+      circle.setAttribute("fill", "#8c583a");
+      circle.setAttribute("stroke", "#2c221e");
+      circle.setAttribute("stroke-width", "2.5");
+      centerG.appendChild(circle);
+
+      const rootText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      rootText.setAttribute("x", "0");
+      rootText.setAttribute("y", "-4");
+      rootText.setAttribute("text-anchor", "middle");
+      rootText.setAttribute("fill", "#fffdf9");
+      rootText.setAttribute("font-size", "10.5");
+      rootText.setAttribute("font-weight", "bold");
+      rootText.textContent = rootPerson ? rootPerson.name.slice(0, 18) : "Výchozí osoba";
+      centerG.appendChild(rootText);
+
+      const rootSub = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      rootSub.setAttribute("x", "0");
+      rootSub.setAttribute("y", "13");
+      rootSub.setAttribute("text-anchor", "middle");
+      rootSub.setAttribute("fill", "#e2d7c5");
+      rootSub.setAttribute("font-size", "8.5");
+      rootSub.textContent = "Střed vějíře (#1)";
+      centerG.appendChild(rootSub);
+
+      svg.appendChild(centerG);
+    }
+
+    // ==================== 2. VÝVOD PŘEDKŮ PO GENERACÍCH ====================
+    function renderTreeGenerations() {
+      const container = document.getElementById('treeGenerationsContainer');
+      const genRanges = [
+        { gen: 1, title: "1. Generace – Výchozí osoba (#1)", min: 1, max: 1 },
+        { gen: 2, title: "2. Generace – Rodiče (#2–3)", min: 2, max: 3 },
+        { gen: 3, title: "3. Generace – Prarodiče (#4–7)", min: 4, max: 7 },
+        { gen: 4, title: "4. Generace – Praprarodiče (#8–15)", min: 8, max: 15 },
+        { gen: 5, title: "5. Generace – Prapraprarodiče (#16–31)", min: 16, max: 31 },
+        { gen: 6, title: "6. Generace – Starší předci v 19. století (#32–63)", min: 32, max: 63 },
+        { gen: 7, title: "7. Generace – Nejstarší předci v 18. století (#64–127)", min: 64, max: 127 }
+      ];
+
+      container.innerHTML = genRanges.map(g => {
+        const foundInGen = [];
+        for (let s = g.min; s <= g.max; s++) {
+          if (sosaMap[s]) foundInGen.push({ sosa: s, person: sosaMap[s] });
         }
+        if (foundInGen.length === 0) return '';
 
-        function editProject(id) {
-            const p = projects.find(item => item.id === id);
-            if (!p) return;
-            document.getElementById('project-id').value = p.id;
-            document.getElementById('project-name').value = p.name;
-            document.getElementById('project-desc').value = p.description || '';
-            document.getElementById('project-image').value = p.imageUrl || '';
-            document.getElementById('project-budget').value = p.budget;
-            document.getElementById('modal-project-title').innerText = "Upravit Projekt";
-            openModal('project');
+        return `
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#8c583a] bg-[#f7f3e9] px-3 py-1.5 rounded-lg border border-[#e2d7c5]">${g.title}</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              ${foundInGen.map(({ sosa, person }) => `
+                <div onclick="selectPersonById('${person.id}')" class="p-3 rounded-xl border ${person.id === selectedPersonId ? 'border-[#8c583a] bg-[#f7f3e9]' : 'border-[#e2d7c5] bg-white'} hover:border-[#8c583a] cursor-pointer transition flex items-center gap-3">
+                  ${person.photo ? `<img src="${person.photo}" class="w-11 h-11 rounded-full object-cover border border-[#d5c5ab]">` : `
+                    <div class="w-11 h-11 rounded-full ${person.gender === 'M' ? 'bg-[#d6e4f0] text-[#2b547e]' : 'bg-[#f5dce0] text-[#8a3346]'} flex items-center justify-center font-bold text-xs">
+                      #${sosa}
+                    </div>
+                  `}
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#efe8d8] text-[#8c583a]">#${sosa}</span>
+                      <span class="font-bold text-sm text-[#2c221e] truncate">${person.name}</span>
+                    </div>
+                    <p class="text-[11px] text-[#6e5a4f] truncate mt-0.5">
+                      ${person.birth ? `* ${person.birth}` : ''} ${person.death ? `• † ${person.death}` : ''}
+                    </p>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ==================== 3. SEZNAM VŠECH 133 OSOB ====================
+    function handleSearch(val) {
+      searchFilter = val.trim().toLowerCase();
+      if (searchFilter.length > 0) switchTab('people');
+      renderPeopleList();
+    }
+
+    function renderPeopleList() {
+      const container = document.getElementById('peopleListContainer');
+      const surnameVal = document.getElementById('surnameFilter').value;
+
+      const filtered = (appData.people || []).filter(p => {
+        if (surnameVal && p.maiden !== surnameVal) return false;
+        if (!searchFilter) return true;
+        return (
+          (p.name || '').toLowerCase().includes(searchFilter) ||
+          (p.maiden || '').toLowerCase().includes(searchFilter) ||
+          (p.place || '').toLowerCase().includes(searchFilter) ||
+          (p.birth || '').toLowerCase().includes(searchFilter) ||
+          (p.note || '').toLowerCase().includes(searchFilter)
+        );
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="py-8 text-center text-sm text-[#6e5a4f]">Žádná osoba neodpovídá filtru.</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => `
+        <div onclick="selectPersonById('${p.id}')" class="py-3 px-3 hover:bg-[#f7f3e9] rounded-xl cursor-pointer transition flex justify-between items-center gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            ${p.photo ? `<img src="${p.photo}" class="w-10 h-10 rounded-full object-cover border border-[#d5c5ab]">` : `
+              <div class="w-10 h-10 rounded-full ${p.gender === 'M' ? 'bg-[#d6e4f0] text-[#2b547e]' : 'bg-[#f5dce0] text-[#8a3346]'} flex items-center justify-center font-bold text-xs">
+                ${p.gender === 'M' ? 'M' : 'Ž'}
+              </div>
+            `}
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="serif font-bold text-base text-[#2c221e]">${p.name}</span>
+                ${p.maiden && !p.name.includes(p.maiden) ? `<span class="text-xs text-[#6e5a4f]">(roz. ${p.maiden})</span>` : ''}
+              </div>
+              <p class="text-xs text-[#6e5a4f] truncate">
+                ${p.birth ? `* ${p.birth}` : ''} ${p.death ? ` — † ${p.death}` : ''}
+              </p>
+            </div>
+          </div>
+          <div class="text-right text-xs text-[#8c583a] font-medium whitespace-nowrap">
+            ${p.place || ''}<br>
+            <span class="text-[11px] underline">Detail →</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ==================== 4. PŘÍBĚHY RODU ====================
+    function renderStories() {
+      const container = document.getElementById('storiesContainer');
+      container.innerHTML = (appData.stories || []).map(st => `
+        <article class="bg-[#f7f3e9] border border-[#e2d7c5] rounded-2xl p-5 space-y-2">
+          <div class="flex justify-between items-start gap-2">
+            <h3 class="serif text-xl font-bold text-[#2c221e]">${st.title}</h3>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#efe8d8] text-[#8c583a] whitespace-nowrap">${st.period || ''}</span>
+          </div>
+          <p class="text-sm text-[#2c221e] leading-relaxed">${st.content}</p>
+        </article>
+      `).join('');
+    }
+
+    async function openStoryModal() {
+      const title = prompt("Název kapitoly / příběhu:");
+      if (!title) return;
+      const period = prompt("Období (např. 1919–1945):", "");
+      const content = prompt("Text příběhu:");
+      if (!content) return;
+      if (!appData.stories) appData.stories = [];
+      appData.stories.push({ id: 'st-' + Date.now(), title, period, content });
+      await saveToCloud(true);
+    }
+
+    // ==================== 5. OBCE A STATISTIKY ====================
+    function renderPlacesAndStats() {
+      const container = document.getElementById('placesStatsContainer');
+      const placesCount = {};
+      const surnamesCount = {};
+
+      (appData.people || []).forEach(p => {
+        if (p.place) {
+          placesCount[p.place] = (placesCount[p.place] || 0) + 1;
         }
-
-        async function deleteProject(id) {
-            if (confirm("Opravdu smazat celý projekt?")) {
-                projects = projects.filter(p => p.id !== id);
-                currentProjectId = projects.length > 0 ? projects[0].id : null;
-                logAction("Smazán projekt");
-                await saveStorage();
-            }
+        if (p.maiden) {
+          surnamesCount[p.maiden] = (surnamesCount[p.maiden] || 0) + 1;
         }
+      });
 
-        async function handleTaskSubmit(e) {
-            e.preventDefault();
-            const project = projects.find(p => p.id === currentProjectId);
-            if (!project) return;
+      const topPlaces = Object.entries(placesCount).sort((a, b) => b[1] - a[1]);
+      const topSurnames = Object.entries(surnamesCount).sort((a, b) => b[1] - a[1]).slice(0, 14);
 
-            const taskId = document.getElementById('task-id').value;
-            const title = document.getElementById('task-title').value;
-            const status = document.getElementById('task-status').value;
-            const assignee = document.getElementById('task-assignee').value;
+      container.innerHTML = `
+        <div class="bg-[#f7f3e9] border border-[#e2d7c5] rounded-xl p-4 space-y-3">
+          <h3 class="serif text-lg font-bold text-[#2c221e] flex items-center gap-2">
+            <i class="fa-solid fa-map-location-dot text-[#8c583a]"></i> Hlavní obce a místa v rodokmenu
+          </h3>
+          <div class="space-y-1.5 text-xs">
+            ${topPlaces.map(([pl, cnt]) => `
+              <div onclick="handleSearch('${pl}')" class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e2d7c5] cursor-pointer hover:border-[#8c583a]">
+                <span class="font-bold text-[#2c221e]">${pl}</span>
+                <span class="font-bold px-2 py-0.5 rounded bg-[#efe8d8] text-[#8c583a]">${cnt} osob</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
 
-            if (!project.tasks) project.tasks = [];
-            if (taskId) {
-                const t = project.tasks.find(item => item.id === taskId);
-                if (t) { t.title = title; t.status = status; t.assignee = assignee; }
-            } else {
-                project.tasks.push({ id: 'task-' + Date.now(), title, status, assignee });
-            }
+        <div class="bg-[#f7f3e9] border border-[#e2d7c5] rounded-xl p-4 space-y-3">
+          <h3 class="serif text-lg font-bold text-[#2c221e] flex items-center gap-2">
+            <i class="fa-solid fa-users-line text-[#8c583a]"></i> Nejčastější příjmení v rodokmenu
+          </h3>
+          <div class="space-y-1.5 text-xs">
+            ${topSurnames.map(([sur, cnt]) => `
+              <div onclick="document.getElementById('surnameFilter').value='${sur}'; switchTab('people'); renderPeopleList();" class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e2d7c5] cursor-pointer hover:border-[#8c583a]">
+                <span class="font-medium text-[#2c221e]">${sur}</span>
+                <span class="font-bold px-2 py-0.5 rounded bg-[#efe8d8] text-[#8c583a]">${cnt}×</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
 
-            document.getElementById('form-task').reset();
-            document.getElementById('task-id').value = '';
-            closeModal('task');
-            await saveStorage();
-        }
+    // ==================== PRAVÝ PANEL: DETAIL OSOBY ====================
+    function selectPersonById(id) {
+      selectedPersonId = id;
+      renderFanChart();
+      renderTreeGenerations();
+      renderPersonDetail(id);
+    }
 
-        async function handleMaterialSubmit(e) {
-            e.preventDefault();
-            const project = projects.find(p => p.id === currentProjectId);
-            if (!project) return;
+    function renderPersonDetail(id) {
+      const card = document.getElementById('personDetailCard');
+      const p = getPersonById(id);
+      if (!p) return;
 
-            const id = document.getElementById('material-id').value;
-            const name = document.getElementById('material-name').value;
-            const plannedPrice = Number(document.getElementById('material-planned').value);
-            const actualPrice = Number(document.getElementById('material-actual').value) || 0;
-            const url = document.getElementById('material-url').value;
-            const purchased = document.getElementById('material-purchased').checked;
+      const father = p.fatherId ? getPersonById(p.fatherId) : null;
+      const mother = p.motherId ? getPersonById(p.motherId) : null;
+      const children = (appData.people || []).filter(ch => ch.fatherId === p.id || ch.motherId === p.id);
 
-            if (!project.materials) project.materials = [];
-            if (id) {
-                const m = project.materials.find(item => item.id === id);
-                if (m) { m.name = name; m.plannedPrice = plannedPrice; m.actualPrice = actualPrice; m.url = url; m.purchased = purchased; }
-            } else {
-                project.materials.push({ id: 'mat-' + Date.now(), name, plannedPrice, actualPrice: purchased ? (actualPrice || plannedPrice) : 0, url, purchased });
-            }
+      card.innerHTML = `
+        <div class="flex justify-between items-start gap-3 border-b border-[#efe8d8] pb-3">
+          <div class="flex items-center gap-3">
+            ${p.photo ? `<img src="${p.photo}" class="w-16 h-16 rounded-2xl object-cover border-2 border-[#8c583a] shadow">` : `
+              <div class="w-14 h-14 rounded-2xl ${p.gender === 'M' ? 'bg-[#d6e4f0] text-[#2b547e]' : 'bg-[#f5dce0] text-[#8a3346]'} flex items-center justify-center font-bold text-lg">
+                <i class="fa-solid fa-user"></i>
+              </div>
+            `}
+            <div>
+              <h3 class="serif text-2xl font-bold text-[#2c221e] leading-tight">${p.name}</h3>
+              ${p.maiden ? `<p class="text-xs text-[#8c583a] font-semibold">Rodné příjmení: ${p.maiden}</p>` : ''}
+            </div>
+          </div>
+          <button onclick="openEditPersonModal('${p.id}')" title="Upravit osobu" class="p-2 text-[#6e5a4f] hover:text-[#2c221e] bg-[#f7f3e9] rounded-xl border border-[#e2d7c5]">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+        </div>
 
-            document.getElementById('form-material').reset();
-            document.getElementById('material-id').value = '';
-            closeModal('material');
-            await saveStorage();
-        }
+        <button onclick="changeRootPerson('${p.id}')" class="w-full py-2 px-3 bg-[#efe8d8] hover:bg-[#e2d7c5] text-[#2c221e] rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-bullseye text-[#8c583a]"></i> Nastavit tuto osobu jako střed vějíře (#1)
+        </button>
 
-        window.onload = function() {
-            switchTab('dashboard');
-        };
-    </script>
+        <!-- Životní data -->
+        <div class="space-y-2 text-xs bg-[#f7f3e9] p-3.5 rounded-xl border border-[#e2d7c5]">
+          <div class="flex justify-between gap-2">
+            <span class="text-[#6e5a4f] font-semibold">Narození (*):</span>
+            <span class="font-medium text-right">${p.birth || '—'}</span>
+          </div>
+          <div class="flex justify-between gap-2">
+            <span class="text-[#6e5a4f] font-semibold">Úmrtí (†):</span>
+            <span class="font-medium text-right">${p.death || '—'}</span>
+          </div>
+          <div class="flex justify-between gap-2 pt-1 border-t border-[#e2d7c5]">
+            <span class="text-[#6e5a4f] font-semibold">Obec / Místo:</span>
+            <span class="font-bold text-[#8c583a] text-right">${p.place || '—'}</span>
+          </div>
+        </div>
+
+        ${p.note ? `
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold uppercase tracking-wider text-[#6e5a4f] block">Poznámka / Záznam</label>
+            <div class="p-3 rounded-xl bg-[#fff9eb] border border-[#e6d6b5] serif italic text-sm text-[#2c221e]">
+              ${p.note}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Rodiče -->
+        <div class="pt-2 border-t border-[#efe8d8] space-y-2 text-xs">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#6e5a4f] block">Rodiče</span>
+          <div class="grid grid-cols-2 gap-2">
+            ${father ? `
+              <button onclick="selectPersonById('${father.id}')" class="p-2.5 rounded-xl border border-[#e2d7c5] bg-[#f7f3e9] hover:border-[#8c583a] text-left truncate">
+                <span class="text-[10px] text-[#6e5a4f] block">Otec</span>
+                <span class="font-bold text-[#2c221e]">${father.name}</span>
+              </button>
+            ` : `<div class="p-2.5 rounded-xl border border-dashed border-[#d5c5ab] text-[#6e5a4f] text-[11px]">Otec nezadán</div>`}
+
+            ${mother ? `
+              <button onclick="selectPersonById('${mother.id}')" class="p-2.5 rounded-xl border border-[#e2d7c5] bg-[#f7f3e9] hover:border-[#8c583a] text-left truncate">
+                <span class="text-[10px] text-[#6e5a4f] block">Matka</span>
+                <span class="font-bold text-[#2c221e]">${mother.name}</span>
+              </button>
+            ` : `<div class="p-2.5 rounded-xl border border-dashed border-[#d5c5ab] text-[#6e5a4f] text-[11px]">Matka nezadána</div>`}
+          </div>
+        </div>
+
+        <!-- Děti -->
+        ${children.length > 0 ? `
+          <div class="pt-2 border-t border-[#efe8d8] space-y-1.5 text-xs">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-[#6e5a4f] block">Děti (${children.length})</span>
+            <div class="flex flex-wrap gap-1.5">
+              ${children.map(ch => `
+                <button onclick="selectPersonById('${ch.id}')" class="px-2.5 py-1 rounded-lg bg-[#f7f3e9] hover:bg-[#efe8d8] border border-[#e2d7c5] font-medium text-[#2c221e]">
+                  ${ch.name}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+      `;
+    }
+
+    // ==================== ÚPRAVA A PŘIDÁNÍ OSOBY ====================
+    function populateParentSelects(selectedFatherId, selectedMotherId) {
+      const fSel = document.getElementById('formFather');
+      const mSel = document.getElementById('formMother');
+      const men = appData.people.filter(p => p.gender === 'M').sort((a, b) => a.name.localeCompare(b.name, 'cs'));
+      const women = appData.people.filter(p => p.gender === 'F').sort((a, b) => a.name.localeCompare(b.name, 'cs'));
+
+      fSel.innerHTML = `<option value="">-- Nevybráno --</option>` +
+        men.map(m => `<option value="${m.id}" ${m.id === selectedFatherId ? 'selected' : ''}>${m.name} (${m.birth || ''})</option>`).join('');
+      mSel.innerHTML = `<option value="">-- Nevybráno --</option>` +
+        women.map(w => `<option value="${w.id}" ${w.id === selectedMotherId ? 'selected' : ''}>${w.name} (${w.birth || ''})</option>`).join('');
+    }
+
+    function openNewPersonModal() {
+      document.getElementById('personModalTitle').innerText = "Přidat novou osobu";
+      document.getElementById('formId').value = 'I_NEW_' + Date.now();
+      document.getElementById('formName').value = '';
+      document.getElementById('formMaiden').value = '';
+      document.getElementById('formGender').value = 'M';
+      document.getElementById('formPlace').value = '';
+      document.getElementById('formBirth').value = '';
+      document.getElementById('formDeath').value = '';
+      document.getElementById('formNote').value = '';
+      document.getElementById('formPhoto').value = '';
+      populateParentSelects('', '');
+      document.getElementById('personModal').classList.remove('hidden');
+    }
+
+    function openEditPersonModal(id) {
+      const p = getPersonById(id);
+      if (!p) return;
+      document.getElementById('personModalTitle').innerText = "Upravit osobu";
+      document.getElementById('formId').value = p.id;
+      document.getElementById('formName').value = p.name || '';
+      document.getElementById('formMaiden').value = p.maiden || '';
+      document.getElementById('formGender').value = p.gender || 'M';
+      document.getElementById('formPlace').value = p.place || '';
+      document.getElementById('formBirth').value = p.birth || '';
+      document.getElementById('formDeath').value = p.death || '';
+      document.getElementById('formNote').value = p.note || '';
+      document.getElementById('formPhoto').value = p.photo || '';
+      populateParentSelects(p.fatherId || '', p.motherId || '');
+      document.getElementById('personModal').classList.remove('hidden');
+    }
+
+    function closePersonModal() {
+      document.getElementById('personModal').classList.add('hidden');
+    }
+
+    async function savePersonForm(e) {
+      e.preventDefault();
+      const id = document.getElementById('formId').value;
+      const newObj = {
+        id,
+        name: document.getElementById('formName').value.trim(),
+        maiden: document.getElementById('formMaiden').value.trim(),
+        gender: document.getElementById('formGender').value,
+        place: document.getElementById('formPlace').value.trim(),
+        birth: document.getElementById('formBirth').value.trim(),
+        death: document.getElementById('formDeath').value.trim(),
+        fatherId: document.getElementById('formFather').value,
+        motherId: document.getElementById('formMother').value,
+        note: document.getElementById('formNote').value.trim(),
+        photo: document.getElementById('formPhoto').value.trim(),
+        spouseIds: []
+      };
+
+      const idx = appData.people.findIndex(item => item.id === id);
+      if (idx >= 0) {
+        newObj.spouseIds = appData.people[idx].spouseIds || [];
+        appData.people[idx] = newObj;
+      } else {
+        appData.people.push(newObj);
+      }
+
+      selectedPersonId = id;
+      closePersonModal();
+      await saveToCloud(true);
+    }
+
+    async function deletePersonFromForm() {
+      const id = document.getElementById('formId').value;
+      if (!confirm("Opravdu chcete smazat tuto osobu z rodokmenu?")) return;
+      appData.people = appData.people.filter(p => p.id !== id);
+      closePersonModal();
+      selectedPersonId = appData.config.rootId || "I12";
+      await saveToCloud(true);
+    }
+
+    // ==================== NASTAVENÍ A ZÁLOHA ====================
+    function openDataModal() {
+      document.getElementById('cfgTitle').value = appData.config.title || '';
+      document.getElementById('cfgQuestion').value = appData.config.question || '';
+      document.getElementById('cfgAnswer').value = appData.config.answer || '';
+      document.getElementById('dataModal').classList.remove('hidden');
+    }
+
+    function closeDataModal() {
+      document.getElementById('dataModal').classList.add('hidden');
+    }
+
+    async function saveConfig() {
+      appData.config.title = document.getElementById('cfgTitle').value.trim();
+      appData.config.question = document.getElementById('cfgQuestion').value.trim();
+      appData.config.answer = document.getElementById('cfgAnswer').value.trim();
+      closeDataModal();
+      await saveToCloud(true);
+    }
+
+    function exportJsonData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", "rodokmen-polezal-prytoluk.json");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  </script>
 </body>
 </html>
