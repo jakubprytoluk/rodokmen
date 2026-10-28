@@ -7,6 +7,9 @@
   <title>Rodokmen rodu Poležalů, Prytoluků, Pojerů a Ženíšků</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Leaflet CSS a JS pro interaktivní mapu -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap');
     
@@ -35,6 +38,15 @@
     }
     .fan-slice:hover {
       filter: brightness(0.92);
+    }
+
+    .mh-node {
+      transition: transform 0.15s, box-shadow 0.15s;
+      cursor: pointer;
+    }
+    .mh-node:hover {
+      transform: translateY(-2px);
+      filter: brightness(0.97);
     }
 
     ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -94,10 +106,10 @@
 
         <button onclick="overwriteCloudWithGedcom()" title="Nahrát výchozí data ze souboru data.js do cloudu" class="bg-amber-700 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow">
           <i class="fa-solid fa-cloud-arrow-up"></i>
-          <span>Načíst z data.js do cloudu</span>
+          <span class="hidden md:inline">Načíst z data.js</span>
         </button>
 
-        <div class="relative flex-1 sm:w-52">
+        <div class="relative flex-1 sm:w-48">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-[#a38f72] text-xs"></i>
           <input type="text" id="globalSearch" oninput="handleSearch(this.value)" placeholder="Hledat osobu, obec..."
             class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#3d302a] border border-[#57463e] text-xs text-[#f7f3e9] placeholder-[#a38f72] focus:outline-none focus:border-[#c5b49a]">
@@ -113,22 +125,32 @@
       </div>
     </div>
 
+    <!-- Navigační záložky -->
     <div class="bg-[#382c27] border-t border-[#4a3b34]">
       <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto gap-1 py-1.5 text-xs font-medium">
-        <button onclick="switchTab('fan')" id="tab-fan" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white whitespace-nowrap">
+        <button onclick="switchTab('mhtree')" id="tab-mhtree" class="tab-btn px-3.5 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white whitespace-nowrap shadow-sm">
+          <i class="fa-solid fa-diagram-project"></i> Grafický strom
+        </button>
+        <button onclick="switchTab('clans')" id="tab-clans" class="tab-btn px-3.5 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
+          <i class="fa-solid fa-shield-halved"></i> Rody
+        </button>
+        <button onclick="switchTab('map')" id="tab-map" class="tab-btn px-3.5 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
+          <i class="fa-solid fa-map-location-dot"></i> Mapa
+        </button>
+        <button onclick="switchTab('fan')" id="tab-fan" class="tab-btn px-3.5 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
           <i class="fa-solid fa-fan"></i> Vějíř předků
         </button>
-        <button onclick="switchTab('tree')" id="tab-tree" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
+        <button onclick="switchTab('tree')" id="tab-tree" class="tab-btn px-3.5 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
           <i class="fa-solid fa-sitemap"></i> Vývod po generacích
         </button>
-        <button onclick="switchTab('people')" id="tab-people" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
-          <i class="fa-solid fa-users"></i> Všichni členové rodu (<span id="navCountPeople">0</span>)
+        <button onclick="switchTab('people')" id="tab-people" class="tab-btn px-3.5 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
+          <i class="fa-solid fa-users"></i> Lidé (<span id="navCountPeople">0</span>)
         </button>
-        <button onclick="switchTab('stories')" id="tab-stories" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
-          <i class="fa-solid fa-scroll"></i> Příběhy & Volyňští Češi
+        <button onclick="switchTab('stories')" id="tab-stories" class="tab-btn px-3.5 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
+          <i class="fa-solid fa-scroll"></i> Příběhy
         </button>
-        <button onclick="switchTab('places')" id="tab-places" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
-          <i class="fa-solid fa-location-dot"></i> Obce & statistiky
+        <button onclick="switchTab('places')" id="tab-places" class="tab-btn px-3.5 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
+          <i class="fa-solid fa-chart-pie"></i> Statistiky
         </button>
       </div>
     </div>
@@ -138,17 +160,80 @@
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
     <div class="lg:col-span-8 space-y-6">
+      <!-- Výběr výchozí osoby -->
       <div class="bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-3.5 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-3">
-        <div class="flex items-center gap-2 text-xs">
-          <span class="font-bold uppercase tracking-wider text-[#8c583a]"><i class="fa-solid fa-bullseye mr-1"></i>Střed vějíře (#1):</span>
-          <select id="rootPersonSelect" onchange="changeRootPerson(this.value)" class="bg-[#f7f3e9] border border-[#d5c5ab] rounded-xl px-3 py-1.5 font-semibold text-[#2c221e] focus:outline-none">
+        <div class="flex items-center gap-2 text-xs w-full sm:w-auto">
+          <span class="font-bold uppercase tracking-wider text-[#8c583a] whitespace-nowrap"><i class="fa-solid fa-bullseye mr-1"></i>Výchozí osoba (#1):</span>
+          <select id="rootPersonSelect" onchange="changeRootPerson(this.value)" class="flex-1 bg-[#f7f3e9] border border-[#d5c5ab] rounded-xl px-3 py-1.5 font-semibold text-[#2c221e] focus:outline-none">
           </select>
         </div>
-        <span class="text-[11px] text-[#6e5a4f]">Přepnutím osoby okamžitě přepočítáte vějíř i strom předků.</span>
+        <span class="text-[11px] text-[#6e5a4f]">Podle této osoby se automaticky větví Grafický strom, Rody i Vějíř.</span>
       </div>
 
-      <!-- TAB 1: VĚJÍŘ PŘEDKŮ -->
-      <section id="view-fan" class="bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm">
+      <!-- NOVÝ TAB: GRAFICKÝ STROM (STYL MYHERITAGE) -->
+      <section id="view-mhtree" class="bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-5 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-[#efe8d8] pb-3">
+          <div>
+            <h2 class="serif text-2xl font-bold text-[#2c221e]">Grafický rodokmen (styl MyHeritage)</h2>
+            <p class="text-xs text-[#6e5a4f]">Karty osob s fotografiemi a rodinnými spojnicemi. Kliknutím na kartu zobrazíte podrobnosti vpravo, terčem <i class="fa-solid fa-bullseye text-[#8c583a]"></i> posunete střed stromu.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="zoomMhTree(0.85)" class="px-2.5 py-1 rounded-lg bg-[#f7f3e9] border border-[#d5c5ab] text-xs font-bold hover:bg-[#efe8d8]" title="Oddálit"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+            <button onclick="zoomMhTree(1.0)" class="px-2.5 py-1 rounded-lg bg-[#f7f3e9] border border-[#d5c5ab] text-xs font-bold hover:bg-[#efe8d8]">100%</button>
+            <button onclick="zoomMhTree(1.15)" class="px-2.5 py-1 rounded-lg bg-[#f7f3e9] border border-[#d5c5ab] text-xs font-bold hover:bg-[#efe8d8]" title="Přiblížit"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+          </div>
+        </div>
+
+        <div class="w-full overflow-x-auto bg-[#faf6ee] border border-[#efe8d8] rounded-xl p-3">
+          <div id="mhTreeZoomWrapper" class="origin-top-left transition-transform duration-150" style="min-width: 980px;">
+            <svg id="mhTreeSvg" viewBox="0 0 1120 680" class="w-full h-auto select-none"></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- NOVÝ TAB: RODY (AUTOMATICKY GENEROVANÉ DLE PŘÍLOHY) -->
+      <section id="view-clans" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="border-b border-[#efe8d8] pb-4">
+          <h2 id="clansMainHeading" class="serif text-4xl font-bold text-[#2c221e] mb-2">Osm rodů</h2>
+          <p class="text-sm text-[#6e5a4f] leading-relaxed">
+            Rodokmen se větví podle praprarodičů (rodičů dědečků a babiček). Každý rod je jedna z těchto větví se všemi svými předky.
+            <strong class="text-[#8c583a]">Přehled se počítá plně automaticky</strong> – jakmile přidáte další předky nebo upravíte obce, karty rodů se samy aktualizují.
+          </p>
+        </div>
+
+        <!-- Větve po otci -->
+        <div class="space-y-4">
+          <h3 class="serif text-2xl font-semibold text-[#2c221e] border-b border-[#e2d7c5] pb-2">Po otci</h3>
+          <div id="clansFatherGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- Větve po matce -->
+        <div class="space-y-4 pt-2">
+          <h3 class="serif text-2xl font-semibold text-[#2c221e] border-b border-[#e2d7c5] pb-2">Po matce</h3>
+          <div id="clansMotherGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+      </section>
+
+      <!-- NOVÝ TAB: INTERAKTIVNÍ MAPA RODŮ -->
+      <section id="view-map" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-[#efe8d8] pb-3">
+          <div>
+            <h2 class="serif text-2xl font-bold text-[#2c221e]">Mapa výskytu rodů a předků</h2>
+            <p class="text-xs text-[#6e5a4f]">Interaktivní mapa obcí, odkud vaše rody pocházejí (Severní a Jižní Čechy, Vysočina i Volyň na Ukrajině). Klikněte na značku v mapě pro seznam osob.</p>
+          </div>
+          <div class="flex gap-1.5 text-xs">
+            <button onclick="focusMapRegion('cz')" class="px-3 py-1.5 rounded-lg bg-[#efe8d8] hover:bg-[#e2d7c5] text-[#2c221e] font-semibold">Čechy</button>
+            <button onclick="focusMapRegion('volyn')" class="px-3 py-1.5 rounded-lg bg-[#efe8d8] hover:bg-[#e2d7c5] text-[#2c221e] font-semibold">Volyň (Ukrajina)</button>
+            <button onclick="focusMapRegion('all')" class="px-3 py-1.5 rounded-lg bg-[#8c583a] text-white font-semibold">Vše</button>
+          </div>
+        </div>
+
+        <div id="familyMapContainer" class="w-full h-[460px] rounded-2xl border border-[#d5c5ab] z-10 overflow-hidden shadow-inner"></div>
+        <div id="mapLegendPlaces" class="flex flex-wrap gap-1.5 pt-1"></div>
+      </section>
+
+      <!-- TAB: VĚJÍŘ PŘEDKŮ -->
+      <section id="view-fan" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm">
         <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4 border-b border-[#efe8d8] pb-3">
           <div>
             <h2 class="serif text-2xl font-bold text-[#2c221e]">Vějíř předků (4 generace)</h2>
@@ -164,7 +249,7 @@
         </div>
       </section>
 
-      <!-- TAB 2: STROM PO GENERACÍCH -->
+      <!-- TAB: STROM PO GENERACÍCH -->
       <section id="view-tree" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
         <div class="border-b border-[#efe8d8] pb-3">
           <h2 class="serif text-2xl font-bold text-[#2c221e]">Kompletní vývod předků po generacích</h2>
@@ -173,7 +258,7 @@
         <div id="treeGenerationsContainer" class="space-y-6"></div>
       </section>
 
-      <!-- TAB 3: SEZNAM VŠECH OSOB -->
+      <!-- TAB: SEZNAM VŠECH OSOB -->
       <section id="view-people" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm">
         <div class="flex flex-col sm:flex-row justify-between sm:items-center border-b border-[#efe8d8] pb-3 mb-4 gap-2">
           <div>
@@ -187,7 +272,7 @@
         <div id="peopleListContainer" class="divide-y divide-[#efe8d8] max-h-[700px] overflow-y-auto pr-1"></div>
       </section>
 
-      <!-- TAB 4: PŘÍBĚHY RODU -->
+      <!-- TAB: PŘÍBĚHY RODU -->
       <section id="view-stories" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
         <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3">
           <div>
@@ -201,7 +286,7 @@
         <div id="storiesContainer" class="space-y-4"></div>
       </section>
 
-      <!-- TAB 5: OBCE A STATISTIKY -->
+      <!-- TAB: OBCE A STATISTIKY -->
       <section id="view-places" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
         <div class="border-b border-[#efe8d8] pb-3">
           <h2 class="serif text-2xl font-bold text-[#2c221e]">Obce, místa původu a nejčastější příjmení</h2>
@@ -275,7 +360,7 @@
         </div>
 
         <div>
-          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Poznámka / Matriční záznam</label>
+          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Poznámka / Matriční záznam / Číslo domu</label>
           <textarea id="formNote" rows="3" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white"></textarea>
         </div>
 
@@ -351,6 +436,54 @@
     let selectedPersonId = "I12";
     let sosaMap = {};
     let searchFilter = "";
+    let leafletMap = null;
+    let mapMarkersGroup = null;
+
+    // Slovník souřadnic pro obce v rodokmenu (vč. Volyně, jižních a severních Čech)
+    const KNOWN_COORDS = {
+      "Žatec": { lat: 50.3272, lng: 13.5458, country: "Česko" },
+      "Chomutov": { lat: 50.4605, lng: 13.4178, country: "Česko" },
+      "Postoloprty": { lat: 50.3597, lng: 13.7026, country: "Česko" },
+      "Lenešice": { lat: 50.3752, lng: 13.7601, country: "Česko" },
+      "Louny": { lat: 50.3570, lng: 13.7967, country: "Česko" },
+      "Bečov u Mostu": { lat: 50.4501, lng: 13.7192, country: "Česko" },
+      "Libochovice": { lat: 50.4053, lng: 14.0454, country: "Česko" },
+      "Nezabylice": { lat: 50.4152, lng: 13.4754, country: "Česko" },
+      "Karlovy Vary": { lat: 50.2319, lng: 12.8712, country: "Česko" },
+      "Cheb": { lat: 50.0796, lng: 12.3739, country: "Česko" },
+      "Praha": { lat: 50.0755, lng: 14.4378, country: "Česko" },
+      "Kozolupy": { lat: 49.7667, lng: 13.2536, country: "Česko" },
+      "Blatná": { lat: 49.4247, lng: 13.8808, country: "Česko" },
+      "Oselec": { lat: 49.4422, lng: 13.6947, country: "Česko" },
+      "Horažďovice": { lat: 49.3208, lng: 13.7003, country: "Česko" },
+      "Písek": { lat: 49.3088, lng: 14.1475, country: "Česko" },
+      "Kloub": { lat: 49.1887, lng: 14.1843, country: "Česko" },
+      "Protivín": { lat: 49.1997, lng: 14.2175, country: "Česko" },
+      "Albrechtice": { lat: 49.2547, lng: 14.3053, country: "Česko" },
+      "Mezimostí": { lat: 49.1856, lng: 14.7086, country: "Česko" },
+      "Veselí nad Lužnicí": { lat: 49.1842, lng: 14.6975, country: "Česko" },
+      "Hluboká": { lat: 49.0522, lng: 14.4342, country: "Česko" },
+      "Pelhřimov": { lat: 49.4313, lng: 15.2234, country: "Česko" },
+      "Bedřichov": { lat: 49.4831, lng: 15.0419, country: "Česko (Pelhřimovsko)" },
+      "Zlátenka": { lat: 49.4525, lng: 15.0594, country: "Česko (Pelhřimovsko)" },
+      "Leskovice": { lat: 49.4239, lng: 15.0758, country: "Česko (Pelhřimovsko)" },
+      "Rovná": { lat: 49.5083, lng: 15.0989, country: "Česko (Pelhřimovsko)" },
+      "Zhořec": { lat: 49.4619, lng: 14.9917, country: "Česko (Pelhřimovsko)" },
+      "Roučkovice": { lat: 49.4906, lng: 15.0089, country: "Česko (Pacovsko)" },
+      "Hartlíkov": { lat: 49.4803, lng: 14.9481, country: "Česko (Pacovsko)" },
+      "Německá Lhota": { lat: 49.4491, lng: 15.0124, country: "Česko" },
+      "Malá Lhota": { lat: 49.3912, lng: 14.2211, country: "Česko" },
+      "Zahrádka": { lat: 49.5122, lng: 15.1742, country: "Česko" },
+      "Dolní Huť": { lat: 49.4412, lng: 15.0844, country: "Česko" },
+      "Mašovice": { lat: 49.4581, lng: 14.9811, country: "Česko" },
+      "Šellenberk": { lat: 49.5167, lng: 14.8333, country: "Česko (Šelmberk)" },
+      "Havlíčkův Brod": { lat: 49.6078, lng: 15.5806, country: "Česko" },
+      "Teremno": { lat: 50.7445, lng: 25.3789, country: "Ukrajina (Volyň, u Lucku)" },
+      "Luck": { lat: 50.7472, lng: 25.3254, country: "Ukrajina (Volyň)" },
+      "Dlouhé Pole": { lat: 50.5112, lng: 25.6145, country: "Ukrajina (Volyň, Dubenský újezd)" },
+      "Volyň": { lat: 50.6500, lng: 25.4800, country: "Ukrajina (Volyň)" },
+      "Polsko": { lat: 51.9194, lng: 19.1451, country: "Polsko" }
+    };
 
     window.addEventListener('DOMContentLoaded', async () => {
       checkLockStatus();
@@ -479,7 +612,7 @@
       if (!rootPerson) return;
 
       function traverse(person, sosaNum, depth) {
-        if (!person || depth > 7) return;
+        if (!person || depth > 8) return;
         sosaMap[sosaNum] = person;
         if (person.fatherId) {
           const father = getPersonById(person.fatherId);
@@ -504,17 +637,25 @@
     }
 
     function switchTab(tabId) {
-      ['fan', 'tree', 'people', 'stories', 'places'].forEach(t => {
+      ['mhtree', 'clans', 'map', 'fan', 'tree', 'people', 'stories', 'places'].forEach(t => {
         const view = document.getElementById(`view-${t}`);
         const btn = document.getElementById(`tab-${t}`);
+        if (!view || !btn) return;
         if (t === tabId) {
           view.classList.remove('hidden');
-          btn.className = "tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white shadow-sm whitespace-nowrap";
+          btn.className = "tab-btn px-3.5 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white shadow-sm whitespace-nowrap";
         } else {
           view.classList.add('hidden');
-          btn.className = "tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap";
+          btn.className = "tab-btn px-3.5 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap";
         }
       });
+
+      if (tabId === 'map') {
+        setTimeout(() => {
+          initOrUpdateMap();
+          if (leafletMap) leafletMap.invalidateSize();
+        }, 120);
+      }
     }
 
     function renderAll() {
@@ -524,12 +665,17 @@
       document.getElementById('navCountPeople').innerText = (appData.people || []).length;
       populateRootSelect(rootId);
       populateSurnameFilter();
+      renderMyHeritageTree();
+      renderClansAutomatic();
       renderFanChart();
       renderTreeGenerations();
       renderPeopleList();
       renderStories();
       renderPlacesAndStats();
       renderPersonDetail(selectedPersonId);
+      if (!document.getElementById('view-map').classList.contains('hidden')) {
+        initOrUpdateMap();
+      }
     }
 
     function populateRootSelect(currentRootId) {
@@ -561,6 +707,448 @@
         sorted.map(s => `<option value="${s}" ${s === currentVal ? 'selected' : ''}>${s}</option>`).join('');
     }
 
+    // ==================== NOVÉ 1: GRAFICKÝ STROM (MYHERITAGE STYL) ====================
+    function zoomMhTree(scale) {
+      const wrap = document.getElementById('mhTreeZoomWrapper');
+      wrap.style.transform = `scale(${scale})`;
+    }
+
+    function renderMyHeritageTree() {
+      const svg = document.getElementById('mhTreeSvg');
+      svg.innerHTML = '';
+
+      const W = 1120;
+      const yLevels = { 4: 55, 3: 205, 2: 365, 1: 525, 0: 635 };
+
+      function getXForSosa(sosa) {
+        if (sosa === 1) return W / 2;
+        if (sosa >= 2 && sosa <= 3) return (sosa - 2 + 0.5) * (W / 2);
+        if (sosa >= 4 && sosa <= 7) return (sosa - 4 + 0.5) * (W / 4);
+        if (sosa >= 8 && sosa <= 15) return (sosa - 8 + 0.5) * (W / 8);
+        return W / 2;
+      }
+
+      function getYForSosa(sosa) {
+        if (sosa === 1) return yLevels[1];
+        if (sosa <= 3) return yLevels[2];
+        if (sosa <= 7) return yLevels[3];
+        return yLevels[4];
+      }
+
+      // 1. Vykreslení propojovacích čar (orthogonal MyHeritage style)
+      for (let s = 1; s <= 7; s++) {
+        const child = sosaMap[s];
+        const father = sosaMap[s * 2];
+        const mother = sosaMap[s * 2 + 1];
+        if (!child && !father && !mother) continue;
+
+        const cx = getXForSosa(s);
+        const cy = getYForSosa(s);
+        const fx = getXForSosa(s * 2);
+        const mx = getXForSosa(s * 2 + 1);
+        const py = getYForSosa(s * 2);
+        const midY = (cy + py) / 2;
+
+        // Spojnice mezi otcem a matkou + svislice k dítěti
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const d = [
+          `M ${fx} ${py + 28}`,
+          `L ${fx} ${midY}`,
+          `L ${mx} ${midY}`,
+          `L ${mx} ${py + 28}`,
+          `M ${cx} ${midY}`,
+          `L ${cx} ${cy - 32}`
+        ].join(" ");
+        path.setAttribute("d", d);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", "#c5b49a");
+        path.setAttribute("stroke-width", "2");
+        svg.appendChild(path);
+
+        // Malý kroužek manželství uprostřed mezi rodiči
+        const marrCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        marrCircle.setAttribute("cx", cx);
+        marrCircle.setAttribute("cy", midY);
+        marrCircle.setAttribute("r", "5");
+        marrCircle.setAttribute("fill", "#fffdf9");
+        marrCircle.setAttribute("stroke", "#8c583a");
+        marrCircle.setAttribute("stroke-width", "2");
+        svg.appendChild(marrCircle);
+      }
+
+      // 2. Vykreslení karet osob (Sosa 1 až 15)
+      for (let s = 1; s <= 15; s++) {
+        const person = sosaMap[s];
+        const x = getXForSosa(s);
+        const y = getYForSosa(s);
+        const isGen4 = s >= 8;
+        const cardW = isGen4 ? 132 : 185;
+        const cardH = isGen4 ? 64 : 72;
+
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", "mh-node");
+        if (person) {
+          g.onclick = () => selectPersonById(person.id);
+        }
+
+        const isSelected = person && person.id === selectedPersonId;
+        const topColor = !person ? "#d5c5ab" : (person.gender === "M" ? "#4a90d9" : "#e06c88");
+
+        // Základ karty
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", x - cardW / 2);
+        rect.setAttribute("y", y - cardH / 2);
+        rect.setAttribute("width", cardW);
+        rect.setAttribute("height", cardH);
+        rect.setAttribute("rx", "10");
+        rect.setAttribute("fill", person ? "#ffffff" : "#f7f3e9");
+        rect.setAttribute("stroke", isSelected ? "#8c583a" : "#dfd3be");
+        rect.setAttribute("stroke-width", isSelected ? "3" : "1.5");
+        g.appendChild(rect);
+
+        // Barevný horní proužek MyHeritage (modrá = muž, růžová = žena)
+        const topBar = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        topBar.setAttribute("x", x - cardW / 2);
+        topBar.setAttribute("y", y - cardH / 2);
+        topBar.setAttribute("width", cardW);
+        topBar.setAttribute("height", "6");
+        topBar.setAttribute("rx", "3");
+        topBar.setAttribute("fill", topColor);
+        g.appendChild(topBar);
+
+        if (person) {
+          // Jméno
+          const nameTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          nameTxt.setAttribute("x", x);
+          nameTxt.setAttribute("y", y - (isGen4 ? 8 : 10));
+          nameTxt.setAttribute("text-anchor", "middle");
+          nameTxt.setAttribute("fill", "#2c221e");
+          nameTxt.setAttribute("font-size", isGen4 ? "10" : "12");
+          nameTxt.setAttribute("font-weight", "bold");
+          nameTxt.textContent = person.name.length > (isGen4 ? 18 : 23) ? person.name.slice(0, isGen4 ? 17 : 22) + "…" : person.name;
+          g.appendChild(nameTxt);
+
+          // Rodné příjmení / obec
+          const subTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          subTxt.setAttribute("x", x);
+          subTxt.setAttribute("y", y + 6);
+          subTxt.setAttribute("text-anchor", "middle");
+          subTxt.setAttribute("fill", "#8c583a");
+          subTxt.setAttribute("font-size", isGen4 ? "8.5" : "9.5");
+          subTxt.setAttribute("font-weight", "600");
+          const maidenInfo = person.maiden && !person.name.includes(person.maiden) ? `roz. ${person.maiden}` : (person.place || '');
+          subTxt.textContent = maidenInfo.slice(0, isGen4 ? 20 : 26);
+          g.appendChild(subTxt);
+
+          // Roky narození a úmrtí
+          const bYear = (person.birth || '').match(/\b(1[789]\d\d|20\d\d)\b/);
+          const dYear = (person.death || '').match(/\b(1[789]\d\d|20\d\d)\b/);
+          const yearsStr = `${bYear ? '*' + bYear[0] : ''} ${dYear ? ' †' + dYear[0] : ''}`.trim();
+
+          const dateTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          dateTxt.setAttribute("x", x);
+          dateTxt.setAttribute("y", y + (isGen4 ? 20 : 22));
+          dateTxt.setAttribute("text-anchor", "middle");
+          dateTxt.setAttribute("fill", "#6e5a4f");
+          dateTxt.setAttribute("font-size", isGen4 ? "8.5" : "9.5");
+          dateTxt.textContent = yearsStr || (person.birth || '').slice(0, 16);
+          g.appendChild(dateTxt);
+        } else {
+          const emptyTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          emptyTxt.setAttribute("x", x);
+          emptyTxt.setAttribute("y", y + 4);
+          emptyTxt.setAttribute("text-anchor", "middle");
+          emptyTxt.setAttribute("fill", "#a38f72");
+          emptyTxt.setAttribute("font-size", "9.5");
+          emptyTxt.textContent = `Nezadáno (#${s})`;
+          g.appendChild(emptyTxt);
+        }
+
+        svg.appendChild(g);
+      }
+
+      // 3. Sourozenci a děti výchozí osoby dole pod #1
+      const rootPerson = sosaMap[1];
+      if (rootPerson) {
+        const children = (appData.people || []).filter(ch => ch.fatherId === rootPerson.id || ch.motherId === rootPerson.id);
+        const siblings = (appData.people || []).filter(sb =>
+          sb.id !== rootPerson.id &&
+          ((rootPerson.fatherId && sb.fatherId === rootPerson.fatherId) || (rootPerson.motherId && sb.motherId === rootPerson.motherId))
+        );
+
+        const bottomList = children.length > 0 ? children : siblings;
+        const bottomLabel = children.length > 0 ? "Děti výchozí osoby:" : (siblings.length > 0 ? "Sourozenci výchozí osoby:" : "");
+
+        if (bottomList.length > 0) {
+          const lbl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          lbl.setAttribute("x", W / 2);
+          lbl.setAttribute("y", 595);
+          lbl.setAttribute("text-anchor", "middle");
+          lbl.setAttribute("fill", "#8c583a");
+          lbl.setAttribute("font-size", "10");
+          lbl.setAttribute("font-weight", "bold");
+          lbl.textContent = bottomLabel;
+          svg.appendChild(lbl);
+
+          const spacing = Math.min(180, (W - 100) / bottomList.length);
+          const startX = W / 2 - ((bottomList.length - 1) * spacing) / 2;
+
+          bottomList.forEach((rel, idx) => {
+            const rx = startX + idx * spacing;
+            const ry = yLevels[0];
+            const rg = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            rg.setAttribute("class", "mh-node");
+            rg.onclick = () => selectPersonById(rel.id);
+
+            const rRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            rRect.setAttribute("x", rx - 75);
+            rRect.setAttribute("y", ry - 22);
+            rRect.setAttribute("width", "150");
+            rRect.setAttribute("height", "44");
+            rRect.setAttribute("rx", "8");
+            rRect.setAttribute("fill", "#ffffff");
+            rRect.setAttribute("stroke", rel.gender === "M" ? "#4a90d9" : "#e06c88");
+            rRect.setAttribute("stroke-width", "2");
+            rg.appendChild(rRect);
+
+            const rTxt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            rTxt.setAttribute("x", rx);
+            rTxt.setAttribute("y", ry - 2);
+            rTxt.setAttribute("text-anchor", "middle");
+            rTxt.setAttribute("fill", "#2c221e");
+            rTxt.setAttribute("font-size", "10.5");
+            rTxt.setAttribute("font-weight", "bold");
+            rTxt.textContent = rel.name.slice(0, 20);
+            rg.appendChild(rTxt);
+
+            const rSub = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            rSub.setAttribute("x", rx);
+            rSub.setAttribute("y", ry + 12);
+            rSub.setAttribute("text-anchor", "middle");
+            rSub.setAttribute("fill", "#6e5a4f");
+            rSub.setAttribute("font-size", "8.5");
+            rSub.textContent = rel.birth ? `* ${rel.birth}` : '';
+            rg.appendChild(rSub);
+
+            svg.appendChild(rg);
+          });
+        }
+      }
+    }
+
+    // ==================== NOVÉ 2: AUTOMATICKÁ SEKCE "RODY" (DLE PŘÍLOHY) ====================
+    function pluralizeSurname(surname) {
+      if (!surname) return "Neznámý rod";
+      const s = surname.trim();
+      // Převod ženského příjmení na mužský kořen a množné číslo (např. Camprová -> Camprovi, Ženíšková -> Ženíškovi)
+      let base = s;
+      if (base.endsWith("ová")) base = base.slice(0, -3);
+      else if (base.endsWith("á")) return base.slice(0, -1) + "ých";
+
+      if (base.endsWith("ek")) return base.slice(0, -2) + "kovi";
+      if (base.endsWith("ec")) return base.slice(0, -2) + "covi";
+      if (base.endsWith("a")) return base.slice(0, -1) + "ovi";
+      if (base.endsWith("e") || base.endsWith("é")) return "Rod " + base;
+      return base + "ovi";
+    }
+
+    function collectSubtreeAncestors(startPerson) {
+      const list = [];
+      function walk(p) {
+        if (!p) return;
+        list.push(p);
+        if (p.fatherId) walk(getPersonById(p.fatherId));
+        if (p.motherId) walk(getPersonById(p.motherId));
+      }
+      walk(startPerson);
+      return list;
+    }
+
+    function renderClansAutomatic() {
+      const fatherGrid = document.getElementById('clansFatherGrid');
+      const motherGrid = document.getElementById('clansMotherGrid');
+      fatherGrid.innerHTML = '';
+      motherGrid.innerHTML = '';
+
+      // Barevná paleta horních proužků karet přesně podle vzoru
+      const borderColors = [
+        "#eab308", "#f97316", "#a855f7", "#ec4899",
+        "#3b82f6", "#14b8a6", "#84cc16", "#06b6d4"
+      ];
+
+      // Zjistíme větve po otci (Sosa 8, 9, 10, 11; pokud chybí, vezmeme Sosa 4 nebo 5)
+      const fatherBranches = [];
+      [8, 9, 10, 11].forEach((s, i) => {
+        if (sosaMap[s]) fatherBranches.push({ sosa: s, person: sosaMap[s], color: borderColors[i] });
+      });
+      if (fatherBranches.length === 0) {
+        [4, 5].forEach((s, i) => {
+          if (sosaMap[s]) fatherBranches.push({ sosa: s, person: sosaMap[s], color: borderColors[i] });
+        });
+      }
+
+      // Větve po matce (Sosa 12, 13, 14, 15; pokud chybí, vezmeme Sosa 6 nebo 7)
+      const motherBranches = [];
+      [12, 13, 14, 15].forEach((s, i) => {
+        if (sosaMap[s]) motherBranches.push({ sosa: s, person: sosaMap[s], color: borderColors[i + 4] });
+      });
+      if (motherBranches.length === 0) {
+        [6, 7].forEach((s, i) => {
+          if (sosaMap[s]) motherBranches.push({ sosa: s, person: sosaMap[s], color: borderColors[i + 4] });
+        });
+      }
+
+      const totalClans = fatherBranches.length + motherBranches.length;
+      const numWords = { 1: "Jeden rod", 2: "Dva rody", 3: "Tři rody", 4: "Čtyři rody", 5: "Pět rodů", 6: "Šest rodů", 7: "Sedm rodů", 8: "Osm rodů" };
+      document.getElementById('clansMainHeading').innerText = numWords[totalClans] || `${totalClans} rodů`;
+
+      function buildClanCardHTML(branch) {
+        const startP = branch.person;
+        const ancestors = collectSubtreeAncestors(startP);
+        const count = ancestors.length;
+        const oldest = ancestors[ancestors.length - 1] || startP;
+
+        // Posbíráme unikátní obce v této větvi
+        const placesSet = new Set();
+        ancestors.forEach(a => {
+          if (a.place) {
+            a.place.split('/').forEach(part => {
+              const clean = part.trim();
+              if (clean && clean !== 'Česko') placesSet.add(clean);
+            });
+          }
+        });
+        const placesArr = [...placesSet];
+
+        const baseSurname = startP.maiden || startP.name.split(' ').pop();
+        const clanTitle = pluralizeSurname(baseSurname);
+
+        // Automatický popis větve
+        let desc = "";
+        if (placesArr.length > 0) {
+          desc += `Původ a působiště rodu: ${placesArr.join(', ')}. `;
+        } else {
+          desc += `Rodová linie začínající u předka ${startP.name}. `;
+        }
+        if (oldest && oldest.id !== startP.id) {
+          desc += `Doloženi až k předkovi ${oldest.name}${oldest.birth ? ' (*' + oldest.birth + ')' : ''}.`;
+        } else if (startP.birth) {
+          desc += `Narození výchozího předka větvě: ${startP.birth}.`;
+        }
+
+        return `
+          <div onclick="selectPersonById('${startP.id}'); changeRootPerson('${startP.id}'); switchTab('mhtree');"
+               class="bg-white rounded-2xl border border-[#e2d7c5] shadow-sm hover:shadow-md transition cursor-pointer overflow-hidden flex flex-col justify-between group">
+            <div style="background-color: ${branch.color}; height: 6px; width: 100%;"></div>
+            <div class="p-5 space-y-3 flex-1 flex flex-col justify-between">
+              <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                  <h4 class="serif text-2xl font-bold text-[#2c221e] group-hover:text-[#8c583a] transition">${clanTitle}</h4>
+                  <span class="text-[#a38f72] group-hover:translate-x-1 transition">→</span>
+                </div>
+                <p class="text-xs text-[#4a3b34] leading-relaxed">${desc}</p>
+              </div>
+              <div class="pt-3 border-t border-[#f3eee3] text-[11px] text-[#6e5a4f] font-medium">
+                ${count} ${count === 1 ? 'předek' : (count >= 2 && count <= 4 ? 'předci' : 'předků')} · začíná u ${startP.name}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      fatherGrid.innerHTML = fatherBranches.map(buildClanCardHTML).join('') || `<p class="text-xs text-[#6e5a4f]">V této větvi zatím nejsou zadáni praprarodiče.</p>`;
+      motherGrid.innerHTML = motherBranches.map(buildClanCardHTML).join('') || `<p class="text-xs text-[#6e5a4f]">V této větvi zatím nejsou zadáni praprarodiče.</p>`;
+    }
+
+    // ==================== NOVÉ 3: INTERAKTIVNÍ MAPA RODŮ ====================
+    function resolveCoordinatesForPlace(rawPlace) {
+      if (!rawPlace) return null;
+      for (const [key, coords] of Object.entries(KNOWN_COORDS)) {
+        if (rawPlace.toLowerCase().includes(key.toLowerCase())) {
+          return { name: key, ...coords };
+        }
+      }
+      return null;
+    }
+
+    function initOrUpdateMap() {
+      const container = document.getElementById('familyMapContainer');
+      if (!container) return;
+
+      if (!leafletMap) {
+        leafletMap = L.map('familyMapContainer').setView([49.85, 15.5], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap přispěvatelé'
+        }).addTo(leafletMap);
+        mapMarkersGroup = L.layerGroup().addTo(leafletMap);
+      }
+
+      mapMarkersGroup.clearLayers();
+
+      // Seskupíme lidi podle obcí
+      const groupedByPlace = {};
+      (appData.people || []).forEach(p => {
+        const sourceText = `${p.place || ''} ${p.birth || ''} ${p.death || ''}`;
+        for (const [placeKey, coords] of Object.entries(KNOWN_COORDS)) {
+          if (sourceText.toLowerCase().includes(placeKey.toLowerCase())) {
+            if (!groupedByPlace[placeKey]) {
+              groupedByPlace[placeKey] = { coords, people: [] };
+            }
+            if (!groupedByPlace[placeKey].people.some(existing => existing.id === p.id)) {
+              groupedByPlace[placeKey].people.push(p);
+            }
+          }
+        }
+      });
+
+      const legendEl = document.getElementById('mapLegendPlaces');
+      legendEl.innerHTML = '';
+
+      Object.entries(groupedByPlace).forEach(([placeName, data]) => {
+        const count = data.people.length;
+        const surnames = [...new Set(data.people.map(p => p.maiden || p.name.split(' ').pop()))].join(', ');
+
+        const popupHtml = `
+          <div style="font-family: Inter, sans-serif; min-width: 190px;">
+            <strong style="font-size: 14px; color: #2c221e;">${placeName}</strong>
+            <div style="font-size: 11px; color: #8c583a; margin-bottom: 6px;">Rody: ${surnames}</div>
+            <div style="max-height: 130px; overflow-y: auto; font-size: 11px; border-top: 1px solid #e2d7c5; padding-top: 4px;">
+              ${data.people.map(p => `<div style="margin-bottom: 3px;">• <b>${p.name}</b> ${p.birth ? '(' + p.birth + ')' : ''}</div>`).join('')}
+            </div>
+          </div>
+        `;
+
+        const marker = L.circleMarker([data.coords.lat, data.coords.lng], {
+          radius: Math.min(8 + count * 1.5, 20),
+          fillColor: data.coords.country.includes("Ukrajina") ? "#d97706" : "#8c583a",
+          color: "#fffdf9",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.88
+        }).bindPopup(popupHtml);
+
+        mapMarkersGroup.addLayer(marker);
+
+        // Tlačítko pod mapou pro rychlý skok na obec
+        const btn = document.createElement('button');
+        btn.className = "px-2.5 py-1 rounded-lg bg-[#f7f3e9] hover:bg-[#efe8d8] border border-[#d5c5ab] text-xs font-medium text-[#2c221e]";
+        btn.innerHTML = `<i class="fa-solid fa-location-dot text-[#8c583a] mr-1"></i>${placeName} (${count})`;
+        btn.onclick = () => {
+          leafletMap.setView([data.coords.lat, data.coords.lng], 11);
+          marker.openPopup();
+        };
+        legendEl.appendChild(btn);
+      });
+    }
+
+    function focusMapRegion(region) {
+      if (!leafletMap) return;
+      if (region === 'cz') leafletMap.setView([49.75, 14.3], 8);
+      else if (region === 'volyn') leafletMap.setView([50.62, 25.45], 9);
+      else leafletMap.setView([49.9, 18.5], 6);
+    }
+
+    // ==================== VĚJÍŘ PŘEDKŮ ====================
     function polarToCartesian(cx, cy, r, angleDeg) {
       const rad = (angleDeg * Math.PI) / 180.0;
       return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
@@ -854,6 +1442,7 @@
 
     function selectPersonById(id) {
       selectedPersonId = id;
+      renderMyHeritageTree();
       renderFanChart();
       renderTreeGenerations();
       renderPersonDetail(id);
@@ -887,7 +1476,7 @@
         </div>
 
         <button onclick="changeRootPerson('${p.id}')" class="w-full py-2 px-3 bg-[#efe8d8] hover:bg-[#e2d7c5] text-[#2c221e] rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5">
-          <i class="fa-solid fa-bullseye text-[#8c583a]"></i> Nastavit tuto osobu jako střed vějíře (#1)
+          <i class="fa-solid fa-bullseye text-[#8c583a]"></i> Nastavit tuto osobu jako výchozí (#1)
         </button>
 
         <div class="space-y-2 text-xs bg-[#f7f3e9] p-3.5 rounded-xl border border-[#e2d7c5]">
@@ -1036,7 +1625,6 @@
       await saveToCloud(true);
     }
 
-    // Vygeneruje přímo hotový soubor data.js ke stažení pro GitHub
     function exportDataJsFile() {
       const jsContent = "const gedcomFamilyData = " + JSON.stringify(appData, null, 2) + ";\n";
       const dataStr = "data:text/javascript;charset=utf-8," + encodeURIComponent(jsContent);
