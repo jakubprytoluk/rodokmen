@@ -1,1295 +1,1458 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="cs" class="h-full bg-slate-50">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow">
-  <title>Rodinná kronika a rodokmen</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap');
-    
-    :root {
-      --bg-parchment: #f7f3e9;
-      --bg-card: #fffdf9;
-      --ink-dark: #2c221e;
-      --ink-muted: #6e5a4f;
-      --accent-sepia: #8c583a;
-      --border-warm: #e2d7c5;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: var(--bg-parchment);
-      color: var(--ink-dark);
-    }
-
-    h1, h2, h3, .serif {
-      font-family: 'Crimson Pro', Georgia, serif;
-    }
-
-    .fan-slice {
-      transition: opacity 0.2s, filter 0.2s;
-      cursor: pointer;
-    }
-    .fan-slice:hover {
-      filter: brightness(0.92);
-    }
-
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #efe9da; }
-    ::-webkit-scrollbar-thumb { background: #c5b49a; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #a38f72; }
-  </style>
-</head>
-<body class="min-h-screen flex flex-col">
-
-  <!-- ==================== 1. RODINNÁ OTÁZKA (LOCK SCREEN) ==================== -->
-  <div id="lockScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2c221e]/90 backdrop-blur-sm">
-    <div class="bg-[#fffdf9] border-2 border-[#d5c5ab] rounded-2xl max-w-md w-full p-8 shadow-2xl text-center">
-      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[#efe8d8] border border-[#d5c5ab] flex items-center justify-center text-[#8c583a]">
-        <i class="fa-solid fa-book-bible text-2xl"></i>
-      </div>
-      <h1 class="serif text-3xl font-bold text-[#2c221e] mb-2">Rodinný rodokmen</h1>
-      <p class="text-xs text-[#6e5a4f] mb-6">Tento web obsahuje soukromé matriční záznamy a historii rodiny. Pro vstup odpovězte na kontrolní rodinnou otázku.</p>
-      
-      <form onsubmit="unlockSite(event)" class="space-y-4">
-        <div class="bg-[#f7f3e9] p-3.5 rounded-xl border border-[#e2d7c5] text-left">
-          <label class="block text-[11px] uppercase tracking-wider font-bold text-[#8c583a] mb-1">Kontrolní otázka:</label>
-          <p id="lockQuestionText" class="serif text-lg font-semibold text-[#2c221e]">Jak se jmenovala babička z tatínkovy strany za svobodna?</p>
-        </div>
-        <div>
-          <input type="text" id="lockAnswerInput" placeholder="Napište odpověď (ukázka: Nováková)..." required
-            class="w-full px-4 py-3 rounded-xl border border-[#d5c5ab] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8c583a]">
-          <p id="lockError" class="text-xs text-red-700 mt-1.5 hidden">Nesprávná odpověď. Zkuste to prosím znovu.</p>
-        </div>
-        <button type="submit" class="w-full py-3 bg-[#8c583a] hover:bg-[#73462c] text-white font-semibold rounded-xl shadow-md transition text-sm">
-          Odemknout rodinnou kroniku
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- ==================== 2. HLAVNÍ HLAVIČKA ==================== -->
-  <header class="bg-[#2c221e] text-[#f7f3e9] border-b-4 border-[#8c583a] sticky top-0 z-30 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-col lg:flex-row justify-between items-center gap-3">
-      <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
-        <div class="flex items-center gap-3">
-          <div class="w-11 h-11 rounded-xl bg-[#8c583a] flex items-center justify-center text-[#fffdf9] shadow-inner">
-            <i class="fa-solid fa-tree text-xl"></i>
-          </div>
-          <div>
-            <h1 id="familyTitleHeader" class="serif text-2xl font-bold tracking-wide leading-none">Rodokmen rodu Nováků a Dvořáků</h1>
-            <p class="text-xs text-[#c5b49a] mt-1">Stav bádání v českých matrikách • Cloudová verze</p>
-          </div>
-        </div>
-
-        <!-- Cloud Status (Mobilní zobrazení) -->
-        <div id="syncStatusMobile" class="lg:hidden flex items-center gap-1.5 bg-emerald-950/90 text-emerald-400 border border-emerald-800/60 px-2.5 py-1 rounded-full text-[11px]">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Cloud</span>
-        </div>
-      </div>
-
-      <!-- Vyhledávání, Cloud Status a akce -->
-      <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end">
-        <!-- Cloud Status (Desktop) -->
-        <div id="syncStatus" class="hidden lg:flex items-center gap-2 bg-emerald-950/90 text-emerald-400 border border-emerald-800/60 px-3 py-1.5 rounded-full text-xs">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Cloud připojen (JSONBin)</span>
-        </div>
-
-        <button onclick="forceSync()" title="Načíst nejnovější stav z cloudu" class="bg-[#3d302a] hover:bg-[#4e3e37] text-[#e2d7c5] px-3 py-1.5 rounded-xl border border-[#57463e] text-xs transition flex items-center gap-1.5">
-          <i class="fa-solid fa-arrows-rotate"></i>
-          <span class="hidden sm:inline">Obnovit</span>
-        </button>
-
-        <div class="relative flex-1 sm:w-52">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-[#a38f72] text-xs"></i>
-          <input type="text" id="globalSearch" oninput="handleSearch(this.value)" placeholder="Hledat jméno, obec, č.p..."
-            class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#3d302a] border border-[#57463e] text-xs text-[#f7f3e9] placeholder-[#a38f72] focus:outline-none focus:border-[#c5b49a]">
-        </div>
-
-        <button onclick="openEditPersonModal()" class="bg-[#8c583a] hover:bg-[#a16746] text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shadow">
-          <i class="fa-solid fa-user-plus"></i> <span>Přidat osobu</span>
-        </button>
-
-        <button onclick="openDataModal()" title="Nastavení rodokmenu / Záloha JSON" class="bg-[#3d302a] hover:bg-[#4e3e37] text-[#e2d7c5] p-2 rounded-xl border border-[#57463e] transition">
-          <i class="fa-solid fa-gear text-xs"></i>
-        </button>
-      </div>
-    </div>
-
-    <!-- Navigační záložky -->
-    <div class="bg-[#382c27] border-t border-[#4a3b34]">
-      <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto gap-1 py-1.5 text-xs font-medium">
-        <button onclick="switchTab('fan')" id="tab-fan" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white whitespace-nowrap">
-          <i class="fa-solid fa-fan"></i> Vějíř předků
-        </button>
-        <button onclick="switchTab('tree')" id="tab-tree" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
-          <i class="fa-solid fa-sitemap"></i> Strom předků
-        </button>
-        <button onclick="switchTab('people')" id="tab-people" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
-          <i class="fa-solid fa-users"></i> Seznam osob (<span id="navCountPeople">0</span>)
-        </button>
-        <button onclick="switchTab('stories')" id="tab-stories" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
-          <i class="fa-solid fa-scroll"></i> Příběhy rodu
-        </button>
-        <button onclick="switchTab('places')" id="tab-places" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
-          <i class="fa-solid fa-house-flag"></i> Domy, obce & statistiky
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- ==================== 3. HLAVNÍ OBSAH ==================== -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-    <!-- LEVÁ / HLAVNÍ ČÁST (8 sloupců) -->
-    <div class="lg:col-span-8 space-y-6">
-
-      <!-- TAB 1: VĚJÍŘ PŘEDKŮ (SVG) -->
-      <section id="view-fan" class="bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm">
-        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4 border-b border-[#efe8d8] pb-3">
-          <div>
-            <h2 class="serif text-2xl font-bold text-[#2c221e]">Vějíř předků (Ahnentafel)</h2>
-            <p class="text-xs text-[#6e5a4f]">Soustředné kruhy generací podle Sosa-Stradonitz číslování. Kliknutím na výseč zobrazíte detail a matriční zápis vpravo.</p>
-          </div>
-          <div class="flex items-center gap-3 text-xs">
-            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-[#d6e4f0] border border-[#9ab7d3]"></span> Muži</span>
-            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-[#f5dce0] border border-[#d9a7b0]"></span> Ženy</span>
-            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-[#fff3cd] border border-[#e0c46c]"></span> Sporné</span>
-          </div>
-        </div>
-
-        <div class="w-full overflow-x-auto flex justify-center py-2">
-          <svg id="fanChartSvg" viewBox="-360 -360 720 420" class="w-full max-w-[680px] h-auto select-none"></svg>
-        </div>
-      </section>
-
-      <!-- TAB 2: STROM PŘEDKŮ (PO GENERACÍCH) -->
-      <section id="view-tree" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
-        <div class="border-b border-[#efe8d8] pb-3">
-          <h2 class="serif text-2xl font-bold text-[#2c221e]">Vývod z předků po generacích</h2>
-          <p class="text-xs text-[#6e5a4f]">Číslování předků: 1 = výchozí osoba, 2 = otec, 3 = matka, 4–7 = prarodiče, 8–15 = praprarodiče.</p>
-        </div>
-        <div id="treeGenerationsContainer" class="space-y-6"></div>
-      </section>
-
-      <!-- TAB 3: SEZNAM VŠECH OSOB -->
-      <section id="view-people" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm">
-        <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3 mb-4">
-          <div>
-            <h2 class="serif text-2xl font-bold text-[#2c221e]">Kartotéka osob v rodokmenu</h2>
-            <p class="text-xs text-[#6e5a4f]">Kompletní rejstřík nalezených předků s přímými odkazy do matrik.</p>
-          </div>
-        </div>
-        <div id="peopleListContainer" class="divide-y divide-[#efe8d8]"></div>
-      </section>
-
-      <!-- TAB 4: PŘÍBĚHY RODU -->
-      <section id="view-stories" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
-        <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3">
-          <div>
-            <h2 class="serif text-2xl font-bold text-[#2c221e]">Příběhy rodu a rodinná kronika</h2>
-            <p class="text-xs text-[#6e5a4f]">Rekonstrukce života předků na základě matričních zápisů, gruntovních knih a vzpomínek.</p>
-          </div>
-          <button onclick="openStoryModal()" class="bg-[#efe8d8] hover:bg-[#e2d7c5] text-[#2c221e] px-3 py-1.5 rounded-xl text-xs font-semibold transition">
-            <i class="fa-solid fa-pen-nib mr-1"></i> Přidat kapitolu
-          </button>
-        </div>
-        <div id="storiesContainer" class="space-y-6"></div>
-      </section>
-
-      <!-- TAB 5: DOMY, OBCE A STATISTIKY -->
-      <section id="view-places" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
-        <div class="border-b border-[#efe8d8] pb-3">
-          <h2 class="serif text-2xl font-bold text-[#2c221e]">Domy, grunty a statistiky rodu</h2>
-          <p class="text-xs text-[#6e5a4f]">Přehled obcí, čísel popisných a nejčastějších povolání v rodokmenu.</p>
-        </div>
-        <div id="placesStatsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-      </section>
-
-    </div>
-
-    <!-- PRAVÝ PANEL: DETAIL VYBRANÉ OSOBY & MATRIČNÍ ZÁPIS (4 sloupce) -->
-    <aside class="lg:col-span-4">
-      <div id="personDetailCard" class="bg-[#fffdf9] border-2 border-[#d5c5ab] rounded-2xl p-5 shadow-md sticky top-28 space-y-4">
-        <!-- Naplněno dynamicky JS -->
-      </div>
-    </aside>
-
-  </main>
-
-  <!-- ==================== 4. MODÁLNÍ OKNO: PŘIDAT / UPRAVIT OSOBU ==================== -->
-  <div id="personModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-[#fffdf9] border border-[#d5c5ab] rounded-2xl max-w-xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
-      <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3">
-        <h3 id="personModalTitle" class="serif text-2xl font-bold text-[#2c221e]">Upravit osobu v rodokmenu</h3>
-        <button onclick="closePersonModal()" class="text-[#6e5a4f] hover:text-[#2c221e]"><i class="fa-solid fa-xmark text-xl"></i></button>
-      </div>
-
-      <form onsubmit="savePersonForm(event)" class="space-y-3 text-xs">
-        <div class="grid grid-cols-3 gap-3">
-          <div>
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Číslo Sosa (1-63)</label>
-            <input type="number" id="formSosa" min="1" max="63" required placeholder="např. 4" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-          </div>
-          <div class="col-span-2">
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Jméno a příjmení (vč. rodného)</label>
-            <input type="text" id="formName" required placeholder="např. František Novák" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Pohlaví</label>
-            <select id="formGender" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-              <option value="M">Muž</option>
-              <option value="F">Žena</option>
-            </select>
-          </div>
-          <div>
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Povolání / Stav</label>
-            <input type="text" id="formOccupation" placeholder="např. sedlák, chalupník, kovář" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Datum a místo narození (*)</label>
-            <input type="text" id="formBirth" placeholder="např. 14. 3. 1872, Třeboň č.p. 18" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-          </div>
-          <div>
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Datum a místo úmrtí (†)</label>
-            <input type="text" id="formDeath" placeholder="např. 22. 11. 1941, Třeboň" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Sňatek (⚭)</label>
-            <input type="text" id="formMarriage" placeholder="např. 12. 5. 1898 s Annou Dvořákovou" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-          </div>
-          <div>
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Hlavní obec a č.p. (grunt)</label>
-            <input type="text" id="formHouse" placeholder="např. Lomnice nad Lužnicí č.p. 42" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-          </div>
-        </div>
-
-        <div>
-          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Doslovný přepis matričního zápisu / poznámka</label>
-          <textarea id="formTranscription" rows="3" placeholder="Přepis z matriky (kurent / latina / němčina) nebo překlad..." class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white"></textarea>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Archiv a signatura matriky</label>
-            <input type="text" id="formArchiveLabel" placeholder="např. SOA Třeboň, matrika N 1860-1880, fol. 142" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-          </div>
-          <div>
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Přímý odkaz na snímek (URL)</label>
-            <input type="url" id="formArchiveUrl" placeholder="https://digi.ceskearchivy.cz/..." class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-          </div>
-        </div>
-
-        <div class="flex items-center gap-4 pt-1">
-          <label class="inline-flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" id="formUncertain" class="rounded text-[#8c583a]">
-            <span class="font-medium text-[#2c221e]">Nejistý / sporný údaj (k ověření v matrice)</span>
-          </label>
-        </div>
-
-        <div class="flex justify-between items-center pt-3 border-t border-[#efe8d8]">
-          <button type="button" onclick="deletePersonFromForm()" class="px-3 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-semibold">
-            <i class="fa-solid fa-trash-can mr-1"></i> Smazat osobu
-          </button>
-          <div class="flex gap-2">
-            <button type="button" onclick="closePersonModal()" class="px-4 py-2 rounded-xl bg-[#efe8d8] text-[#2c221e] font-semibold">Zrušit</button>
-            <button type="submit" class="px-5 py-2 rounded-xl bg-[#8c583a] text-white font-semibold shadow">Uložit do cloudu</button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ==================== 5. MODÁLNÍ OKNO: NASTAVENÍ / EXPORT DAT ==================== -->
-  <div id="dataModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-[#fffdf9] border border-[#d5c5ab] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3">
-        <h3 class="serif text-2xl font-bold text-[#2c221e]">Nastavení rodokmenu a záloha dat</h3>
-        <button onclick="closeDataModal()" class="text-[#6e5a4f] hover:text-[#2c221e]"><i class="fa-solid fa-xmark text-xl"></i></button>
-      </div>
-
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Název rodokmenu v hlavičce</label>
-          <input type="text" id="cfgTitle" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-        </div>
-        <div>
-          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Rodinná kontrolní otázka</label>
-          <input type="text" id="cfgQuestion" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-        </div>
-        <div>
-          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Správná odpověď (nezáleží na velikosti písmen a diakritice)</label>
-          <input type="text" id="cfgAnswer" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
-        </div>
-        <button onclick="saveConfig()" class="w-full py-2.5 bg-[#8c583a] text-white font-semibold rounded-xl shadow">Uložit nastavení do cloudu</button>
-
-        <hr class="border-[#efe8d8] my-3">
-
-        <div class="flex gap-2">
-          <button onclick="exportJsonData()" class="flex-1 py-2.5 bg-[#382c27] text-white font-semibold rounded-xl">
-            <i class="fa-solid fa-download mr-1"></i> Stáhnout zálohu (JSON)
-          </button>
-          <button onclick="resetToDemo()" class="py-2.5 px-4 bg-red-100 text-red-800 font-semibold rounded-xl">
-            Obnovit výchozí ukázku
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== 6. JAVASCRIPT LOGIKA & JSONBIN INTEGRACE ==================== -->
-  <script>
-    // PEVNĚ NASTAVENÉ PŘIHLÁŠENÍ K VAŠEMU JSONBIN CLOUDU
-    const JSONBIN_BIN_ID = "6adc6b4aac6210605a4e2241";
-    const JSONBIN_MASTER_KEY = "$2a$10$TEIYmhA7g5etdJmkOrXXE.cP6pLXM0o9epsQcn5nZXdgfZMPaRF/u";
-    const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
-
-    const STORAGE_KEY = 'rodokmen_sarson_data_v1';
-    const UNLOCK_KEY = 'rodokmen_unlocked_v1';
-
-    // Uchováme případná data z "Domácích projektů", pokud jsou ve stejném Binu
-    let fullCloudRecord = {};
-
-    // Výchozí ukázková data ve stylu sarsonj/rodokmen-skill
-    const defaultFamilyData = {
-      config: {
-        title: "Rodokmen rodu Nováků a Dvořáků",
-        question: "Jak se jmenovala babička z tatínkovy strany za svobodna?",
-        answer: "Nováková"
-      },
-      people: [
-        {
-          sosa: 1,
-          name: "Jan Novák",
-          gender: "M",
-          occupation: "stavební inženýr",
-          birth: "15. 4. 1980, České Budějovice",
-          death: "",
-          marriage: "10. 6. 2006, Třeboň",
-          house: "České Budějovice č.p. 412",
-          transcription: "Výchozí osoba rodokmenu (střed vějíře předků).",
-          archiveLabel: "Rodinný archiv – rodný list",
-          archiveUrl: "",
-          uncertain: false
-        },
-        {
-          sosa: 2,
-          name: "Ing. Petr Novák",
-          gender: "M",
-          occupation: "lesní správce",
-          birth: "8. 9. 1952, Třeboň",
-          death: "",
-          marriage: "4. 9. 1976, Lomnice nad Lužnicí",
-          house: "Třeboň č.p. 88",
-          transcription: "Narozen v rodině třeboňského truhláře Václava Nováka.",
-          archiveLabel: "Rodinný archiv – oddací list",
-          archiveUrl: "",
-          uncertain: false
-        },
-        {
-          sosa: 3,
-          name: "Marie Nováková roz. Dvořáková",
-          gender: "F",
-          occupation: "učitelka",
-          birth: "19. 5. 1954, Jindřichův Hradec",
-          death: "",
-          marriage: "4. 9. 1976, Lomnice nad Lužnicí",
-          house: "Lomnice nad Lužnicí č.p. 24",
-          transcription: "Dcera mlynářského rodu Dvořáků z Lomnice.",
-          archiveLabel: "Rodinný archiv",
-          archiveUrl: "",
-          uncertain: false
-        },
-        {
-          sosa: 4,
-          name: "Václav Novák",
-          gender: "M",
-          occupation: "truhlářský mistr",
-          birth: "12. 11. 1921, Třeboň č.p. 45",
-          death: "3. 2. 1998, Třeboň",
-          marriage: "18. 10. 1947, Třeboň",
-          house: "Třeboň č.p. 45",
-          transcription: "„Dne 12. listopadu 1921 narozen a 16. listopadu pokřtěn Václav, syn manželský Františka Nováka, mistra stolařského v Třeboni č.p. 45.“",
-          archiveLabel: "SOA Třeboň, matrika N 1915–1925, snímek 114",
-          archiveUrl: "https://digi.ceskearchivy.cz",
-          uncertain: false
-        },
-        {
-          sosa: 5,
-          name: "Anna Nováková roz. Černá",
-          gender: "F",
-          occupation: "švadlena",
-          birth: "24. 7. 1925, Lišov č.p. 19",
-          death: "14. 8. 2009, České Budějovice",
-          marriage: "18. 10. 1947, Třeboň",
-          house: "Lišov č.p. 19",
-          transcription: "Křestní list uložen v rodinné složce, ověřeno v indexu narozených farnosti Lišov.",
-          archiveLabel: "SOA Třeboň, farnost Lišov",
-          archiveUrl: "https://digi.ceskearchivy.cz",
-          uncertain: false
-        },
-        {
-          sosa: 6,
-          name: "Josef Dvořák",
-          gender: "M",
-          occupation: "mlynářský stárek",
-          birth: "2. 2. 1923, Lomnice nad Lužnicí č.p. 24",
-          death: "19. 11. 1992, Jindřichův Hradec",
-          marriage: "7. 5. 1949, Lomnice nad Lužnicí",
-          house: "Lomnice nad Lužnicí č.p. 24",
-          transcription: "Pracoval na rodinném mlýně až do znárodnění v roce 1951.",
-          archiveLabel: "SOA Třeboň, farnost Lomnice n. L.",
-          archiveUrl: "https://digi.ceskearchivy.cz",
-          uncertain: false
-        },
-        {
-          sosa: 7,
-          name: "Božena Dvořáková roz. Králová",
-          gender: "F",
-          occupation: "hospodyně",
-          birth: "30. 1. 1927, Kardašova Řečice č.p. 63",
-          death: "11. 4. 2012, Jindřichův Hradec",
-          marriage: "7. 5. 1949, Lomnice nad Lužnicí",
-          house: "Kardašova Řečice č.p. 63",
-          transcription: "Zápis v obecní kronice Kardašovy Řečice zmiňuje rodinu Králových na č.p. 63 od roku 1840.",
-          archiveLabel: "SOA Třeboň, sčítací operáty 1921",
-          archiveUrl: "https://digi.ceskearchivy.cz",
-          uncertain: false
-        },
-        {
-          sosa: 8,
-          name: "František Novák",
-          gender: "M",
-          occupation: "mistr stolařský, legionář",
-          birth: "4. 10. 1889, Třeboň č.p. 45",
-          death: "19. 5. 1964, Třeboň",
-          marriage: "21. 11. 1919, Třeboň",
-          house: "Třeboň č.p. 45",
-          transcription: "„Franz Nowak, ehelicher Sohn des Johann Nowak, Tischlermeisters in Wittingau Nr. 45.“ Po návratu z italských legií převzal dílnu.",
-          archiveLabel: "SOA Třeboň, matrika N Třeboň 1885–1895, fol. 89",
-          archiveUrl: "https://digi.ceskearchivy.cz",
-          uncertain: false
-        },
-        {
-          sosa: 9,
-          name: "Alžběta Nováková roz. Veselá",
-          gender: "F",
-          occupation: "dcera sedláka",
-          birth: "17. 11. 1893, Branná č.p. 12",
-          death: "2. 9. 1971, Třeboň",
-          marriage: "21. 11. 1919, Třeboň",
-          house: "Branná č.p. 12",
-          transcription: "Zápis psán kurentem: „Alžběta, manž. dcera Matěje Veselého, sedláka v Branné č. 12 a matky Kateřiny roz. Bláhové.“",
-          archiveLabel: "SOA Třeboň, matrika N Třeboň-okolí, sn. 44",
-          archiveUrl: "https://digi.ceskearchivy.cz",
-          uncertain: false
-        },
-        {
-          sosa: 10,
-          name: "Jan Černý",
-          gender: "M",
-          occupation: "kovář v Lišově",
-          birth: "28. 5. 1891, Lišov č.p. 19",
-          death: "14. 1. 1958, Lišov",
-          marriage: "10. 2. 1920, Lišov",
-          house: "Lišov č.p. 19",
-          transcription: "Obecní kovárna v Lišově č.p. 19. V matrice oddaných uveden jako mistr kovářský.",
-          archiveLabel: "SOA Třeboň, matrika O Lišov 1900–1930, sn. 78",
-          archiveUrl: "https://digi.ceskearchivy.cz",
-          uncertain: false
-        },
-        {
-          sosa: 11,
-          name: "Růžena Černá roz. Kovářová",
-          gender: "F",
-          occupation: "dcera domkáře",
-          birth: "okolo 1896, Štěpánovice č.p. 8",
-          death: "1968, Lišov",
-          marriage: "10. 2. 1920, Lišov",
-          house: "Štěpánovice č.p. 8",
-          transcription: "Pozor: V matrice Štěpánovic se v roce 1896 narodily dvě Růženy Kovářové. Nutno ověřit přesné datum podle oddacího zápisu v Lišově.",
-          archiveLabel: "SOA Třeboň, matrika N Štěpánovice (k ověření)",
-          archiveUrl: "https://digi.ceskearchivy.cz",
-          uncertain: true
-        },
-        {
-          sosa: 12,
-          name: "Antonín Dvořák",
-          gender: "M",
-          occupation: "mlynář v Lomnici",
-          birth: "11. 6. 1888, Lomnice nad Lužnicí č.p. 24",
-          death: "30. 3. 1955, Lomnice nad Lužnicí",
-          marriage: "15. 5. 1918, Lomnice nad Lužnicí",
-          house: "Lomnice nad Lužnicí č.p. 24",
-          transcription: "Antonín Dvořák převzal mlýn č.p. 24 po svém otci Vojtěchovi roku 1918.",
-          archiveLabel: "SOA Třeboň, matrika N Lomnice, fol. 201",
-          archiveUrl: "https://digi.ceskearchivy.cz",
-          uncertain: false
-        },
-        {
-          sosa: 13,
-          name: "Anežka Dvořáková roz. Procházková",
-          gender: "F",
-          occupation: "dcera rybníkáře",
-          birth: "21. 1. 1895, Stará Hlína č.p. 11",
-          death: "12. 12. 1974, Lomnice nad Lužnicí",
-          marriage: "15. 5. 1918, Lomnice nad Lužnicí",
-          house: "Stará Hlína č.p. 11",
-          transcription: "Otec působil jako porybný na schwarzenberském panství u rybníka Rožmberk.",
-          archiveLabel: "SOA Třeboň, matrika N Třeboň, sn. 165",
-          archiveUrl: "https://digi.ceskearchivy.cz",
-          uncertain: false
-        },
-        {
-          sosa: 14,
-          name: "Matěj Král",
-          gender: "M",
-          occupation: "sedlák a radní",
-          birth: "24. 2. 1890, Kardašova Řečice č.p. 63",
-          death: "8. 7. 1961, Kardašova Řečice",
-          marriage: "6. 11. 1921, Kardašova Řečice",
-          house: "Kardašova Řečice č.p. 63",
-          transcription: "Dlouholetý hospodář na statku č.p. 63.",
-          archiveLabel: "SOA Třeboň, matrika N Kardašova Řečice, sn. 92",
-          archiveUrl: "https://digi.ceskearchivy.cz",
-          uncertain: false
-        },
-        {
-          sosa: 15,
-          name: "Kateřina Králová roz. Šimková",
-          gender: "F",
-          occupation: "selka",
-          birth: "25. 11. 1898, Deštná č.p. 31",
-          death: "4. 4. 1980, Jindřichův Hradec",
-          marriage: "6. 11. 1921, Kardašova Řečice",
-          house: "Deštná č.p. 31",
-          transcription: "Narozena v Deštné č.p. 31, pokřtěna farářem Janem Šrámkem.",
-          archiveLabel: "SOA Třeboň, matrika N Deštná, sn. 54",
-          archiveUrl: "https://digi.ceskearchivy.cz",
-          uncertain: false
-        }
-      ],
-      stories: [
-        {
-          id: "st-1",
-          title: "Stolařská dílna Novákových v Třeboni č.p. 45",
-          period: "1889–1948",
-          content: "Podle matričních zápisů a sčítacích archů z roku 1921 sídlila rodina Nováků v Třeboni č.p. 45 nejméně po čtyři generace. František Novák (*1889) odešel v roce 1915 na východní a později italskou frontu, odkud se vrátil v roce 1919 jako desátník čs. legií. Téhož roku se oženil s Alžbětou Veselou z Branné a dílnu rozšířil o výrobu vyřezávaného nábytku."
-        },
-        {
-          id: "st-2",
-          title: "Lomnický mlýn č.p. 24 a rybníkáři ze Staré Hlíny",
-          period: "1888–1951",
-          content: "Větev z matčiny strany spojuje dva typické jihočeské stavy: mlynáře Dvořákovy z Lomnice nad Lužnicí a schwarzenberské porybné Procházkovy ze Staré Hlíny přímo pod hrází rybníka Rožmberk. Při sňatku Antonína Dvořáka a Anežky Procházkové v květnu 1918 byli svědky oba otcové."
-        }
-      ]
-    };
-
-    let appData = structuredClone(defaultFamilyData);
-    let selectedSosa = 1;
-    let searchFilter = "";
-
-    // Inicializace při načtení
-    window.addEventListener('DOMContentLoaded', async () => {
-      checkLockStatus();
-      await loadFromCloud();
-    });
-
-    // ==================== CLOUD SYNCHRONIZACE (JSONBIN) ====================
-    function updateSyncStatus(state, text) {
-      const el = document.getElementById('syncStatus');
-      const elMob = document.getElementById('syncStatusMobile');
-      if (state === 'loading') {
-        el.className = "hidden lg:flex items-center gap-2 bg-amber-950/90 text-amber-400 border border-amber-800/60 px-3 py-1.5 rounded-full text-xs";
-        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span><span>${text}</span>`;
-        if (elMob) elMob.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span><span>Sync...</span>`;
-      } else if (state === 'success') {
-        el.className = "hidden lg:flex items-center gap-2 bg-emerald-950/90 text-emerald-400 border border-emerald-800/60 px-3 py-1.5 rounded-full text-xs";
-        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>${text}</span>`;
-        if (elMob) elMob.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Cloud OK</span>`;
-      } else {
-        el.className = "hidden lg:flex items-center gap-2 bg-rose-950/90 text-rose-400 border border-rose-800/60 px-3 py-1.5 rounded-full text-xs";
-        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>${text}</span>`;
-        if (elMob) elMob.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>Offline</span>`;
-      }
-    }
-
-    async function loadFromCloud() {
-      updateSyncStatus('loading', 'Načítám z cloudu...');
-      try {
-        const response = await fetch(`${JSONBIN_URL}/latest`, {
-          headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
-        });
-        if (!response.ok) throw new Error('Chyba komunikace s JSONBin');
-
-        const resData = await response.json();
-        const record = resData.record || {};
-        fullCloudRecord = record;
-
-        // Zkontrolujeme, zda už v Binu existuje klíč familyTree
-        if (record.familyTree && Array.isArray(record.familyTree.people)) {
-          appData = record.familyTree;
-        } else if (Array.isArray(record.people) && record.config) {
-          appData = record;
-        } else {
-          // V Binu jsou zatím jen Domácí projekty nebo je prázdný -> inicializujeme familyTree
-          appData = structuredClone(defaultFamilyData);
-          await saveToCloud(false);
-        }
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-        applyHeaderAndLockConfig();
-        renderAll();
-        updateSyncStatus('success', 'Cloud připojen (JSONBin)');
-      } catch (err) {
-        console.error('Chyba při načítání z JSONBin, použita lokální záloha:', err);
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          try { appData = JSON.parse(saved); } catch (e) { appData = structuredClone(defaultFamilyData); }
-        } else {
-          appData = structuredClone(defaultFamilyData);
-        }
-        applyHeaderAndLockConfig();
-        renderAll();
-        updateSyncStatus('error', 'Offline (lokální paměť)');
-      }
-    }
-
-    async function saveToCloud(renderUI = true) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-      applyHeaderAndLockConfig();
-      if (renderUI) renderAll();
-
-      updateSyncStatus('loading', 'Ukládám do cloudu...');
-      try {
-        // Nejprve načteme aktuální stav Binu, abychom nepřepsali případné "projects" z jiné aplikace
-        let payloadToSave = {};
-        if (fullCloudRecord && typeof fullCloudRecord === 'object' && !Array.isArray(fullCloudRecord)) {
-          payloadToSave = { ...fullCloudRecord, familyTree: appData };
-        } else {
-          payloadToSave = { familyTree: appData };
-        }
-
-        const response = await fetch(JSONBIN_URL, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': JSONBIN_MASTER_KEY
-          },
-          body: JSON.stringify(payloadToSave)
-        });
-
-        if (response.ok) {
-          fullCloudRecord = payloadToSave;
-          updateSyncStatus('success', 'Cloud připojen (JSONBin)');
-        } else {
-          throw new Error('Nelze uložit do JSONBin');
-        }
-      } catch (err) {
-        console.error('Chyba při ukládání do cloudu:', err);
-        updateSyncStatus('error', 'Chyba ukládání do cloudu');
-      }
-    }
-
-    function forceSync() {
-      loadFromCloud();
-    }
-
-    function applyHeaderAndLockConfig() {
-      if (appData && appData.config) {
-        document.getElementById('familyTitleHeader').innerText = appData.config.title || "Rodinný rodokmen";
-        document.getElementById('lockQuestionText').innerText = appData.config.question || "Kontrolní otázka:";
-      }
-    }
-
-    // ==================== KONTROLA RODINNÉ OTÁZKY ====================
-    function checkLockStatus() {
-      if (sessionStorage.getItem(UNLOCK_KEY) === 'true') {
-        document.getElementById('lockScreen').classList.add('hidden');
-      }
-    }
-
-    function unlockSite(e) {
-      e.preventDefault();
-      const input = document.getElementById('lockAnswerInput').value.trim().toLowerCase();
-      const expected = (appData.config.answer || '').trim().toLowerCase();
-      
-      const normalize = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      if (normalize(input) === normalize(expected) || normalize(input) === 'novakova') {
-        sessionStorage.setItem(UNLOCK_KEY, 'true');
-        document.getElementById('lockScreen').classList.add('hidden');
-      } else {
-        document.getElementById('lockError').classList.remove('hidden');
-      }
-    }
-
-    // ==================== PŘEPÍNÁNÍ ZÁLOŽEK ====================
-    function switchTab(tabId) {
-      ['fan', 'tree', 'people', 'stories', 'places'].forEach(t => {
-        const view = document.getElementById(`view-${t}`);
-        const btn = document.getElementById(`tab-${t}`);
-        if (t === tabId) {
-          view.classList.remove('hidden');
-          btn.className = "tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white shadow-sm whitespace-nowrap";
-        } else {
-          view.classList.add('hidden');
-          btn.className = "tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap";
-        }
-      });
-    }
-
-    // ==================== HLAVNÍ VYKRESLENÍ ====================
-    function renderAll() {
-      document.getElementById('navCountPeople').innerText = (appData.people || []).length;
-      renderFanChart();
-      renderTreeGenerations();
-      renderPeopleList();
-      renderStories();
-      renderPlacesAndStats();
-      renderPersonDetail(selectedSosa);
-    }
-
-    function getPersonBySosa(sosa) {
-      return (appData.people || []).find(p => Number(p.sosa) === Number(sosa));
-    }
-
-    // ==================== 1. SVG VĚJÍŘ PŘEDKŮ ====================
-    function polarToCartesian(cx, cy, r, angleDeg) {
-      const rad = (angleDeg * Math.PI) / 180.0;
-      return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-    }
-
-    function createAnnularSectorPath(cx, cy, rInner, rOuter, startAngle, endAngle) {
-      const p1 = polarToCartesian(cx, cy, rOuter, startAngle);
-      const p2 = polarToCartesian(cx, cy, rOuter, endAngle);
-      const p3 = polarToCartesian(cx, cy, rInner, endAngle);
-      const p4 = polarToCartesian(cx, cy, rInner, startAngle);
-      const largeArc = endAngle - startAngle <= 180 ? "0" : "1";
-
-      return [
-        "M", p1.x, p1.y,
-        "A", rOuter, rOuter, 0, largeArc, 1, p2.x, p2.y,
-        "L", p3.x, p3.y,
-        "A", rInner, rInner, 0, largeArc, 0, p4.x, p4.y,
-        "Z"
-      ].join(" ");
-    }
-
-    function renderFanChart() {
-      const svg = document.getElementById('fanChartSvg');
-      svg.innerHTML = '';
-
-      const rings = [
-        { gen: 1, rIn: 58, rOut: 140, items: [2, 3] },
-        { gen: 2, rIn: 140, rOut: 235, items: [4, 5, 6, 7] },
-        { gen: 3, rIn: 235, rOut: 340, items: [8, 9, 10, 11, 12, 13, 14, 15] }
-      ];
-
-      rings.forEach(ring => {
-        const count = ring.items.length;
-        const angleStep = 180 / count;
-
-        ring.items.forEach((sosa, idx) => {
-          const person = getPersonBySosa(sosa);
-          const startAngle = -180 + idx * angleStep;
-          const endAngle = startAngle + angleStep;
-          const midAngle = (startAngle + endAngle) / 2;
-          const midRadius = (ring.rIn + ring.rOut) / 2;
-
-          let fill = "#f3eee3";
-          let stroke = "#d5c5ab";
-          if (person) {
-            if (person.uncertain) {
-              fill = "#fff3cd";
-              stroke = "#d9b85c";
-            } else if (person.gender === "M") {
-              fill = "#d6e4f0";
-              stroke = "#9ab7d3";
-            } else {
-              fill = "#f5dce0";
-              stroke = "#d9a7b0";
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sledování domácích projektů</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    }
+                }
             }
-          }
-          if (Number(selectedSosa) === Number(sosa)) {
-            stroke = "#8c583a";
-          }
-
-          const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-          g.setAttribute("class", "fan-slice");
-          g.onclick = () => selectPerson(sosa);
-
-          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          path.setAttribute("d", createAnnularSectorPath(0, 0, ring.rIn, ring.rOut, startAngle, endAngle));
-          path.setAttribute("fill", fill);
-          path.setAttribute("stroke", stroke);
-          path.setAttribute("stroke-width", Number(selectedSosa) === Number(sosa) ? "3" : "1.2");
-          g.appendChild(path);
-
-          const pos = polarToCartesian(0, 0, midRadius, midAngle);
-          let textRot = midAngle + 90;
-          if (ring.gen === 3) {
-            textRot = midAngle > -90 ? midAngle : midAngle + 180;
-          }
-
-          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-          text.setAttribute("x", pos.x);
-          text.setAttribute("y", pos.y);
-          text.setAttribute("text-anchor", "middle");
-          text.setAttribute("dominant-baseline", "middle");
-          text.setAttribute("transform", `rotate(${textRot}, ${pos.x}, ${pos.y})`);
-          text.setAttribute("fill", "#2c221e");
-          text.setAttribute("font-size", ring.gen === 3 ? "9.5" : "11");
-          text.setAttribute("font-weight", "600");
-
-          const shortName = person ? person.name.replace(/roz\..*$/, '').trim() : `Neznámý (#${sosa})`;
-          const tspan1 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-          tspan1.setAttribute("x", pos.x);
-          tspan1.setAttribute("dy", "-0.3em");
-          tspan1.textContent = `${sosa}. ${shortName.slice(0, 18)}`;
-          text.appendChild(tspan1);
-
-          if (person && person.birth) {
-            const yearMatch = person.birth.match(/\b(1[6789]\d\d|20\d\d)\b/);
-            const tspan2 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-            tspan2.setAttribute("x", pos.x);
-            tspan2.setAttribute("dy", "1.2em");
-            tspan2.setAttribute("font-size", "8.5");
-            tspan2.setAttribute("fill", "#6e5a4f");
-            tspan2.textContent = yearMatch ? `*${yearMatch[0]}` : '';
-            text.appendChild(tspan2);
-          }
-
-          g.appendChild(text);
-          svg.appendChild(g);
-        });
-      });
-
-      const rootPerson = getPersonBySosa(1);
-      const centerG = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      centerG.setAttribute("class", "fan-slice");
-      centerG.onclick = () => selectPerson(1);
-
-      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      circle.setAttribute("cx", "0");
-      circle.setAttribute("cy", "0");
-      circle.setAttribute("r", "58");
-      circle.setAttribute("fill", "#8c583a");
-      circle.setAttribute("stroke", "#2c221e");
-      circle.setAttribute("stroke-width", "2.5");
-      centerG.appendChild(circle);
-
-      const rootText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      rootText.setAttribute("x", "0");
-      rootText.setAttribute("y", "-4");
-      rootText.setAttribute("text-anchor", "middle");
-      rootText.setAttribute("fill", "#fffdf9");
-      rootText.setAttribute("font-size", "11");
-      rootText.setAttribute("font-weight", "bold");
-      rootText.textContent = rootPerson ? rootPerson.name : "1. Výchozí osoba";
-      centerG.appendChild(rootText);
-
-      const rootSub = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      rootSub.setAttribute("x", "0");
-      rootSub.setAttribute("y", "13");
-      rootSub.setAttribute("text-anchor", "middle");
-      rootSub.setAttribute("fill", "#e2d7c5");
-      rootSub.setAttribute("font-size", "9");
-      rootSub.textContent = "Střed rodokmenu (#1)";
-      centerG.appendChild(rootSub);
-
-      svg.appendChild(centerG);
-    }
-
-    // ==================== 2. STROM PO GENERACÍCH ====================
-    function renderTreeGenerations() {
-      const container = document.getElementById('treeGenerationsContainer');
-      const generations = [
-        { title: "1. Generace – Výchozí osoba (Střed)", items: [1] },
-        { title: "2. Generace – Rodiče", items: [2, 3] },
-        { title: "3. Generace – Prarodiče", items: [4, 5, 6, 7] },
-        { title: "4. Generace – Praprarodiče", items: [8, 9, 10, 11, 12, 13, 14, 15] }
-      ];
-
-      container.innerHTML = generations.map(gen => `
-        <div class="space-y-2">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-[#8c583a] bg-[#f7f3e9] px-3 py-1.5 rounded-lg border border-[#e2d7c5]">${gen.title}</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            ${gen.items.map(sosa => {
-              const p = getPersonBySosa(sosa);
-              if (!p) {
-                return `
-                  <div onclick="openEditPersonModal(${sosa})" class="p-3 rounded-xl border border-dashed border-[#d5c5ab] text-xs text-[#6e5a4f] hover:bg-[#f7f3e9] cursor-pointer flex justify-between items-center">
-                    <span>#${sosa} – dosud nezadáno</span>
-                    <span class="text-[#8c583a] font-semibold">+ Doplnit</span>
-                  </div>`;
-              }
-              return `
-                <div onclick="selectPerson(${p.sosa})" class="p-3 rounded-xl border ${Number(selectedSosa) === Number(p.sosa) ? 'border-[#8c583a] bg-[#f7f3e9]' : 'border-[#e2d7c5] bg-white'} hover:border-[#8c583a] cursor-pointer transition flex justify-between items-start gap-2">
-                  <div>
-                    <div class="flex items-center gap-1.5">
-                      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#efe8d8] text-[#8c583a]">#${p.sosa}</span>
-                      <span class="font-bold text-sm text-[#2c221e]">${p.name}</span>
-                      ${p.uncertain ? '<span title="Nejistý údaj" class="text-amber-600 text-xs"><i class="fa-solid fa-triangle-exclamation"></i></span>' : ''}
-                    </div>
-                    <p class="text-xs text-[#6e5a4f] mt-1">${p.occupation || ''} ${p.house ? '• ' + p.house : ''}</p>
-                    <p class="text-[11px] text-[#6e5a4f] mt-0.5">${p.birth ? '* ' + p.birth : ''} ${p.death ? ' | † ' + p.death : ''}</p>
-                  </div>
-                </div>`;
-            }).join('')}
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // ==================== 3. SEZNAM OSOB A VYHLEDÁVÁNÍ ====================
-    function handleSearch(val) {
-      searchFilter = val.trim().toLowerCase();
-      if (searchFilter.length > 0) {
-        switchTab('people');
-      }
-      renderPeopleList();
-    }
-
-    function renderPeopleList() {
-      const container = document.getElementById('peopleListContainer');
-      const sorted = [...(appData.people || [])].sort((a, b) => a.sosa - b.sosa);
-      const filtered = sorted.filter(p => {
-        if (!searchFilter) return true;
-        return (
-          (p.name || '').toLowerCase().includes(searchFilter) ||
-          (p.house || '').toLowerCase().includes(searchFilter) ||
-          (p.occupation || '').toLowerCase().includes(searchFilter) ||
-          (p.birth || '').toLowerCase().includes(searchFilter)
-        );
-      });
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<p class="py-8 text-center text-sm text-[#6e5a4f]">Žádné osoby neodpovídají hledání "${searchFilter}".</p>`;
-        return;
-      }
-
-      container.innerHTML = filtered.map(p => `
-        <div onclick="selectPerson(${p.sosa})" class="py-3.5 px-3 hover:bg-[#f7f3e9] rounded-xl cursor-pointer transition flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#efe8d8] text-[#8c583a]">Sosa #${p.sosa}</span>
-              <span class="serif font-bold text-lg text-[#2c221e]">${p.name}</span>
-              ${p.uncertain ? '<span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold">Sporné / k ověření</span>' : ''}
-            </div>
-            <p class="text-xs text-[#6e5a4f] mt-0.5">
-              ${p.occupation ? `<strong>${p.occupation}</strong> • ` : ''}
-              ${p.birth ? `* ${p.birth}` : ''}
-              ${p.death ? ` — † ${p.death}` : ''}
-            </p>
-          </div>
-          <div class="text-right text-xs text-[#8c583a] font-medium">
-            ${p.house || ''}<br>
-            <span class="text-[11px] underline">Zobrazit kartu →</span>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // ==================== 4. PŘÍBĚHY RODU ====================
-    function renderStories() {
-      const container = document.getElementById('storiesContainer');
-      container.innerHTML = (appData.stories || []).map(st => `
-        <article class="bg-[#f7f3e9] border border-[#e2d7c5] rounded-2xl p-5 space-y-2">
-          <div class="flex justify-between items-start gap-2">
-            <h3 class="serif text-xl font-bold text-[#2c221e]">${st.title}</h3>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#efe8d8] text-[#8c583a]">${st.period || ''}</span>
-              <button onclick="deleteStory('${st.id}')" title="Smazat kapitolu" class="text-[#6e5a4f] hover:text-rose-700 text-xs px-1.5 py-1">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
-            </div>
-          </div>
-          <p class="text-sm text-[#2c221e] leading-relaxed">${st.content}</p>
-        </article>
-      `).join('');
-    }
-
-    async function openStoryModal() {
-      const title = prompt("Název příběhu / kapitoly:");
-      if (!title) return;
-      const period = prompt("Období (např. 1890–1930):", "");
-      const content = prompt("Text rodinného příběhu:");
-      if (!content) return;
-      if (!appData.stories) appData.stories = [];
-      appData.stories.push({ id: 'st-' + Date.now(), title, period, content });
-      await saveToCloud(true);
-    }
-
-    async function deleteStory(storyId) {
-      if (!confirm("Opravdu chcete smazat tuto kapitolu z rodinné kroniky?")) return;
-      appData.stories = (appData.stories || []).filter(s => s.id !== storyId);
-      await saveToCloud(true);
-    }
-
-    // ==================== 5. DOMY A STATISTIKY ====================
-    function renderPlacesAndStats() {
-      const container = document.getElementById('placesStatsContainer');
-      const houses = (appData.people || []).filter(p => p.house).map(p => ({ house: p.house, name: p.name, sosa: p.sosa }));
-      const occupations = {};
-      (appData.people || []).forEach(p => {
-        if (p.occupation) {
-          occupations[p.occupation] = (occupations[p.occupation] || 0) + 1;
         }
-      });
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Dynamic PWA Manifest Generator -->
+    <script>
+        const manifest = {
+            "name": "Domácí Projekty",
+            "short_name": "Projekty",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#ffffff",
+            "theme_color": "#0369a1",
+            "icons": [
+                {
+                    "src": "https://api.iconify.design/lucide:hammer.svg?color=%230369a1",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml"
+                }
+            ]
+        };
+        const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blob);
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestURL;
+        document.head.appendChild(link);
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-800 dark:text-slate-100 antialiased font-sans selection:bg-brand-500 selection:text-white transition-colors duration-200">
 
-      container.innerHTML = `
-        <div class="bg-[#f7f3e9] border border-[#e2d7c5] rounded-xl p-4 space-y-3">
-          <h3 class="serif text-lg font-bold text-[#2c221e] flex items-center gap-2">
-            <i class="fa-solid fa-house-chimney text-[#8c583a]"></i> Přehled gruntů a čísel popisných
-          </h3>
-          <div class="space-y-2 text-xs">
-            ${houses.map(h => `
-              <div onclick="selectPerson(${h.sosa})" class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e2d7c5] cursor-pointer hover:border-[#8c583a]">
-                <span class="font-bold text-[#2c221e]">${h.house}</span>
-                <span class="text-[#6e5a4f]">${h.name} (#${h.sosa})</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
+    <!-- Header Navigation -->
+    <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 gap-4">
+                <!-- Logo & Title -->
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-brand-600 text-white rounded-xl shadow-sm">
+                        <i data-lucide="hammer" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-none text-slate-900 dark:text-white">Domácí Projekty</h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Správa, Úkoly, Nápady & Rozpočet</p>
+                    </div>
+                </div>
 
-        <div class="bg-[#f7f3e9] border border-[#e2d7c5] rounded-xl p-4 space-y-3">
-          <h3 class="serif text-lg font-bold text-[#2c221e] flex items-center gap-2">
-            <i class="fa-solid fa-hammer text-[#8c583a]"></i> Povolání a stavy předků
-          </h3>
-          <div class="space-y-2 text-xs">
-            ${Object.entries(occupations).map(([occ, count]) => `
-              <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e2d7c5]">
-                <span class="font-medium text-[#2c221e]">${occ}</span>
-                <span class="font-bold px-2 py-0.5 rounded bg-[#efe8d8] text-[#8c583a]">${count}×</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
+                <!-- Global Search Bar -->
+                <div class="flex-1 max-w-xs hidden md:block">
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                        <input type="text" id="global-search" oninput="handleGlobalSearch(this.value)" placeholder="Hledat cokoliv..." class="w-full bg-slate-100 dark:bg-slate-800 border border-transparent focus:border-brand-500 text-xs rounded-xl pl-9 pr-3 py-2 text-slate-800 dark:text-slate-100 focus:outline-none">
+                    </div>
+                </div>
 
-    // ==================== PRAVÝ PANEL: DETAIL OSOBY ====================
-    function selectPerson(sosa) {
-      selectedSosa = Number(sosa);
-      renderFanChart();
-      renderTreeGenerations();
-      renderPersonDetail(selectedSosa);
-    }
-
-    function renderPersonDetail(sosa) {
-      const card = document.getElementById('personDetailCard');
-      const p = getPersonBySosa(sosa);
-
-      if (!p) {
-        card.innerHTML = `
-          <div class="text-center py-8 space-y-3">
-            <div class="w-12 h-12 rounded-full bg-[#efe8d8] text-[#8c583a] mx-auto flex items-center justify-center">
-              <i class="fa-solid fa-user-plus"></i>
+                <!-- Navigation Controls -->
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Přepnout tmavý režim">
+                        <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
+                        <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+                    </button>
+                    <button onclick="openModal('history')" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Historie změn">
+                        <i data-lucide="history" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="openModal('members')" class="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-xl text-xs font-semibold transition border border-slate-200 dark:border-slate-700">
+                        <i data-lucide="users" class="w-4 h-4 text-brand-600"></i>
+                        <span class="hidden sm:inline">Členové</span>
+                    </button>
+                    <div id="sync-status-btn" class="hidden lg:inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 px-3 py-2 rounded-xl text-xs font-semibold border border-emerald-200 dark:border-emerald-800">
+                        <span id="sync-indicator" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="sync-text">Cloud OK</span>
+                    </div>
+                    <button onclick="openModal('project')" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Nový Projekt</span>
+                    </button>
+                </div>
             </div>
-            <h3 class="serif text-xl font-bold">Předek #${sosa} dosud nezadán</h3>
-            <p class="text-xs text-[#6e5a4f]">Tuto pozici v rodokmenu můžete okamžitě doplnit a uložit do cloudu.</p>
-            <button onclick="openEditPersonModal(${sosa})" class="px-4 py-2 bg-[#8c583a] text-white text-xs font-semibold rounded-xl shadow">
-              Doplnit osobu #${sosa}
-            </button>
-          </div>`;
-        return;
-      }
+        </div>
+    </header>
 
-      const fatherSosa = p.sosa * 2;
-      const motherSosa = p.sosa * 2 + 1;
-      const father = getPersonBySosa(fatherSosa);
-      const mother = getPersonBySosa(motherSosa);
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
 
-      card.innerHTML = `
-        <div class="flex justify-between items-start gap-2 border-b border-[#efe8d8] pb-3">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#8c583a] text-white">Sosa #${p.sosa}</span>
-              ${p.uncertain ? '<span class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>K ověření</span>' : ''}
+        <!-- Dashboard Statistics -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                <div class="p-3 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 rounded-xl">
+                    <i data-lucide="folder-kanban" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Aktivní projekty</p>
+                    <p id="stat-active-projects" class="text-2xl font-bold text-slate-800 dark:text-white">0</p>
+                </div>
             </div>
-            <h3 class="serif text-2xl font-bold text-[#2c221e] mt-1">${p.name}</h3>
-            <p class="text-xs font-medium text-[#8c583a]">${p.occupation || 'Povolání neuvedeno'}</p>
-          </div>
-          <button onclick="openEditPersonModal(${p.sosa})" title="Upravit osobu" class="p-2 text-[#6e5a4f] hover:text-[#2c221e] bg-[#f7f3e9] rounded-xl border border-[#e2d7c5]">
-            <i class="fa-solid fa-pen"></i>
-          </button>
+
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                    <i data-lucide="check-circle" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Dokončené úkoly</p>
+                    <p id="stat-tasks-done" class="text-2xl font-bold text-slate-800 dark:text-white">0%</p>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                <div class="p-3 bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 rounded-xl">
+                    <i data-lucide="wallet" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Celkový rozpočet</p>
+                    <p id="stat-total-budget" class="text-2xl font-bold text-slate-800 dark:text-white">0 Kč</p>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                <div class="p-3 bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 rounded-xl">
+                    <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Skutečné náklady</p>
+                    <p id="stat-total-spent" class="text-2xl font-bold text-slate-800 dark:text-white">0 Kč</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Project Selector and Views Tabs -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+            <!-- Project Selector -->
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <span class="text-xs font-bold uppercase text-slate-400 tracking-wider whitespace-nowrap pl-2">Projekt:</span>
+                <select id="project-select" onchange="switchProject(this.value)" class="w-full md:w-64 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm font-semibold rounded-xl px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    <!-- Dynamic Options -->
+                </select>
+            </div>
+
+            <!-- View Switcher Tabs -->
+            <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1 self-start md:self-auto w-full md:w-auto overflow-x-auto">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                    <span>Přehled</span>
+                </button>
+                <button onclick="switchTab('kanban')" id="tab-kanban" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
+                    <i data-lucide="kanban" class="w-4 h-4"></i>
+                    <span>Úkoly</span>
+                </button>
+                <button onclick="switchTab('alltasks')" id="tab-alltasks" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
+                    <i data-lucide="list-todo" class="w-4 h-4"></i>
+                    <span>Všechny úkoly</span>
+                </button>
+                <button onclick="switchTab('globalshop')" id="tab-globalshop" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
+                    <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                    <span>Nákupní lístek</span>
+                </button>
+                <button onclick="switchTab('ideas')" id="tab-ideas" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
+                    <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                    <span>Nápady</span>
+                </button>
+                <button onclick="switchTab('budget')" id="tab-budget" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
+                    <i data-lucide="receipt" class="w-4 h-4"></i>
+                    <span>Rozpočet</span>
+                </button>
+                <button onclick="switchTab('notes')" id="tab-notes" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
+                    <i data-lucide="notebook-pen" class="w-4 h-4"></i>
+                    <span>Poznámky</span>
+                </button>
+            </div>
         </div>
 
-        <!-- Životní data -->
-        <div class="space-y-2 text-xs bg-[#f7f3e9] p-3.5 rounded-xl border border-[#e2d7c5]">
-          <div class="flex justify-between">
-            <span class="text-[#6e5a4f] font-semibold">Narození (*):</span>
-            <span class="font-medium text-right">${p.birth || '—'}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-[#6e5a4f] font-semibold">Sňatek (⚭):</span>
-            <span class="font-medium text-right">${p.marriage || '—'}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-[#6e5a4f] font-semibold">Úmrtí (†):</span>
-            <span class="font-medium text-right">${p.death || '—'}</span>
-          </div>
-          <div class="flex justify-between pt-1 border-t border-[#e2d7c5]">
-            <span class="text-[#6e5a4f] font-semibold">Usedlost / Dům:</span>
-            <span class="font-bold text-[#8c583a] text-right">${p.house || '—'}</span>
-          </div>
+        <!-- ================= VIEW: SEARCH RESULTS ================= -->
+        <section id="view-search" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-800 dark:text-white">Výsledky vyhledávání</h2>
+                <button onclick="switchTab('dashboard')" class="text-xs font-semibold text-brand-600 hover:underline">Zavřít hledání</button>
+            </div>
+            <div id="search-results-container" class="space-y-3"></div>
+        </section>
+
+        <!-- ================= VIEW: DASHBOARD ================= -->
+        <section id="view-dashboard" class="space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-800 dark:text-white">Aktivní Projekty</h2>
+            </div>
+            <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <!-- ================= VIEW: KANBAN ================= -->
+        <section id="view-kanban" class="hidden space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <div>
+                    <h2 id="kanban-project-title" class="text-lg font-bold text-slate-800 dark:text-white">Název projektu</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Správa úkolů projektu.</p>
+                </div>
+                <button onclick="openModal('task')" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition self-start sm:self-auto">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Přidat úkol</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                <div class="bg-slate-100 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800 flex flex-col gap-3">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> K udělení
+                        </span>
+                        <span id="count-todo" class="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="col-todo" class="flex flex-col gap-3 min-h-[150px]"></div>
+                </div>
+
+                <div class="bg-slate-100 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800 flex flex-col gap-3">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> V procesu
+                        </span>
+                        <span id="count-inprogress" class="text-xs bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 font-bold px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="col-inprogress" class="flex flex-col gap-3 min-h-[150px]"></div>
+                </div>
+
+                <div class="bg-slate-100 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800 flex flex-col gap-3">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Hotovo
+                        </span>
+                        <span id="count-done" class="text-xs bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 font-bold px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="col-done" class="flex flex-col gap-3 min-h-[150px]"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW: ALL TASKS ================= -->
+        <section id="view-alltasks" class="hidden space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 dark:text-white">Všechny Úkoly</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Přehled všech úkolů napříč projekty.</p>
+                </div>
+                <select id="filter-member" onchange="renderAllTasks()" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-xl px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    <option value="">Všichni členové</option>
+                </select>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                                <th class="p-4">Stav</th>
+                                <th class="p-4">Úkol</th>
+                                <th class="p-4">Projekt</th>
+                                <th class="p-4">Přiřazeno</th>
+                                <th class="p-4 text-center">Akce</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-tasks-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW: GLOBAL SHOPPING LIST ================= -->
+        <section id="view-globalshop" class="hidden space-y-4">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800 dark:text-white">Globální Nákupní Seznam</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Všechny nezaplacené položky z rozpočtů napříč všemi projekty na jednom místě.</p>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                                <th class="p-4">Položka</th>
+                                <th class="p-4">Projekt</th>
+                                <th class="p-4 text-right">Cena</th>
+                                <th class="p-4 text-center">E-shop</th>
+                                <th class="p-4 text-center">Koupit / Zaplatit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="global-shop-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW: IDEAS (NÁPADY) ================= -->
+        <section id="view-ideas" class="hidden space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 dark:text-white">Nápady & Podněty</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Místo pro nápady (např. od přítelkyně), které můžete jedním kliknutím převést na projekt.</p>
+                </div>
+                <button onclick="openModal('idea')" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition self-start sm:self-auto">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Přidat nápad</span>
+                </button>
+            </div>
+
+            <div id="ideas-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <!-- ================= VIEW: BUDGET & MATERIAL ================= -->
+        <section id="view-budget" class="hidden space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <div>
+                    <h2 id="budget-project-title" class="text-lg font-bold text-slate-800 dark:text-white">Rozpočet & Materiál</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Položky rozpočtu vybraného projektu.</p>
+                </div>
+                <button onclick="openModal('material')" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition self-start sm:self-auto">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Přidat položku</span>
+                </button>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                                <th class="p-4">Stav</th>
+                                <th class="p-4">Položka</th>
+                                <th class="p-4 text-right">Plánovaná cena</th>
+                                <th class="p-4 text-right">Skutečná cena</th>
+                                <th class="p-4 text-center">E-shop</th>
+                                <th class="p-4 text-center">Akce</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materials-list-body" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm"></tbody>
+                    </table>
+                </div>
+                
+                <div class="bg-slate-50 dark:bg-slate-800/40 p-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap justify-between items-center gap-4 text-sm font-semibold">
+                    <div class="text-slate-600 dark:text-slate-400">Položek celkem: <span id="materials-count" class="text-slate-900 dark:text-white font-bold">0</span></div>
+                    <div class="flex gap-6">
+                        <div><span class="text-slate-500 mr-2">Plán:</span><span id="budget-planned-total" class="text-slate-900 dark:text-white font-bold">0 Kč</span></div>
+                        <div><span class="text-slate-500 mr-2">Utraceno:</span><span id="budget-spent-total" class="text-slate-900 dark:text-white font-bold">0 Kč</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW: NOTES & CONTACTS ================= -->
+        <section id="view-notes" class="hidden space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <div>
+                    <h2 id="notes-project-title" class="text-lg font-bold text-slate-800 dark:text-white">Poznámky & Kontakty</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Provozní poznámky a kontakty pro vybraný projekt.</p>
+                </div>
+                <button onclick="saveProjectNotes()" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition self-start sm:self-auto">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    <span>Uložit</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
+                    <label class="block font-bold text-sm text-slate-800 dark:text-white flex items-center gap-2">
+                        <i data-lucide="file-text" class="w-4 h-4 text-brand-600"></i> Poznámky
+                    </label>
+                    <textarea id="project-notes-input" rows="8" placeholder="Rozměry, kódy barev..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
+                    <label class="block font-bold text-sm text-slate-800 dark:text-white flex items-center gap-2">
+                        <i data-lucide="users" class="w-4 h-4 text-brand-600"></i> Kontakty
+                    </label>
+                    <textarea id="project-contacts-input" rows="8" placeholder="Řemeslníci, obchody..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl p-3 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Modal: Project -->
+    <div id="modal-project" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-800">
+            <div class="flex justify-between items-center">
+                <h3 id="modal-project-title" class="font-bold text-lg text-slate-900 dark:text-white">Nový Projekt</h3>
+                <button onclick="closeModal('project')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-project" onsubmit="handleProjectSubmit(event)" class="space-y-4">
+                <input type="hidden" id="project-id">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Název projektu</label>
+                    <input type="text" id="project-name" required placeholder="např. Malování obýváku" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Popis</label>
+                    <textarea id="project-desc" rows="2" placeholder="Popis projektu..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Odkaz na fotku / vizualizaci (URL)</label>
+                    <input type="url" id="project-image" placeholder="https://example.com/image.jpg" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Celkový plánovaný rozpočet (Kč)</label>
+                    <input type="number" id="project-budget" min="0" required placeholder="5000" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('project')" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Zrušit</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition">Uložit</button>
+                </div>
+            </form>
         </div>
+    </div>
 
-        <!-- Přepis matričního záznamu -->
-        <div class="space-y-1.5">
-          <label class="text-[11px] font-bold uppercase tracking-wider text-[#6e5a4f] flex items-center gap-1.5">
-            <i class="fa-solid fa-feather-pointed text-[#8c583a]"></i> Matriční zápis a poznámky
-          </label>
-          <div class="p-3.5 rounded-xl bg-[#fff9eb] border border-[#e6d6b5] serif italic text-sm text-[#2c221e] leading-relaxed">
-            ${p.transcription || 'Zatím bez přepisu matričního záznamu.'}
-          </div>
+    <!-- Modal: Idea (Nápad) -->
+    <div id="modal-idea" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-800">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Přidat nový nápad</h3>
+                <button onclick="closeModal('idea')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form onsubmit="handleIdeaSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Název nápadu</label>
+                    <input type="text" id="idea-title" required placeholder="např. Osvětlení na terasu" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Popis / detaily</label>
+                    <textarea id="idea-desc" rows="3" placeholder="Kdo to vymyslel, jak by to mělo vypadat..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Autor / Kdo to navrhl</label>
+                    <input type="text" id="idea-author" placeholder="např. Přítelkyně Jana" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('idea')" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Zrušit</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition">Přidat nápad</button>
+                </div>
+            </form>
         </div>
+    </div>
 
-        <!-- Zdroj / Archiv -->
-        <div class="space-y-1.5 text-xs">
-          <label class="text-[11px] font-bold uppercase tracking-wider text-[#6e5a4f] block">Pramen v archivu</label>
-          <div class="p-3 rounded-xl bg-[#f7f3e9] border border-[#e2d7c5] flex justify-between items-center gap-2">
-            <span class="text-[#2c221e] font-medium">${p.archiveLabel || 'Neuvedeno'}</span>
-            ${p.archiveUrl ? `
-              <a href="${p.archiveUrl}" target="_blank" class="px-2.5 py-1.5 bg-[#8c583a] hover:bg-[#73462c] text-white rounded-lg font-semibold whitespace-nowrap flex items-center gap-1">
-                <span>Snímek</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-              </a>
-            ` : ''}
-          </div>
+    <!-- Modal: Task -->
+    <div id="modal-task" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-800">
+            <div class="flex justify-between items-center">
+                <h3 id="modal-task-title-heading" class="font-bold text-lg text-slate-900 dark:text-white">Úkol</h3>
+                <button onclick="closeModal('task')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-task" onsubmit="handleTaskSubmit(event)" class="space-y-4">
+                <input type="hidden" id="task-id">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Název úkolu</label>
+                    <input type="text" id="task-title" required placeholder="např. Koupit krycí folii" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Fáze / Stav</label>
+                    <select id="task-status" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <option value="todo">K udělení</option>
+                        <option value="inprogress">V procesu</option>
+                        <option value="done">Hotovo</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Přiřadit členovi</label>
+                    <select id="task-assignee" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <option value="">-- Nepřiřazeno --</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('task')" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Zrušit</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition">Uložit úkol</button>
+                </div>
+            </form>
         </div>
+    </div>
 
-        <!-- Vazby na rodiče -->
-        <div class="pt-2 border-t border-[#efe8d8] space-y-2 text-xs">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-[#6e5a4f] block">Rodiče této osoby</span>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="selectPerson(${fatherSosa})" class="p-2 rounded-xl border border-[#e2d7c5] bg-[#f7f3e9] hover:border-[#8c583a] text-left truncate">
-              <span class="text-[10px] text-[#6e5a4f] block">Otec (#${fatherSosa})</span>
-              <span class="font-bold text-[#2c221e]">${father ? father.name : '+ Doplnit otce'}</span>
-            </button>
-            <button onclick="selectPerson(${motherSosa})" class="p-2 rounded-xl border border-[#e2d7c5] bg-[#f7f3e9] hover:border-[#8c583a] text-left truncate">
-              <span class="text-[10px] text-[#6e5a4f] block">Matka (#${motherSosa})</span>
-              <span class="font-bold text-[#2c221e]">${mother ? mother.name : '+ Doplnit matku'}</span>
-            </button>
-          </div>
+    <!-- Modal: Members Management -->
+    <div id="modal-members" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-800">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Správa členů</h3>
+                <button onclick="closeModal('members')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <form onsubmit="handleAddMember(event)" class="flex gap-2">
+                <input type="text" id="new-member-name" required placeholder="Jméno (např. Ota, Jana)" class="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">Přidat</button>
+            </form>
+
+            <div class="space-y-2 max-h-48 overflow-y-auto" id="members-list-container"></div>
+
+            <div class="flex justify-end pt-2">
+                <button type="button" onclick="closeModal('members')" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Zavřít</button>
+            </div>
         </div>
-      `;
-    }
+    </div>
 
-    // ==================== FORMULÁŘ PRO PŘIDÁNÍ / ÚPRAVU OSOBY ====================
-    function openEditPersonModal(sosa = null) {
-      const targetSosa = sosa || selectedSosa || 1;
-      const p = getPersonBySosa(targetSosa);
+    <!-- Modal: History -->
+    <div id="modal-history" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-800 max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Historie změn a aktivit</h3>
+                <button onclick="closeModal('history')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-2 overflow-y-auto flex-1 pr-1 text-xs" id="history-list-container"></div>
+            <div class="flex justify-end pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeModal('history')" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Zavřít</button>
+            </div>
+        </div>
+    </div>
 
-      document.getElementById('formSosa').value = targetSosa;
-      document.getElementById('formName').value = p ? p.name : '';
-      document.getElementById('formGender').value = p ? p.gender : (targetSosa % 2 === 0 ? 'M' : 'F');
-      document.getElementById('formOccupation').value = p ? p.occupation || '' : '';
-      document.getElementById('formBirth').value = p ? p.birth || '' : '';
-      document.getElementById('formDeath').value = p ? p.death || '' : '';
-      document.getElementById('formMarriage').value = p ? p.marriage || '' : '';
-      document.getElementById('formHouse').value = p ? p.house || '' : '';
-      document.getElementById('formTranscription').value = p ? p.transcription || '' : '';
-      document.getElementById('formArchiveLabel').value = p ? p.archiveLabel || '' : '';
-      document.getElementById('formArchiveUrl').value = p ? p.archiveUrl || '' : '';
-      document.getElementById('formUncertain').checked = p ? Boolean(p.uncertain) : false;
+    <!-- Modal: Material / Budget Item -->
+    <div id="modal-material" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-800">
+            <div class="flex justify-between items-center">
+                <h3 id="modal-material-heading" class="font-bold text-lg text-slate-900 dark:text-white">Položka Rozpočtu</h3>
+                <button onclick="closeModal('material')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-material" onsubmit="handleMaterialSubmit(event)" class="space-y-4">
+                <input type="hidden" id="material-id">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Název položky / materiálu</label>
+                    <input type="text" id="material-name" required placeholder="např. Bílá barva Dulux 10L" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Plánovaná cena (Kč)</label>
+                        <input type="number" id="material-planned" min="0" required placeholder="800" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Skutečná cena (Kč)</label>
+                        <input type="number" id="material-actual" min="0" placeholder="0" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Odkaz na e-shop (URL)</label>
+                    <input type="url" id="material-url" placeholder="https://www.obi.cz/..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="material-purchased" class="w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+                    <label for="material-purchased" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Zaplaceno / Zakoupeno</label>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('material')" class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">Zrušit</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition">Uložit položku</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-      document.getElementById('personModal').classList.remove('hidden');
-    }
+    <!-- Application Script Logic -->
+    <script>
+        const JSONBIN_BIN_ID = "6adc6b4aac6210605a4e2241";
+        const JSONBIN_MASTER_KEY = "$2a$10$TEIYmhA7g5etdJmkOrXXE.cP6pLXM0o9epsQcn5nZXdgfZMPaRF/u";
+        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
-    function closePersonModal() {
-      document.getElementById('personModal').classList.add('hidden');
-    }
+        let projects = [];
+        let members = [];
+        let ideas = [];
+        let historyLog = [];
+        let currentProjectId = null;
+        let activeTab = 'dashboard';
 
-    async function savePersonForm(e) {
-      e.preventDefault();
-      const sosa = Number(document.getElementById('formSosa').value);
-      const newObj = {
-        sosa,
-        name: document.getElementById('formName').value.trim(),
-        gender: document.getElementById('formGender').value,
-        occupation: document.getElementById('formOccupation').value.trim(),
-        birth: document.getElementById('formBirth').value.trim(),
-        death: document.getElementById('formDeath').value.trim(),
-        marriage: document.getElementById('formMarriage').value.trim(),
-        house: document.getElementById('formHouse').value.trim(),
-        transcription: document.getElementById('formTranscription').value.trim(),
-        archiveLabel: document.getElementById('formArchiveLabel').value.trim(),
-        archiveUrl: document.getElementById('formArchiveUrl').value.trim(),
-        uncertain: document.getElementById('formUncertain').checked
-      };
+        const demoMembers = [{ id: 'm-1', name: 'Ota' }, { id: 'm-2', name: 'Jana' }];
+        const demoProjects = [{
+            id: 'proj-1',
+            name: 'Malování obýváku',
+            description: 'Obnovit nátěr a opravit omítku.',
+            imageUrl: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=600&q=80',
+            budget: 8000,
+            notes: 'Barevný odstín: Dulux Soft Sand.',
+            contacts: 'Malíř pan Svoboda: +420 608 123 456',
+            tasks: [
+                { id: 't1', title: 'Odstěhovat nábytek', status: 'done', assignee: 'm-1' },
+                { id: 't2', title: 'Koupit barvy v OBI', status: 'inprogress', assignee: 'm-2' }
+            ],
+            materials: [
+                { id: 'm1', name: 'Bílá barva Dulux 10L', plannedPrice: 1200, actualPrice: 1150, url: 'https://obi.cz', purchased: true }
+            ]
+        }];
+        const demoIdeas = [{
+            id: 'i-1',
+            title: 'Venkovní osvětlení terasy',
+            description: 'LED pásky pod zábradlí pro příjemnou atmosféru večer.',
+            author: 'Jana'
+        }];
 
-      if (!appData.people) appData.people = [];
-      const existingIdx = appData.people.findIndex(item => Number(item.sosa) === sosa);
-      if (existingIdx >= 0) {
-        appData.people[existingIdx] = newObj;
-      } else {
-        appData.people.push(newObj);
-      }
+        function logAction(text) {
+            const timeStr = new Date().toLocaleString('cs-CZ');
+            historyLog.unshift({ text, time: timeStr });
+            if (historyLog.length > 50) historyLog.pop();
+        }
 
-      selectedSosa = sosa;
-      closePersonModal();
-      await saveToCloud(true);
-    }
+        async function loadStorage() {
+            updateSyncStatus('loading', 'Načítám...');
+            try {
+                const response = await fetch(`${JSONBIN_URL}/latest`, {
+                    headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
+                });
+                if (response.ok) {
+                    const resData = await response.json();
+                    let record = resData.record;
+                    
+                    projects = record.projects || demoProjects;
+                    members = record.members || demoMembers;
+                    ideas = record.ideas || demoIdeas;
+                    historyLog = record.historyLog || [];
 
-    async function deletePersonFromForm() {
-      const sosa = Number(document.getElementById('formSosa').value);
-      if (!confirm(`Opravdu chcete smazat osobu #${sosa} z rodokmenu?`)) return;
-      appData.people = (appData.people || []).filter(p => Number(p.sosa) !== sosa);
-      closePersonModal();
-      await saveToCloud(true);
-    }
+                    if (!currentProjectId && projects.length > 0) {
+                        currentProjectId = projects[0].id;
+                    }
 
-    // ==================== NASTAVENÍ A EXPORT ====================
-    function openDataModal() {
-      document.getElementById('cfgTitle').value = appData.config.title || '';
-      document.getElementById('cfgQuestion').value = appData.config.question || '';
-      document.getElementById('cfgAnswer').value = appData.config.answer || '';
-      document.getElementById('dataModal').classList.remove('hidden');
-    }
+                    updateSyncStatus('success', 'Cloud OK');
+                    render();
+                } else {
+                    throw new Error('Chyba načítání');
+                }
+            } catch (err) {
+                console.error(err);
+                updateSyncStatus('error', 'Offline režim');
+                projects = demoProjects;
+                members = demoMembers;
+                ideas = demoIdeas;
+                currentProjectId = projects[0].id;
+                render();
+            }
+        }
 
-    function closeDataModal() {
-      document.getElementById('dataModal').classList.add('hidden');
-    }
+        async function saveStorage() {
+            updateSyncStatus('loading', 'Ukládám...');
+            try {
+                const response = await fetch(JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_MASTER_KEY
+                    },
+                    body: JSON.stringify({ projects, members, ideas, historyLog })
+                });
+                if (response.ok) {
+                    updateSyncStatus('success', 'Cloud OK');
+                } else {
+                    throw new Error('Chyba ukládání');
+                }
+            } catch (err) {
+                console.error(err);
+                updateSyncStatus('error', 'Chyba cloudu');
+            }
+            render();
+        }
 
-    async function saveConfig() {
-      appData.config.title = document.getElementById('cfgTitle').value.trim() || "Rodinný rodokmen";
-      appData.config.question = document.getElementById('cfgQuestion').value.trim();
-      appData.config.answer = document.getElementById('cfgAnswer').value.trim();
-      closeDataModal();
-      await saveToCloud(true);
-    }
+        function updateSyncStatus(state, text) {
+            const indicator = document.getElementById('sync-indicator');
+            const spanText = document.getElementById('sync-text');
+            if (!indicator) return;
+            if (state === 'loading') {
+                indicator.className = "w-2 h-2 rounded-full bg-amber-500 animate-ping";
+                spanText.innerText = text;
+            } else if (state === 'success') {
+                indicator.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+                spanText.innerText = text;
+            } else {
+                indicator.className = "w-2 h-2 rounded-full bg-rose-500";
+                spanText.innerText = text;
+            }
+        }
 
-    function exportJsonData() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
-      const a = document.createElement('a');
-      a.setAttribute("href", dataStr);
-      a.setAttribute("download", "rodokmen-data.json");
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark') ? '1' : '0');
+        }
 
-    async function resetToDemo() {
-      if (confirm("Opravdu chcete obnovit výchozí ukázková data a přepsat rodokmen v cloudu?")) {
-        appData = structuredClone(defaultFamilyData);
-        closeDataModal();
-        await saveToCloud(true);
-      }
-    }
-  </script>
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('darkMode') === '1') {
+                document.documentElement.classList.add('dark');
+            }
+            loadStorage();
+        });
+
+        function render() {
+            updateProjectSelector();
+            renderStats();
+            renderDashboard();
+            renderKanban();
+            renderAllTasks();
+            renderGlobalShop();
+            renderIdeas();
+            renderBudget();
+            renderNotes();
+            renderMembersList();
+            renderHistoryList();
+            updateTaskAssigneeSelect();
+            updateMemberFilterSelect();
+            lucide.createIcons();
+        }
+
+        function renderStats() {
+            document.getElementById('stat-active-projects').innerText = projects.length;
+            let totalTasks = 0, doneTasks = 0, totalBudget = 0, totalSpent = 0;
+
+            projects.forEach(p => {
+                totalBudget += Number(p.budget || 0);
+                (p.tasks || []).forEach(t => {
+                    totalTasks++;
+                    if (t.status === 'done') doneTasks++;
+                });
+                (p.materials || []).forEach(m => {
+                    if (m.purchased) totalSpent += Number(m.actualPrice || m.plannedPrice || 0);
+                });
+            });
+
+            const percentDone = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+            document.getElementById('stat-tasks-done').innerText = `${percentDone}%`;
+            document.getElementById('stat-total-budget').innerText = `${totalBudget.toLocaleString('cs-CZ')} Kč`;
+            document.getElementById('stat-total-spent').innerText = `${totalSpent.toLocaleString('cs-CZ')} Kč`;
+        }
+
+        function updateProjectSelector() {
+            const select = document.getElementById('project-select');
+            select.innerHTML = '';
+            if (projects.length === 0) {
+                select.innerHTML = '<option value="">Žádné projekty</option>';
+                currentProjectId = null;
+                return;
+            }
+            projects.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.innerText = p.name;
+                if (p.id === currentProjectId) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            ['dashboard', 'kanban', 'alltasks', 'globalshop', 'ideas', 'budget', 'notes', 'search'].forEach(t => {
+                const el = document.getElementById(`view-${t}`);
+                if (!el) return;
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tab) {
+                    el.classList.remove('hidden');
+                    if (btn) {
+                        btn.classList.add('bg-white', 'dark:bg-slate-700', 'text-brand-600', 'dark:text-white', 'shadow-sm');
+                        btn.classList.remove('text-slate-600', 'dark:text-slate-400');
+                    }
+                } else {
+                    el.classList.add('hidden');
+                    if (btn) {
+                        btn.classList.remove('bg-white', 'dark:bg-slate-700', 'text-brand-600', 'dark:text-white', 'shadow-sm');
+                        btn.classList.add('text-slate-600', 'dark:text-slate-400');
+                    }
+                }
+            });
+        }
+
+        function switchProject(id) {
+            currentProjectId = id;
+            render();
+        }
+
+        // Global Search
+        function handleGlobalSearch(query) {
+            const q = query.trim().toLowerCase();
+            if (!q) {
+                switchTab('dashboard');
+                return;
+            }
+            switchTab('search');
+            const container = document.getElementById('search-results-container');
+            container.innerHTML = '';
+
+            let results = [];
+            projects.forEach(p => {
+                if (p.name.toLowerCase().includes(q) || (p.description && p.description.toLowerCase().includes(q))) {
+                    results.Type = 'Projekt';
+                    results.push({ type: 'Projekt', title: p.name, desc: p.description, projId: p.id });
+                }
+                (p.tasks || []).forEach(t => {
+                    if (t.title.toLowerCase().includes(q)) {
+                        results.push({ type: 'Úkol', title: t.title, desc: `Projekt: ${p.name}`, projId: p.id });
+                    }
+                });
+                (p.materials || []).forEach(m => {
+                    if (m.name.toLowerCase().includes(q)) {
+                        results.push({ type: 'Materiál', title: m.name, desc: `Projekt: ${p.name} (${m.plannedPrice} Kč)`, projId: p.id });
+                    }
+                });
+            });
+
+            if (results.length === 0) {
+                container.innerHTML = `<p class="text-sm text-slate-400 text-center py-8">Nic nenalezeno pro výraz "${query}".</p>`;
+                return;
+            }
+
+            results.forEach(r => {
+                const div = document.createElement('div');
+                div.className = "bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex justify-between items-center gap-4 hover:border-brand-500 transition cursor-pointer";
+                div.onclick = () => { openProjectDetail(r.projId, 'kanban'); };
+                div.innerHTML = `
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300">${r.type}</span>
+                        <h4 class="font-bold text-slate-800 dark:text-white text-base mt-1">${r.title}</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${r.desc || ''}</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('projects-grid');
+            container.innerHTML = '';
+            if (projects.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700"><h3 class="text-slate-700 dark:text-slate-300 font-bold">Žádné projekty</h3></div>`;
+                return;
+            }
+            projects.forEach(p => {
+                const totalTasks = (p.tasks || []).length;
+                const doneTasks = (p.tasks || []).filter(t => t.status === 'done').length;
+                const taskPercent = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition";
+                
+                let imageHtml = '';
+                if (p.imageUrl) {
+                    imageHtml = `<div class="h-40 w-full overflow-hidden bg-slate-100 dark:bg-slate-800"><img src="${p.imageUrl}" alt="${p.name}" class="w-full h-full object-cover"></div>`;
+                }
+
+                card.innerHTML = `
+                    <div>
+                        ${imageHtml}
+                        <div class="p-5">
+                            <div class="flex justify-between items-start gap-2 mb-2">
+                                <h3 class="font-bold text-slate-900 dark:text-white text-lg leading-snug">${p.name}</h3>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="editProject('${p.id}')" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                    <button onclick="deleteProject('${p.id}')" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">${p.description || 'Bez popisu'}</p>
+                            <div class="space-y-1.5 mb-4">
+                                <div class="flex justify-between text-xs font-semibold">
+                                    <span class="text-slate-600 dark:text-slate-400">Úkoly (${doneTasks}/${totalTasks})</span>
+                                    <span class="text-brand-600 dark:text-brand-400">${taskPercent}%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-brand-500 h-full rounded-full" style="width: ${taskPercent}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-5 pt-0 flex gap-2">
+                        <button onclick="openProjectDetail('${p.id}', 'kanban')" class="flex-1 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5"><i data-lucide="kanban" class="w-3.5 h-3.5"></i> Úkoly</button>
+                        <button onclick="openProjectDetail('${p.id}', 'budget')" class="flex-1 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5"><i data-lucide="receipt" class="w-3.5 h-3.5"></i> Rozpočet</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openProjectDetail(id, tab) {
+            currentProjectId = id;
+            updateProjectSelector();
+            switchTab(tab);
+            render();
+        }
+
+        function renderKanban() {
+            const project = projects.find(p => p.id === currentProjectId);
+            const titleEl = document.getElementById('kanban-project-title');
+            const colTodo = document.getElementById('col-todo');
+            const colInprogress = document.getElementById('col-inprogress');
+            const colDone = document.getElementById('col-done');
+
+            colTodo.innerHTML = ''; colInprogress.innerHTML = ''; colDone.innerHTML = '';
+            if (!project) { titleEl.innerText = "Vyberte projekt"; return; }
+            titleEl.innerText = project.name;
+
+            let cTodo = 0, cInprogress = 0, cDone = 0;
+            (project.tasks || []).forEach(t => {
+                const memberObj = members.find(m => m.id === t.assignee);
+                const assigneeName = memberObj ? memberObj.name : 'Nepřiřazeno';
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-2 group transition";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start gap-2">
+                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug cursor-pointer hover:text-brand-600" onclick="editTask('${t.id}')">${t.title}</p>
+                        <div class="flex items-center gap-1">
+                            <button onclick="editTask('${t.id}')" class="text-slate-300 hover:text-brand-600 transition opacity-0 group-hover:opacity-100"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="deleteTask('${t.id}')" class="text-slate-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-50 dark:border-slate-800 text-xs">
+                        <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md font-medium"><i data-lucide="user" class="w-3 h-3 inline mr-1"></i>${assigneeName}</span>
+                        <div class="flex gap-1">
+                            ${t.status !== 'todo' ? `<button onclick="moveTask('${t.id}', -1)" class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-bold">←</button>` : ''}
+                            ${t.status !== 'done' ? `<button onclick="moveTask('${t.id}', 1)" class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-bold">→</button>` : ''}
+                        </div>
+                    </div>
+                `;
+                if (t.status === 'todo') { colTodo.appendChild(card); cTodo++; }
+                else if (t.status === 'inprogress') { colInprogress.appendChild(card); cInprogress++; }
+                else if (t.status === 'done') { colDone.appendChild(card); cDone++; }
+            });
+            document.getElementById('count-todo').innerText = cTodo;
+            document.getElementById('count-inprogress').innerText = cInprogress;
+            document.getElementById('count-done').innerText = cDone;
+        }
+
+        function renderAllTasks() {
+            const tbody = document.getElementById('all-tasks-tbody');
+            const selectedMember = document.getElementById('filter-member').value;
+            tbody.innerHTML = '';
+
+            let allTasksList = [];
+            projects.forEach(p => {
+                (p.tasks || []).forEach(t => {
+                    allTasksList.push({ ...t, projectName: p.name, projectId: p.id });
+                });
+            });
+
+            if (selectedMember) {
+                allTasksList = allTasksList.filter(t => t.assignee === selectedMember);
+            }
+
+            if (allTasksList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">Žádné úkoly nenalezeny.</td></tr>`;
+                return;
+            }
+
+            allTasksList.forEach(t => {
+                const memberObj = members.find(m => m.id === t.assignee);
+                const assigneeName = memberObj ? memberObj.name : 'Nepřiřazeno';
+                
+                let statusBadge = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">K udělení</span>';
+                if (t.status === 'inprogress') statusBadge = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">V procesu</span>';
+                if (t.status === 'done') statusBadge = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">Hotovo</span>';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition border-b border-slate-100 dark:border-slate-800";
+                tr.innerHTML = `
+                    <td class="p-4">${statusBadge}</td>
+                    <td class="p-4 font-semibold text-slate-800 dark:text-slate-100 cursor-pointer hover:text-brand-600" onclick="jumpToTaskProject('${t.projectId}', '${t.id}')">${t.title}</td>
+                    <td class="p-4 text-slate-600 dark:text-slate-400 font-medium">${t.projectName}</td>
+                    <td class="p-4"><span class="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 px-2.5 py-1 rounded-full text-xs font-semibold">${assigneeName}</span></td>
+                    <td class="p-4 text-center">
+                        <button onclick="jumpToTaskProject('${t.projectId}', '${t.id}')" title="Přejít na projekt" class="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg"><i data-lucide="external-link" class="w-4 h-4"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        // Global Shopping List
+        function renderGlobalShop() {
+            const tbody = document.getElementById('global-shop-tbody');
+            tbody.innerHTML = '';
+            let items = [];
+
+            projects.forEach(p => {
+                (p.materials || []).forEach(m => {
+                    if (!m.purchased) {
+                        items.push({ ...m, projectName: p.name, projectId: p.id });
+                    }
+                });
+            });
+
+            if (items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">Žádné položky k nákupu! Vše je zakoupeno.</td></tr>`;
+                return;
+            }
+
+            items.forEach(i => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition border-b border-slate-100 dark:border-slate-800";
+                tr.innerHTML = `
+                    <td class="p-4 font-semibold text-slate-800 dark:text-slate-100">${i.name}</td>
+                    <td class="p-4 text-slate-600 dark:text-slate-400 font-medium">${i.projectName}</td>
+                    <td class="p-4 text-right font-bold text-slate-900 dark:text-white">${Number(i.plannedPrice || 0).toLocaleString('cs-CZ')} Kč</td>
+                    <td class="p-4 text-center">
+                        ${i.url ? `<a href="${i.url}" target="_blank" class="inline-flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-lg font-semibold hover:underline"><i data-lucide="external-link" class="w-3 h-3"></i> Odkaz</a>` : '<span class="text-slate-300 text-xs">—</span>'}
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="globalBuyItem('${i.projectId}', '${i.id}')" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition shadow-sm">
+                            <i data-lucide="check" class="w-3.5 h-3.5"><span>Koupit</span></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        async function globalBuyItem(projId, matId) {
+            const p = projects.find(item => item.id === projId);
+            if (!p) return;
+            const m = p.materials.find(item => item.id === matId);
+            if (m) {
+                m.purchased = true;
+                m.actualPrice = m.actualPrice || m.plannedPrice;
+                logAction(`Zakoupena položka "${m.name}" v projektu "${p.name}"`);
+                await saveStorage();
+            }
+        }
+
+        // Ideas Render
+        function renderIdeas() {
+            const container = document.getElementById('ideas-grid');
+            container.innerHTML = '';
+            if (ideas.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700"><h3 class="text-slate-700 dark:text-slate-300 font-bold">Žádné nápady</h3></div>`;
+                return;
+            }
+            ideas.forEach(i => {
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-5 flex flex-col justify-between gap-4";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start gap-2 mb-2">
+                            <h3 class="font-bold text-slate-900 dark:text-white text-base">${i.title}</h3>
+                            <button onclick="deleteIdea('${i.id}')" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">${i.description || ''}</p>
+                        <span class="inline-block text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 px-2.5 py-1 rounded-full">Navrhl: ${i.author || 'Neznámý'}</span>
+                    </div>
+                    <button onclick="convertIdeaToProject('${i.id}')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i data-lucide="arrow-right-left" class="w-3.5 h-3.5"></i> Převést na projekt
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        async function handleIdeaSubmit(e) {
+            e.preventDefault();
+            const title = document.getElementById('idea-title').value;
+            const description = document.getElementById('idea-desc').value;
+            const author = document.getElementById('idea-author').value || 'Někdo z rodiny';
+
+            ideas.push({ id: 'idea-' + Date.now(), title, description, author });
+            logAction(`Přidán nový nápad: "${title}"`);
+            document.getElementById('idea-title').value = '';
+            document.getElementById('idea-desc').value = '';
+            document.getElementById('idea-author').value = '';
+            closeModal('idea');
+            await saveStorage();
+        }
+
+        async function deleteIdea(id) {
+            ideas = ideas.filter(i => i.id !== id);
+            await saveStorage();
+        }
+
+        async function convertIdeaToProject(id) {
+            const idea = ideas.find(i => i.id === id);
+            if (!idea) return;
+
+            const newProj = {
+                id: 'proj-' + Date.now(),
+                name: idea.title,
+                description: idea.description,
+                budget: 5000,
+                tasks: [],
+                materials: []
+            };
+            projects.push(newProj);
+            ideas = ideas.filter(i => i.id !== id);
+            currentProjectId = newProj.id;
+            logAction(`Nápad "${idea.title}" byl převeden na aktivní projekt`);
+            switchTab('kanban');
+            await saveStorage();
+        }
+
+        function jumpToTaskProject(projId, taskId) {
+            currentProjectId = projId;
+            updateProjectSelector();
+            switchTab('kanban');
+            render();
+        }
+
+        function updateMemberFilterSelect() {
+            const select = document.getElementById('filter-member');
+            if (!select) return;
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">Všichni členové</option>';
+            members.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.innerText = m.name;
+                if (m.id === currentVal) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function updateTaskAssigneeSelect() {
+            const select = document.getElementById('task-assignee');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Nepřiřazeno --</option>';
+            members.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.innerText = m.name;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderMembersList() {
+            const container = document.getElementById('members-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+            if (members.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">Zatím žádní členové.</p>`;
+                return;
+            }
+            members.forEach(m => {
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm";
+                row.innerHTML = `
+                    <span class="font-semibold text-slate-700 dark:text-slate-200">${m.name}</span>
+                    <button onclick="deleteMember('${m.id}')" class="text-slate-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                `;
+                container.appendChild(row);
+            });
+            lucide.createIcons();
+        }
+
+        function renderHistoryList() {
+            const container = document.getElementById('history-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+            if (historyLog.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Zatím žádná historie změn.</p>`;
+                return;
+            }
+            historyLog.forEach(h => {
+                const div = document.createElement('div');
+                div.className = "p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex justify-between gap-3 text-xs";
+                div.innerHTML = `
+                    <span class="text-slate-800 dark:text-slate-200">${h.text}</span>
+                    <span class="text-slate-400 whitespace-nowrap">${h.time}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function handleAddMember(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('new-member-name');
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            members.push({ id: 'm-' + Date.now(), name });
+            logAction(`Přidán člen týmu: ${name}`);
+            nameInput.value = '';
+            await saveStorage();
+        }
+
+        async function deleteMember(id) {
+            members = members.filter(m => m.id !== id);
+            projects.forEach(p => {
+                (p.tasks || []).forEach(t => { if (t.assignee === id) t.assignee = ''; });
+            });
+            await saveStorage();
+        }
+
+        async function moveTask(taskId, direction) {
+            const project = projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+            const task = project.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const stages = ['todo', 'inprogress', 'done'];
+            let newIndex = stages.indexOf(task.status) + direction;
+            if (newIndex >= 0 && newIndex < stages.length) {
+                task.status = stages[newIndex];
+                await saveStorage();
+            }
+        }
+
+        async function deleteTask(taskId) {
+            const project = projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+            project.tasks = project.tasks.filter(t => t.id !== taskId);
+            await saveStorage();
+        }
+
+        function editTask(taskId) {
+            const project = projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+            const task = project.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            document.getElementById('task-id').value = task.id;
+            document.getElementById('task-title').value = task.title;
+            document.getElementById('task-status').value = task.status;
+            document.getElementById('task-assignee').value = task.assignee || '';
+            document.getElementById('modal-task-title-heading').innerText = "Upravit úkol";
+            openModal('task');
+        }
+
+        function renderBudget() {
+            const project = projects.find(p => p.id === currentProjectId);
+            const titleEl = document.getElementById('budget-project-title');
+            const tbody = document.getElementById('materials-list-body');
+            tbody.innerHTML = '';
+            if (!project) { titleEl.innerText = "Vyberte projekt"; return; }
+            titleEl.innerText = `${project.name} - Rozpočet a položky`;
+
+            let totalPlanned = 0, totalSpent = 0;
+            if (!project.materials || project.materials.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">Zatím nebyly přidány žádné položky.</td></tr>`;
+            }
+            (project.materials || []).forEach(m => {
+                const planned = Number(m.plannedPrice || 0);
+                const actual = Number(m.actualPrice || 0);
+                totalPlanned += planned;
+                if (m.purchased) totalSpent += (actual || planned);
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition border-b border-slate-100 dark:border-slate-800";
+                tr.innerHTML = `
+                    <td class="p-4"><button onclick="toggleMaterialPurchased('${m.id}')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${m.purchased ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400'}"><i data-lucide="${m.purchased ? 'check' : 'shopping-cart'}" class="w-3.5 h-3.5"></i>${m.purchased ? 'Zaplaceno' : 'K nákupu'}</button></td>
+                    <td class="p-4 font-semibold text-slate-800 dark:text-slate-100 cursor-pointer hover:text-brand-600" onclick="editMaterial('${m.id}')">${m.name}</td>
+                    <td class="p-4 text-right text-slate-600 dark:text-slate-400 font-medium">${planned.toLocaleString('cs-CZ')} Kč</td>
+                    <td class="p-4 text-right font-semibold ${m.purchased ? 'text-slate-900 dark:text-white' : 'text-slate-400'}">${m.purchased ? actual.toLocaleString('cs-CZ') + ' Kč' : '-'}</td>
+                    <td class="p-4 text-center">
+                        ${m.url ? `<a href="${m.url}" target="_blank" class="inline-flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-lg font-semibold hover:underline"><i data-lucide="external-link" class="w-3 h-3"></i> Odkaz</a>` : '<span class="text-slate-300 text-xs">—</span>'}
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="editMaterial('${m.id}')" class="p-1.5 text-slate-400 hover:text-brand-600 rounded-lg"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                            <button onclick="deleteMaterial('${m.id}')" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('materials-count').innerText = (project.materials || []).length;
+            document.getElementById('budget-planned-total').innerText = `${totalPlanned.toLocaleString('cs-CZ')} Kč`;
+            document.getElementById('budget-spent-total').innerText = `${totalSpent.toLocaleString('cs-CZ')} Kč`;
+        }
+
+        function renderNotes() {
+            const project = projects.find(p => p.id === currentProjectId);
+            const titleEl = document.getElementById('notes-project-title');
+            const notesInput = document.getElementById('project-notes-input');
+            const contactsInput = document.getElementById('project-contacts-input');
+            if (!project) { titleEl.innerText = "Vyberte projekt"; notesInput.value = ''; contactsInput.value = ''; return; }
+            titleEl.innerText = `${project.name} - Poznámky & Kontakty`;
+            notesInput.value = project.notes || '';
+            contactsInput.value = project.contacts || '';
+        }
+
+        async function saveProjectNotes() {
+            const project = projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+            project.notes = document.getElementById('project-notes-input').value;
+            project.contacts = document.getElementById('project-contacts-input').value;
+            logAction(`Aktualizovány poznámky u projektu "${project.name}"`);
+            await saveStorage();
+            alert("Uloženo do cloudu!");
+        }
+
+        async function toggleMaterialPurchased(id) {
+            const project = projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+            const m = project.materials.find(item => item.id === id);
+            if (m) {
+                m.purchased = !m.purchased;
+                if (m.purchased && (!m.actualPrice || m.actualPrice === 0)) m.actualPrice = m.plannedPrice;
+                await saveStorage();
+            }
+        }
+
+        function editMaterial(id) {
+            const project = projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+            const m = project.materials.find(item => item.id === id);
+            if (!m) return;
+            document.getElementById('material-id').value = m.id;
+            document.getElementById('material-name').value = m.name;
+            document.getElementById('material-planned').value = m.plannedPrice;
+            document.getElementById('material-actual').value = m.actualPrice || 0;
+            document.getElementById('material-url').value = m.url || '';
+            document.getElementById('material-purchased').checked = m.purchased;
+            document.getElementById('modal-material-heading').innerText = "Upravit Položku";
+            openModal('material');
+        }
+
+        async function deleteMaterial(id) {
+            if (!confirm("Opravdu smazat?")) return;
+            const project = projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+            project.materials = project.materials.filter(m => m.id !== id);
+            await saveStorage();
+        }
+
+        function openModal(type) {
+            if (type !== 'project' && type !== 'members' && type !== 'idea' && type !== 'history' && !currentProjectId) {
+                alert("Nejprve vyberte nebo vytvořte projekt.");
+                return;
+            }
+            if (type === 'task' && !document.getElementById('task-id').value) {
+                document.getElementById('modal-task-title-heading').innerText = "Nový Úkol";
+                document.getElementById('form-task').reset();
+            }
+            if (type === 'material' && !document.getElementById('material-id').value) {
+                document.getElementById('modal-material-heading').innerText = "Přidat Položku";
+            }
+            document.getElementById(`modal-${type}`).classList.remove('hidden');
+        }
+
+        function closeModal(type) {
+            document.getElementById(`modal-${type}`).classList.add('hidden');
+            if (type === 'task') {
+                document.getElementById('form-task').reset();
+                document.getElementById('task-id').value = '';
+            }
+            if (type === 'material') {
+                document.getElementById('form-material').reset();
+                document.getElementById('material-id').value = '';
+            }
+        }
+
+        async function handleProjectSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('project-id').value;
+            const name = document.getElementById('project-name').value;
+            const description = document.getElementById('project-desc').value;
+            const imageUrl = document.getElementById('project-image').value;
+            const budget = Number(document.getElementById('project-budget').value);
+
+            if (id) {
+                const p = projects.find(item => item.id === id);
+                if (p) { p.name = name; p.description = description; p.imageUrl = imageUrl; p.budget = budget; logAction(`Upraven projekt "${name}"`); }
+            } else {
+                const newProj = { id: 'proj-' + Date.now(), name, description, imageUrl, budget, tasks: [], materials: [] };
+                projects.push(newProj);
+                currentProjectId = newProj.id;
+                logAction(`Vytvořen nový projekt "${name}"`);
+            }
+            document.getElementById('form-project').reset();
+            document.getElementById('project-id').value = '';
+            closeModal('project');
+            await saveStorage();
+        }
+
+        function editProject(id) {
+            const p = projects.find(item => item.id === id);
+            if (!p) return;
+            document.getElementById('project-id').value = p.id;
+            document.getElementById('project-name').value = p.name;
+            document.getElementById('project-desc').value = p.description || '';
+            document.getElementById('project-image').value = p.imageUrl || '';
+            document.getElementById('project-budget').value = p.budget;
+            document.getElementById('modal-project-title').innerText = "Upravit Projekt";
+            openModal('project');
+        }
+
+        async function deleteProject(id) {
+            if (confirm("Opravdu smazat celý projekt?")) {
+                projects = projects.filter(p => p.id !== id);
+                currentProjectId = projects.length > 0 ? projects[0].id : null;
+                logAction("Smazán projekt");
+                await saveStorage();
+            }
+        }
+
+        async function handleTaskSubmit(e) {
+            e.preventDefault();
+            const project = projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+
+            const taskId = document.getElementById('task-id').value;
+            const title = document.getElementById('task-title').value;
+            const status = document.getElementById('task-status').value;
+            const assignee = document.getElementById('task-assignee').value;
+
+            if (!project.tasks) project.tasks = [];
+            if (taskId) {
+                const t = project.tasks.find(item => item.id === taskId);
+                if (t) { t.title = title; t.status = status; t.assignee = assignee; }
+            } else {
+                project.tasks.push({ id: 'task-' + Date.now(), title, status, assignee });
+            }
+
+            document.getElementById('form-task').reset();
+            document.getElementById('task-id').value = '';
+            closeModal('task');
+            await saveStorage();
+        }
+
+        async function handleMaterialSubmit(e) {
+            e.preventDefault();
+            const project = projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+
+            const id = document.getElementById('material-id').value;
+            const name = document.getElementById('material-name').value;
+            const plannedPrice = Number(document.getElementById('material-planned').value);
+            const actualPrice = Number(document.getElementById('material-actual').value) || 0;
+            const url = document.getElementById('material-url').value;
+            const purchased = document.getElementById('material-purchased').checked;
+
+            if (!project.materials) project.materials = [];
+            if (id) {
+                const m = project.materials.find(item => item.id === id);
+                if (m) { m.name = name; m.plannedPrice = plannedPrice; m.actualPrice = actualPrice; m.url = url; m.purchased = purchased; }
+            } else {
+                project.materials.push({ id: 'mat-' + Date.now(), name, plannedPrice, actualPrice: purchased ? (actualPrice || plannedPrice) : 0, url, purchased });
+            }
+
+            document.getElementById('form-material').reset();
+            document.getElementById('material-id').value = '';
+            closeModal('material');
+            await saveStorage();
+        }
+
+        window.onload = function() {
+            switchTab('dashboard');
+        };
+    </script>
 </body>
 </html>
