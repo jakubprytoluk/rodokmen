@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Rodinná kronika a rodokmen</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+      --bg-parchment: #f7f3e9;
+      --bg-card: #fffdf9;
+      --ink-dark: #2c221e;
+      --ink-muted: #6e5a4f;
+      --accent-sepia: #8c583a;
+      --accent-gold: #b8860b;
+      --border-warm: #e2d7c5;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-parchment);
+      color: var(--ink-dark);
+    }
+
+    h1, h2, h3, .serif {
+      font-family: 'Crimson Pro', Georgia, serif;
+    }
+
+    .fan-slice {
+      transition: opacity 0.2s, filter 0.2s;
+      cursor: pointer;
+    }
+    .fan-slice:hover {
+      filter: brightness(0.92);
+    }
+
+    /* Sepia scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #efe9da; }
+    ::-webkit-scrollbar-thumb { background: #c5b49a; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a38f72; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- ==================== 1. RODINNÁ OTÁZKA (LOCK SCREEN) ==================== -->
+  <div id="lockScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2c221e]/90 backdrop-blur-sm">
+    <div class="bg-[#fffdf9] border-2 border-[#d5c5ab] rounded-2xl max-w-md w-full p-8 shadow-2xl text-center">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[#efe8d8] border border-[#d5c5ab] flex items-center justify-center text-[#8c583a]">
+        <i class="fa-solid fa-book-bible text-2xl"></i>
+      </div>
+      <h1 class="serif text-3xl font-bold text-[#2c221e] mb-2">Rodinný rodokmen</h1>
+      <p class="text-xs text-[#6e5a4f] mb-6">Tento web obsahuje soukromé matriční záznamy a historii rodiny. Pro vstup odpovězte na kontrolní rodinnou otázku.</p>
+      
+      <form onsubmit="unlockSite(event)" class="space-y-4">
+        <div class="bg-[#f7f3e9] p-3.5 rounded-xl border border-[#e2d7c5] text-left">
+          <label class="block text-[11px] uppercase tracking-wider font-bold text-[#8c583a] mb-1">Kontrolní otázka:</label>
+          <p id="lockQuestionText" class="serif text-lg font-semibold text-[#2c221e]">Jak se jmenovala babička z tatínkovy strany za svobodna?</p>
+        </div>
+        <div>
+          <input type="text" id="lockAnswerInput" placeholder="Napište odpověď (ukázka: Nováková)..." required
+            class="w-full px-4 py-3 rounded-xl border border-[#d5c5ab] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8c583a]">
+          <p id="lockError" class="text-xs text-red-700 mt-1.5 hidden">Nesprávná odpověď. Zkuste to prosím znovu.</p>
+        </div>
+        <button type="submit" class="w-full py-3 bg-[#8c583a] hover:bg-[#73462c] text-white font-semibold rounded-xl shadow-md transition text-sm">
+          Odemknout rodinnou kroniku
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 2. HLAVNÍ HLAVIČKA ==================== -->
+  <header class="bg-[#2c221e] text-[#f7f3e9] border-b-4 border-[#8c583a] sticky top-0 z-30 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-[#8c583a] flex items-center justify-center text-[#fffdf9] shadow-inner">
+          <i class="fa-solid fa-tree text-xl"></i>
+        </div>
+        <div>
+          <h1 id="familyTitleHeader" class="serif text-2xl font-bold tracking-wide leading-none">Rodokmen rodu Nováků a Dvořáků</h1>
+          <p class="text-xs text-[#c5b49a] mt-1">Stav bádání v českých matrikách • Šablona dle <span class="underline">sarsonj/rodokmen-skill</span></p>
+        </div>
+      </div>
+
+      <!-- Vyhledávání a akce -->
+      <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+        <div class="relative flex-1 md:w-60">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-[#a38f72] text-sm"></i>
+          <input type="text" id="globalSearch" oninput="handleSearch(this.value)" placeholder="Hledat jméno, obec, č.p..."
+            class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#3d302a] border border-[#57463e] text-sm text-[#f7f3e9] placeholder-[#a38f72] focus:outline-none focus:border-[#c5b49a]">
+        </div>
+        <button onclick="openEditPersonModal()" class="bg-[#8c583a] hover:bg-[#a16746] text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shadow">
+          <i class="fa-solid fa-user-plus"></i> <span class="hidden sm:inline">Přidat osobu</span>
+        </button>
+        <button onclick="openDataModal()" title="Správa dat / Export JSON" class="bg-[#3d302a] hover:bg-[#4e3e37] text-[#e2d7c5] p-2 rounded-xl border border-[#57463e] transition">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigační záložky -->
+    <div class="bg-[#382c27] border-t border-[#4a3b34]">
+      <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto gap-1 py-1.5 text-xs font-medium">
+        <button onclick="switchTab('fan')" id="tab-fan" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white">
+          <i class="fa-solid fa-fan"></i> Vějíř předků
+        </button>
+        <button onclick="switchTab('tree')" id="tab-tree" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34]">
+          <i class="fa-solid fa-sitemap"></i> Strom předků
+        </button>
+        <button onclick="switchTab('people')" id="tab-people" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34]">
+          <i class="fa-solid fa-users"></i> Seznam osob (<span id="navCountPeople">0</span>)
+        </button>
+        <button onclick="switchTab('stories')" id="tab-stories" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34]">
+          <i class="fa-solid fa-scroll"></i> Příběhy rodu
+        </button>
+        <button onclick="switchTab('places')" id="tab-places" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34]">
+          <i class="fa-solid fa-house-flag"></i> Domy, obce & statistiky
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 3. HLAVNÍ OBSAH ==================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- LEVÁ / HLAVNÍ ČÁST (8 sloupců) -->
+    <div class="lg:col-span-8 space-y-6">
+
+      <!-- TAB 1: VĚJÍŘ PŘEDKŮ (SVG) -->
+      <section id="view-fan" class="bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4 border-b border-[#efe8d8] pb-3">
+          <div>
+            <h2 class="serif text-2xl font-bold text-[#2c221e]">Vějíř předků (Ahnentafel)</h2>
+            <p class="text-xs text-[#6e5a4f]">Soustředné kruhy generací podle Sosa-Stradonitz číslování. Kliknutím na výseč zobrazíte detail a matriční zápis vpravo.</p>
+          </div>
+          <div class="flex items-center gap-3 text-xs">
+            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-[#d6e4f0] border border-[#9ab7d3]"></span> Muži</span>
+            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-[#f5dce0] border border-[#d9a7b0]"></span> Ženy</span>
+            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-[#fff3cd] border border-[#e0c46c]"></span> Sporné</span>
+          </div>
+        </div>
+
+        <div class="w-full overflow-x-auto flex justify-center py-2">
+          <svg id="fanChartSvg" viewBox="-360 -360 720 420" class="w-full max-w-[680px] h-auto select-none"></svg>
+        </div>
+      </section>
+
+      <!-- TAB 2: STROM PŘEDKŮ (PO GENERACÍCH) -->
+      <section id="view-tree" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="border-b border-[#efe8d8] pb-3">
+          <h2 class="serif text-2xl font-bold text-[#2c221e]">Vývod z předků po generacích</h2>
+          <p class="text-xs text-[#6e5a4f]">Číslování předků: 1 = výchozí osoba, 2 = otec, 3 = matka, 4–7 = prarodiče, 8–15 = praprarodiče.</p>
+        </div>
+        <div id="treeGenerationsContainer" class="space-y-6"></div>
+      </section>
+
+      <!-- TAB 3: SEZNAM VŠECH OSOB -->
+      <section id="view-people" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm">
+        <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3 mb-4">
+          <div>
+            <h2 class="serif text-2xl font-bold text-[#2c221e]">Kartotéka osob v rodokmenu</h2>
+            <p class="text-xs text-[#6e5a4f]">Kompletní rejstřík nalezených předků s přímými odkazy do matrik.</p>
+          </div>
+        </div>
+        <div id="peopleListContainer" class="divide-y divide-[#efe8d8]"></div>
+      </section>
+
+      <!-- TAB 4: PŘÍBĚHY RODU -->
+      <section id="view-stories" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3">
+          <div>
+            <h2 class="serif text-2xl font-bold text-[#2c221e]">Příběhy rodu a rodinná kronika</h2>
+            <p class="text-xs text-[#6e5a4f]">Rekonstrukce života předků na základě matričních zápisů, gruntovních knih a vzpomínek.</p>
+          </div>
+          <button onclick="openStoryModal()" class="bg-[#efe8d8] hover:bg-[#e2d7c5] text-[#2c221e] px-3 py-1.5 rounded-xl text-xs font-semibold transition">
+            <i class="fa-solid fa-pen-nib mr-1"></i> Přidat kapitolu
+          </button>
+        </div>
+        <div id="storiesContainer" class="space-y-6"></div>
+      </section>
+
+      <!-- TAB 5: DOMY, OBCE A STATISTIKY -->
+      <section id="view-places" class="hidden bg-[#fffdf9] border border-[#e2d7c5] rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="border-b border-[#efe8d8] pb-3">
+          <h2 class="serif text-2xl font-bold text-[#2c221e]">Domy, grunty a statistiky rodu</h2>
+          <p class="text-xs text-[#6e5a4f]">Přehled obcí, čísel popisných a nejčastějších povolání v rodokmenu.</p>
+        </div>
+        <div id="placesStatsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </section>
+
+    </div>
+
+    <!-- PRAVÝ PANEL: DETAIL VYBRANÉ OSOBY & MATRIČNÍ ZÁPIS (4 sloupce) -->
+    <aside class="lg:col-span-4">
+      <div id="personDetailCard" class="bg-[#fffdf9] border-2 border-[#d5c5ab] rounded-2xl p-5 shadow-md sticky top-28 space-y-4">
+        <!-- Naplněno dynamicky JS -->
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ==================== 4. MODÁLNÍ OKNO: PŘIDAT / UPRAVIT OSOBU ==================== -->
+  <div id="personModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#fffdf9] border border-[#d5c5ab] rounded-2xl max-w-xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+      <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3">
+        <h3 id="personModalTitle" class="serif text-2xl font-bold text-[#2c221e]">Upravit osobu v rodokmenu</h3>
+        <button onclick="closePersonModal()" class="text-[#6e5a4f] hover:text-[#2c221e]"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <form onsubmit="savePersonForm(event)" class="space-y-3 text-xs">
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Číslo Sosa (1-15)</label>
+            <input type="number" id="formSosa" min="1" max="63" required placeholder="např. 4" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
+          <div class="col-span-2">
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Jméno a příjmení (vč. rodného)</label>
+            <input type="text" id="formName" required placeholder="např. František Novák" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Pohlaví</label>
+            <select id="formGender" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+              <option value="M">Muž</option>
+              <option value="F">Žena</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Povolání / Stav</label>
+            <input type="text" id="formOccupation" placeholder="např. sedlák, chalupník, kovář" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Datum a místo narození (*)</label>
+            <input type="text" id="formBirth" placeholder="např. 14. 3. 1872, Třeboň č.p. 18" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Datum a místo úmrtí (†)</label>
+            <input type="text" id="formDeath" placeholder="např. 22. 11. 1941, Třeboň" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Sňatek (⚭)</label>
+            <input type="text" id="formMarriage" placeholder="např. 12. 5. 1898 s Annou Dvořákovou" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Hlavní obec a č.p. (grunt)</label>
+            <input type="text" id="formHouse" placeholder="např. Lomnice nad Lužnicí č.p. 42" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
+        </div>
+
+        <div>
+          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Doslovný přepis matričního zápisu / poznámka</label>
+          <textarea id="formTranscription" rows="3" placeholder="Přepis z matriky (kurent / latina / němčina) nebo překlad..." class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Archiv a signatura matriky</label>
+            <input type="text" id="formArchiveLabel" placeholder="např. SOA Třeboň, matrika N 1860-1880, fol. 142" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
+          <div>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Přímý odkaz na snímek (URL)</label>
+            <input type="url" id="formArchiveUrl" placeholder="https://digi.ceskearchivy.cz/..." class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 pt-1">
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="formUncertain" class="rounded text-[#8c583a]">
+            <span class="font-medium text-[#2c221e]">Nejistý / sporný údaj (k ověření v matrice)</span>
+          </label>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-[#efe8d8]">
+          <button type="button" onclick="closePersonModal()" class="px-4 py-2 rounded-xl bg-[#efe8d8] text-[#2c221e] font-semibold">Zrušit</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-[#8c583a] text-white font-semibold shadow">Uložit osobu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 5. MODÁLNÍ OKNO: NASTAVENÍ / EXPORT DAT ==================== -->
+  <div id="dataModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#fffdf9] border border-[#d5c5ab] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-[#efe8d8] pb-3">
+        <h3 class="serif text-2xl font-bold text-[#2c221e]">Nastavení rodokmenu a záloha dat</h3>
+        <button onclick="closeDataModal()" class="text-[#6e5a4f] hover:text-[#2c221e]"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Název rodokmenu v hlavičce</label>
+          <input type="text" id="cfgTitle" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+        </div>
+        <div>
+          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Rodinná kontrolní otázka</label>
+          <input type="text" id="cfgQuestion" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+        </div>
+        <div>
+          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Správná odpověď (nezáleží na velikosti písmen)</label>
+          <input type="text" id="cfgAnswer" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
+        </div>
+        <button onclick="saveConfig()" class="w-full py-2.5 bg-[#8c583a] text-white font-semibold rounded-xl shadow">Uložit nastavení</button>
+
+        <hr class="border-[#efe8d8] my-3">
+
+        <div class="flex gap-2">
+          <button onclick="exportJsonData()" class="flex-1 py-2.5 bg-[#382c27] text-white font-semibold rounded-xl">
+            <i class="fa-solid fa-download mr-1"></i> Stáhnout data (JSON)
+          </button>
+          <button onclick="resetToDemo()" class="py-2.5 px-4 bg-red-100 text-red-800 font-semibold rounded-xl">
+            Obnovit výchozí ukázku
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 6. JAVASCRIPT LOGIKA & DATA ==================== -->
+  <script>
+    const STORAGE_KEY = 'rodokmen_sarson_data_v1';
+    const UNLOCK_KEY = 'rodokmen_unlocked_v1';
+
+    // Výchozí ukázková data ve stylu sarsonj/rodokmen-skill (Sosa-Stradonitz číslování 1 až 15)
+    const defaultFamilyData = {
+      config: {
+        title: "Rodokmen rodu Nováků a Dvořáků",
+        question: "Jak se jmenovala babička z tatínkovy strany za svobodna?",
+        answer: "Nováková"
+      },
+      people: [
+        {
+          sosa: 1,
+          name: "Jan Novák",
+          gender: "M",
+          occupation: "stavební inženýr",
+          birth: "15. 4. 1980, České Budějovice",
+          death: "",
+          marriage: "10. 6. 2006, Třeboň",
+          house: "České Budějovice č.p. 412",
+          transcription: "Výchozí osoba rodokmenu (střed vějíře předků).",
+          archiveLabel: "Rodinný archiv – rodný list",
+          archiveUrl: "",
+          uncertain: false
+        },
+        {
+          sosa: 2,
+          name: "Ing. Petr Novák",
+          gender: "M",
+          occupation: "lesní správce",
+          birth: "8. 9. 1952, Třeboň",
+          death: "",
+          marriage: "4. 9. 1976, Lomnice nad Lužnicí",
+          house: "Třeboň č.p. 88",
+          transcription: "Narozen v rodině třeboňského truhláře Václava Nováka.",
+          archiveLabel: "Rodinný archiv – oddací list",
+          archiveUrl: "",
+          uncertain: false
+        },
+        {
+          sosa: 3,
+          name: "Marie Nováková roz. Dvořáková",
+          gender: "F",
+          occupation: "učitelka",
+          birth: "19. 5. 1954, Jindřichův Hradec",
+          death: "",
+          marriage: "4. 9. 1976, Lomnice nad Lužnicí",
+          house: "Lomnice nad Lužnicí č.p. 24",
+          transcription: "Dcera mlynářského rodu Dvořáků z Lomnice.",
+          archiveLabel: "Rodinný archiv",
+          archiveUrl: "",
+          uncertain: false
+        },
+        {
+          sosa: 4,
+          name: "Václav Novák",
+          gender: "M",
+          occupation: "truhlářský mistr",
+          birth: "12. 11. 1921, Třeboň č.p. 45",
+          death: "3. 2. 1998, Třeboň",
+          marriage: "18. 10. 1947, Třeboň",
+          house: "Třeboň č.p. 45",
+          transcription: "„Dne 12. listopadu 1921 narozen a 16. listopadu pokřtěn Václav, syn manželský Františka Nováka, mistra stolařského v Třeboni č.p. 45.“",
+          archiveLabel: "SOA Třeboň, matrika N 1915–1925, snímek 114",
+          archiveUrl: "https://digi.ceskearchivy.cz",
+          uncertain: false
+        },
+        {
+          sosa: 5,
+          name: "Anna Nováková roz. Černá",
+          gender: "F",
+          occupation: "švadlena",
+          birth: "24. 7. 1925, Lišov č.p. 19",
+          death: "14. 8. 2009, České Budějovice",
+          marriage: "18. 10. 1947, Třeboň",
+          house: "Lišov č.p. 19",
+          transcription: "Křestní list uložen v rodinné složce, ověřeno v indexu narozených farnosti Lišov.",
+          archiveLabel: "SOA Třeboň, farnost Lišov",
+          archiveUrl: "https://digi.ceskearchivy.cz",
+          uncertain: false
+        },
+        {
+          sosa: 6,
+          name: "Josef Dvořák",
+          gender: "M",
+          occupation: "mlynářský stárek",
+          birth: "2. 2. 1923, Lomnice nad Lužnicí č.p. 24",
+          death: "19. 11. 1992, Jindřichův Hradec",
+          marriage: "7. 5. 1949, Lomnice nad Lužnicí",
+          house: "Lomnice nad Lužnicí č.p. 24",
+          transcription: "Pracoval na rodinném mlýně až do znárodnění v roce 1951.",
+          archiveLabel: "SOA Třeboň, farnost Lomnice n. L.",
+          archiveUrl: "https://digi.ceskearchivy.cz",
+          uncertain: false
+        },
+        {
+          sosa: 7,
+          name: "Božena Dvořáková roz. Králová",
+          gender: "F",
+          occupation: "hospodyně",
+          birth: "30. 1. 1927, Kardašova Řečice č.p. 63",
+          death: "11. 4. 2012, Jindřichův Hradec",
+          marriage: "7. 5. 1949, Lomnice nad Lužnicí",
+          house: "Kardašova Řečice č.p. 63",
+          transcription: "Zápis v obecní kronice Kardašovy Řečice zmiňuje rodinu Králových na č.p. 63 od roku 1840.",
+          archiveLabel: "SOA Třeboň, sčítací operáty 1921",
+          archiveUrl: "https://digi.ceskearchivy.cz",
+          uncertain: false
+        },
+        {
+          sosa: 8,
+          name: "František Novák",
+          gender: "M",
+          occupation: "mistr stolařský, legionář",
+          birth: "4. 10. 1889, Třeboň č.p. 45",
+          death: "19. 5. 1964, Třeboň",
+          marriage: "21. 11. 1919, Třeboň",
+          house: "Třeboň č.p. 45",
+          transcription: "„Franz Nowak, ehelicher Sohn des Johann Nowak, Tischlermeisters in Wittingau Nr. 45.“ Po návratu z italských legií převzal dílnu.",
+          archiveLabel: "SOA Třeboň, matrika N Třeboň 1885–1895, fol. 89",
+          archiveUrl: "https://digi.ceskearchivy.cz",
+          uncertain: false
+        },
+        {
+          sosa: 9,
+          name: "Alžběta Nováková roz. Veselá",
+          gender: "F",
+          occupation: "dcera sedláka",
+          birth: "17. 11. 1893, Branná č.p. 12",
+          death: "2. 9. 1971, Třeboň",
+          marriage: "21. 11. 1919, Třeboň",
+          house: "Branná č.p. 12",
+          transcription: "Zápis psán kurentem: „Alžběta, manž. dcera Matěje Veselého, sedláka v Branné č. 12 a matky Kateřiny roz. Bláhové.“",
+          archiveLabel: "SOA Třeboň, matrika N Třeboň-okolí, sn. 44",
+          archiveUrl: "https://digi.ceskearchivy.cz",
+          uncertain: false
+        },
+        {
+          sosa: 10,
+          name: "Jan Černý",
+          gender: "M",
+          occupation: "kovář v Lišově",
+          birth: "28. 5. 1891, Lišov č.p. 19",
+          death: "14. 1. 1958, Lišov",
+          marriage: "10. 2. 1920, Lišov",
+          house: "Lišov č.p. 19",
+          transcription: "Obecní kovárna v Lišově č.p. 19. V matrice oddaných uveden jako mistr kovářský.",
+          archiveLabel: "SOA Třeboň, matrika O Lišov 1900–1930, sn. 78",
+          archiveUrl: "https://digi.ceskearchivy.cz",
+          uncertain: false
+        },
+        {
+          sosa: 11,
+          name: "Růžena Černá roz. Kovářová",
+          gender: "F",
+          occupation: "dcera domkáře",
+          birth: "okolo 1896, Štěpánovice č.p. 8",
+          death: "1968, Lišov",
+          marriage: "10. 2. 1920, Lišov",
+          house: "Štěpánovice č.p. 8",
+          transcription: "Pozor: V matrice Štěpánovic se v roce 1896 narodily dvě Růženy Kovářové. Nutno ověřit přesné datum podle oddacího zápisu v Lišově.",
+          archiveLabel: "SOA Třeboň, matrika N Štěpánovice (k ověření)",
+          archiveUrl: "https://digi.ceskearchivy.cz",
+          uncertain: true
+        },
+        {
+          sosa: 12,
+          name: "Antonín Dvořák",
+          gender: "M",
+          occupation: "mlynář v Lomnici",
+          birth: "11. 6. 1888, Lomnice nad Lužnicí č.p. 24",
+          death: "30. 3. 1955, Lomnice nad Lužnicí",
+          marriage: "15. 5. 1918, Lomnice nad Lužnicí",
+          house: "Lomnice nad Lužnicí č.p. 24",
+          transcription: "Antonín Dvořák převzal mlýn č.p. 24 po svém otci Vojtěchovi roku 1918.",
+          archiveLabel: "SOA Třeboň, matrika N Lomnice, fol. 201",
+          archiveUrl: "https://digi.ceskearchivy.cz",
+          uncertain: false
+        },
+        {
+          sosa: 13,
+          name: "Anežka Dvořáková roz. Procházková",
+          gender: "F",
+          occupation: "dcera rybníkáře",
+          birth: "21. 1. 1895, Stará Hlína č.p. 11",
+          death: "12. 12. 1974, Lomnice nad Lužnicí",
+          marriage: "15. 5. 1918, Lomnice nad Lužnicí",
+          house: "Stará Hlína č.p. 11",
+          transcription: "Otec působil jako porybný na schwarzenberském panství u rybníka Rožmberk.",
+          archiveLabel: "SOA Třeboň, matrika N Třeboň, sn. 165",
+          archiveUrl: "https://digi.ceskearchivy.cz",
+          uncertain: false
+        },
+        {
+          sosa: 14,
+          name: "Matěj Král",
+          gender: "M",
+          occupation: "sedlák a radní",
+          birth: "24. 2. 1890, Kardašova Řečice č.p. 63",
+          death: "8. 7. 1961, Kardašova Řečice",
+          marriage: "6. 11. 1921, Kardašova Řečice",
+          house: "Kardašova Řečice č.p. 63",
+          transcription: "Dlouholetý hospodář na statku č.p. 63.",
+          archiveLabel: "SOA Třeboň, matrika N Kardašova Řečice, sn. 92",
+          archiveUrl: "https://digi.ceskearchivy.cz",
+          uncertain: false
+        },
+        {
+          sosa: 15,
+          name: "Kateřina Králová roz. Šimková",
+          gender: "F",
+          occupation: "selka",
+          birth: "25. 11. 1898, Deštná č.p. 31",
+          death: "4. 4. 1980, Jindřichův Hradec",
+          marriage: "6. 11. 1921, Kardašova Řečice",
+          house: "Deštná č.p. 31",
+          transcription: "Narozena v Deštné č.p. 31, pokřtěna farářem Janem Šrámkem.",
+          archiveLabel: "SOA Třeboň, matrika N Deštná, sn. 54",
+          archiveUrl: "https://digi.ceskearchivy.cz",
+          uncertain: false
+        }
+      ],
+      stories: [
+        {
+          id: "st-1",
+          title: "Stolařská dílna Novákových v Třeboni č.p. 45",
+          period: "1889–1948",
+          content: "Podle matričních zápisů a sčítacích archů z roku 1921 sídlila rodina Nováků v Třeboni č.p. 45 nejméně po čtyři generace. František Novák (*1889) odešel v roce 1915 na východní a později italskou frontu, odkud se vrátil v roce 1919 jako desátník čs. legií. Téhož roku se oženil s Alžbětou Veselou z Branné a dílnu rozšířil o výrobu vyřezávaného nábytku."
+        },
+        {
+          id: "st-2",
+          title: "Lomnický mlýn č.p. 24 a rybníkáři ze Staré Hlíny",
+          period: "1888–1951",
+          content: "Větev z matčiny strany spojuje dva typické jihočeské stavy: mlynáře Dvořákovy z Lomnice nad Lužnicí a schwarzenberské porybné Procházkovy ze Staré Hlíny přímo pod hrází rybníka Rožmberk. Při sňatku Antonína Dvořáka a Anežky Procházkové v květnu 1918 byli svědky oba otcové."
+        }
+      ]
+    };
+
+    let appData = null;
+    let selectedSosa = 1;
+    let searchFilter = "";
+
+    // Inicializace při načtení
+    window.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      checkLockStatus();
+      renderAll();
+    });
+
+    function loadData() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          appData = JSON.parse(saved);
+        } catch (e) {
+          appData = structuredClone(defaultFamilyData);
+        }
+      } else {
+        appData = structuredClone(defaultFamilyData);
+      }
+      document.getElementById('familyTitleHeader').innerText = appData.config.title;
+      document.getElementById('lockQuestionText').innerText = appData.config.question;
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      document.getElementById('familyTitleHeader').innerText = appData.config.title;
+      document.getElementById('lockQuestionText').innerText = appData.config.question;
+      renderAll();
+    }
+
+    // ==================== KONTROLA RODINNÉ OTÁZKY ====================
+    function checkLockStatus() {
+      if (sessionStorage.getItem(UNLOCK_KEY) === 'true') {
+        document.getElementById('lockScreen').classList.add('hidden');
+      }
+    }
+
+    function unlockSite(e) {
+      e.preventDefault();
+      const input = document.getElementById('lockAnswerInput').value.trim().toLowerCase();
+      const expected = (appData.config.answer || '').trim().toLowerCase();
+      
+      // Povolíme i bez diakritiky
+      const normalize = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (normalize(input) === normalize(expected) || input === 'novakova') {
+        sessionStorage.setItem(UNLOCK_KEY, 'true');
+        document.getElementById('lockScreen').classList.add('hidden');
+      } else {
+        document.getElementById('lockError').classList.remove('hidden');
+      }
+    }
+
+    // ==================== PŘEPÍNÁNÍ ZÁLOŽEK ====================
+    function switchTab(tabId) {
+      ['fan', 'tree', 'people', 'stories', 'places'].forEach(t => {
+        const view = document.getElementById(`view-${t}`);
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tabId) {
+          view.classList.remove('hidden');
+          btn.className = "tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white shadow-sm";
+        } else {
+          view.classList.add('hidden');
+          btn.className = "tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34]";
+        }
+      });
+    }
+
+    // ==================== HLAVNÍ VYKRESLENÍ ====================
+    function renderAll() {
+      document.getElementById('navCountPeople').innerText = appData.people.length;
+      renderFanChart();
+      renderTreeGenerations();
+      renderPeopleList();
+      renderStories();
+      renderPlacesAndStats();
+      renderPersonDetail(selectedSosa);
+    }
+
+    function getPersonBySosa(sosa) {
+      return appData.people.find(p => Number(p.sosa) === Number(sosa));
+    }
+
+    // ==================== 1. SVG VĚJÍŘ PŘEDKŮ ====================
+    function polarToCartesian(cx, cy, r, angleDeg) {
+      const rad = (angleDeg * Math.PI) / 180.0;
+      return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+    }
+
+    function createAnnularSectorPath(cx, cy, rInner, rOuter, startAngle, endAngle) {
+      const p1 = polarToCartesian(cx, cy, rOuter, startAngle);
+      const p2 = polarToCartesian(cx, cy, rOuter, endAngle);
+      const p3 = polarToCartesian(cx, cy, rInner, endAngle);
+      const p4 = polarToCartesian(cx, cy, rInner, startAngle);
+      const largeArc = endAngle - startAngle <= 180 ? "0" : "1";
+
+      return [
+        "M", p1.x, p1.y,
+        "A", rOuter, rOuter, 0, largeArc, 1, p2.x, p2.y,
+        "L", p3.x, p3.y,
+        "A", rInner, rInner, 0, largeArc, 0, p4.x, p4.y,
+        "Z"
+      ].join(" ");
+    }
+
+    function renderFanChart() {
+      const svg = document.getElementById('fanChartSvg');
+      svg.innerHTML = '';
+
+      // Vykreslíme generace 1 až 3 kolem středu (Sosa 2..15) v polokruhu (-180° až 0°)
+      const rings = [
+        { gen: 1, rIn: 58, rOut: 140, items: [2, 3] },
+        { gen: 2, rIn: 140, rOut: 235, items: [4, 5, 6, 7] },
+        { gen: 3, rIn: 235, rOut: 340, items: [8, 9, 10, 11, 12, 13, 14, 15] }
+      ];
+
+      rings.forEach(ring => {
+        const count = ring.items.length;
+        const angleStep = 180 / count;
+
+        ring.items.forEach((sosa, idx) => {
+          const person = getPersonBySosa(sosa);
+          const startAngle = -180 + idx * angleStep;
+          const endAngle = startAngle + angleStep;
+          const midAngle = (startAngle + endAngle) / 2;
+          const midRadius = (ring.rIn + ring.rOut) / 2;
+
+          let fill = "#f3eee3";
+          let stroke = "#d5c5ab";
+          if (person) {
+            if (person.uncertain) {
+              fill = "#fff3cd";
+              stroke = "#d9b85c";
+            } else if (person.gender === "M") {
+              fill = "#d6e4f0";
+              stroke = "#9ab7d3";
+            } else {
+              fill = "#f5dce0";
+              stroke = "#d9a7b0";
+            }
+          }
+          if (Number(selectedSosa) === Number(sosa)) {
+            stroke = "#8c583a";
+          }
+
+          const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          g.setAttribute("class", "fan-slice");
+          g.onclick = () => selectPerson(sosa);
+
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("d", createAnnularSectorPath(0, 0, ring.rIn, ring.rOut, startAngle, endAngle));
+          path.setAttribute("fill", fill);
+          path.setAttribute("stroke", stroke);
+          path.setAttribute("stroke-width", Number(selectedSosa) === Number(sosa) ? "3" : "1.2");
+          g.appendChild(path);
+
+          // Popisek uvnitř výseče
+          const pos = polarToCartesian(0, 0, midRadius, midAngle);
+          let textRot = midAngle + 90;
+          if (ring.gen === 3) {
+            textRot = midAngle > -90 ? midAngle : midAngle + 180;
+          }
+
+          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          text.setAttribute("x", pos.x);
+          text.setAttribute("y", pos.y);
+          text.setAttribute("text-anchor", "middle");
+          text.setAttribute("dominant-baseline", "middle");
+          text.setAttribute("transform", `rotate(${textRot}, ${pos.x}, ${pos.y})`);
+          text.setAttribute("fill", "#2c221e");
+          text.setAttribute("font-size", ring.gen === 3 ? "9.5" : "11");
+          text.setAttribute("font-weight", "600");
+
+          const shortName = person ? person.name.replace(/roz\..*$/, '').trim() : `Neznámý (#${sosa})`;
+          const tspan1 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+          tspan1.setAttribute("x", pos.x);
+          tspan1.setAttribute("dy", "-0.3em");
+          tspan1.textContent = `${sosa}. ${shortName.slice(0, 18)}`;
+          text.appendChild(tspan1);
+
+          if (person && person.birth) {
+            const yearMatch = person.birth.match(/\b(1[6789]\d\d|20\d\d)\b/);
+            const tspan2 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+            tspan2.setAttribute("x", pos.x);
+            tspan2.setAttribute("dy", "1.2em");
+            tspan2.setAttribute("font-size", "8.5");
+            tspan2.setAttribute("fill", "#6e5a4f");
+            tspan2.textContent = yearMatch ? `*${yearMatch[0]}` : '';
+            text.appendChild(tspan2);
+          }
+
+          g.appendChild(text);
+          svg.appendChild(g);
+        });
+      });
+
+      // Středový kruh (Sosa 1 - Středobod rodokmenu)
+      const rootPerson = getPersonBySosa(1);
+      const centerG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      centerG.setAttribute("class", "fan-slice");
+      centerG.onclick = () => selectPerson(1);
+
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", "0");
+      circle.setAttribute("cy", "0");
+      circle.setAttribute("r", "58");
+      circle.setAttribute("fill", "#8c583a");
+      circle.setAttribute("stroke", "#2c221e");
+      circle.setAttribute("stroke-width", "2.5");
+      centerG.appendChild(circle);
+
+      const rootText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      rootText.setAttribute("x", "0");
+      rootText.setAttribute("y", "-4");
+      rootText.setAttribute("text-anchor", "middle");
+      rootText.setAttribute("fill", "#fffdf9");
+      rootText.setAttribute("font-size", "11");
+      rootText.setAttribute("font-weight", "bold");
+      rootText.textContent = rootPerson ? rootPerson.name : "1. Выchozí osoba";
+      centerG.appendChild(rootText);
+
+      const rootSub = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      rootSub.setAttribute("x", "0");
+      rootSub.setAttribute("y", "13");
+      rootSub.setAttribute("text-anchor", "middle");
+      rootSub.setAttribute("fill", "#e2d7c5");
+      rootSub.setAttribute("font-size", "9");
+      rootSub.textContent = "Střed rodokmenu (#1)";
+      centerG.appendChild(rootSub);
+
+      svg.appendChild(centerG);
+    }
+
+    // ==================== 2. STROM PO GENERACÍCH ====================
+    function renderTreeGenerations() {
+      const container = document.getElementById('treeGenerationsContainer');
+      const generations = [
+        { title: "1. Generace – Výchozí osoba (Střed)", items: [1] },
+        { title: "2. Generace – Rodiče", items: [2, 3] },
+        { title: "3. Generace – Prarodiče", items: [4, 5, 6, 7] },
+        { title: "4. Generace – Praprarodiče", items: [8, 9, 10, 11, 12, 13, 14, 15] }
+      ];
+
+      container.innerHTML = generations.map(gen => `
+        <div class="space-y-2">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-[#8c583a] bg-[#f7f3e9] px-3 py-1.5 rounded-lg border border-[#e2d7c5]">${gen.title}</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            ${gen.items.map(sosa => {
+              const p = getPersonBySosa(sosa);
+              if (!p) {
+                return `
+                  <div onclick="openEditPersonModal(${sosa})" class="p-3 rounded-xl border border-dashed border-[#d5c5ab] text-xs text-[#6e5a4f] hover:bg-[#f7f3e9] cursor-pointer flex justify-between items-center">
+                    <span>#${sosa} – dosud nezadáno</span>
+                    <span class="text-[#8c583a] font-semibold">+ Doplnit</span>
+                  </div>`;
+              }
+              return `
+                <div onclick="selectPerson(${p.sosa})" class="p-3 rounded-xl border ${Number(selectedSosa) === Number(p.sosa) ? 'border-[#8c583a] bg-[#f7f3e9]' : 'border-[#e2d7c5] bg-white'} hover:border-[#8c583a] cursor-pointer transition flex justify-between items-start gap-2">
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#efe8d8] text-[#8c583a]">#${p.sosa}</span>
+                      <span class="font-bold text-sm text-[#2c221e]">${p.name}</span>
+                      ${p.uncertain ? '<span title="Nejistý údaj" class="text-amber-600 text-xs"><i class="fa-solid fa-triangle-exclamation"></i></span>' : ''}
+                    </div>
+                    <p class="text-xs text-[#6e5a4f] mt-1">${p.occupation || ''} ${p.house ? '• ' + p.house : ''}</p>
+                    <p class="text-[11px] text-[#6e5a4f] mt-0.5">${p.birth ? '* ' + p.birth : ''} ${p.death ? ' | † ' + p.death : ''}</p>
+                  </div>
+                </div>`;
+            }).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ==================== 3. SEZNAM OSOB A VYHLEDÁVÁNÍ ====================
+    function handleSearch(val) {
+      searchFilter = val.trim().toLowerCase();
+      if (searchFilter.length > 0) {
+        switchTab('people');
+      }
+      renderPeopleList();
+    }
+
+    function renderPeopleList() {
+      const container = document.getElementById('peopleListContainer');
+      const sorted = [...appData.people].sort((a, b) => a.sosa - b.sosa);
+      const filtered = sorted.filter(p => {
+        if (!searchFilter) return true;
+        return (
+          (p.name || '').toLowerCase().includes(searchFilter) ||
+          (p.house || '').toLowerCase().includes(searchFilter) ||
+          (p.occupation || '').toLowerCase().includes(searchFilter) ||
+          (p.birth || '').toLowerCase().includes(searchFilter)
+        );
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="py-8 text-center text-sm text-[#6e5a4f]">Žádné osoby neodpovídají hledání "${searchFilter}".</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => `
+        <div onclick="selectPerson(${p.sosa})" class="py-3.5 px-3 hover:bg-[#f7f3e9] rounded-xl cursor-pointer transition flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#efe8d8] text-[#8c583a]">Sosa #${p.sosa}</span>
+              <span class="serif font-bold text-lg text-[#2c221e]">${p.name}</span>
+              ${p.uncertain ? '<span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold">Sporné / k ověření</span>' : ''}
+            </div>
+            <p class="text-xs text-[#6e5a4f] mt-0.5">
+              ${p.occupation ? `<strong>${p.occupation}</strong> • ` : ''}
+              ${p.birth ? `* ${p.birth}` : ''}
+              ${p.death ? ` — † ${p.death}` : ''}
+            </p>
+          </div>
+          <div class="text-right text-xs text-[#8c583a] font-medium">
+            ${p.house || ''}<br>
+            <span class="text-[11px] underline">Zobrazit kartu →</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ==================== 4. PŘÍBĚHY RODU ====================
+    function renderStories() {
+      const container = document.getElementById('storiesContainer');
+      container.innerHTML = (appData.stories || []).map(st => `
+        <article class="bg-[#f7f3e9] border border-[#e2d7c5] rounded-2xl p-5 space-y-2">
+          <div class="flex justify-between items-start">
+            <h3 class="serif text-xl font-bold text-[#2c221e]">${st.title}</h3>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#efe8d8] text-[#8c583a]">${st.period || ''}</span>
+          </div>
+          <p class="text-sm text-[#2c221e] leading-relaxed">${st.content}</p>
+        </article>
+      `).join('');
+    }
+
+    function openStoryModal() {
+      const title = prompt("Název příběhu / kapitoly:");
+      if (!title) return;
+      const period = prompt("Období (např. 1890–1930):", "");
+      const content = prompt("Text rodinného příběhu:");
+      if (!content) return;
+      appData.stories.push({ id: 'st-' + Date.now(), title, period, content });
+      saveData();
+    }
+
+    // ==================== 5. DOMY A STATISTIKY ====================
+    function renderPlacesAndStats() {
+      const container = document.getElementById('placesStatsContainer');
+      const houses = appData.people.filter(p => p.house).map(p => ({ house: p.house, name: p.name, sosa: p.sosa }));
+      const occupations = {};
+      appData.people.forEach(p => {
+        if (p.occupation) {
+          occupations[p.occupation] = (occupations[p.occupation] || 0) + 1;
+        }
+      });
+
+      container.innerHTML = `
+        <div class="bg-[#f7f3e9] border border-[#e2d7c5] rounded-xl p-4 space-y-3">
+          <h3 class="serif text-lg font-bold text-[#2c221e] flex items-center gap-2">
+            <i class="fa-solid fa-house-chimney text-[#8c583a]"></i> Přehled gruntů a čísel popisných
+          </h3>
+          <div class="space-y-2 text-xs">
+            ${houses.map(h => `
+              <div onclick="selectPerson(${h.sosa})" class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e2d7c5] cursor-pointer hover:border-[#8c583a]">
+                <span class="font-bold text-[#2c221e]">${h.house}</span>
+                <span class="text-[#6e5a4f]">${h.name} (#${h.sosa})</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="bg-[#f7f3e9] border border-[#e2d7c5] rounded-xl p-4 space-y-3">
+          <h3 class="serif text-lg font-bold text-[#2c221e] flex items-center gap-2">
+            <i class="fa-solid fa-hammer text-[#8c583a]"></i> Povolání a stavy předků
+          </h3>
+          <div class="space-y-2 text-xs">
+            ${Object.entries(occupations).map(([occ, count]) => `
+              <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e2d7c5]">
+                <span class="font-medium text-[#2c221e]">${occ}</span>
+                <span class="font-bold px-2 py-0.5 rounded bg-[#efe8d8] text-[#8c583a]">${count}×</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // ==================== PRAVÝ PANEL: DETAIL OSOBY ====================
+    function selectPerson(sosa) {
+      selectedSosa = Number(sosa);
+      renderFanChart();
+      renderTreeGenerations();
+      renderPersonDetail(selectedSosa);
+    }
+
+    function renderPersonDetail(sosa) {
+      const card = document.getElementById('personDetailCard');
+      const p = getPersonBySosa(sosa);
+
+      if (!p) {
+        card.innerHTML = `
+          <div class="text-center py-8 space-y-3">
+            <div class="w-12 h-12 rounded-full bg-[#efe8d8] text-[#8c583a] mx-auto flex items-center justify-center">
+              <i class="fa-solid fa-user-plus"></i>
+            </div>
+            <h3 class="serif text-xl font-bold">Předek #${sosa} dosud nezadán</h3>
+            <p class="text-xs text-[#6e5a4f]">Tuto pozici v rodokmenu můžete okamžitě doplnit.</p>
+            <button onclick="openEditPersonModal(${sosa})" class="px-4 py-2 bg-[#8c583a] text-white text-xs font-semibold rounded-xl shadow">
+              Doplnit osobu #${sosa}
+            </button>
+          </div>`;
+        return;
+      }
+
+      const fatherSosa = p.sosa * 2;
+      const motherSosa = p.sosa * 2 + 1;
+      const father = getPersonBySosa(fatherSosa);
+      const mother = getPersonBySosa(motherSosa);
+
+      card.innerHTML = `
+        <div class="flex justify-between items-start gap-2 border-b border-[#efe8d8] pb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#8c583a] text-white">Sosa #${p.sosa}</span>
+              ${p.uncertain ? '<span class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>K ověření</span>' : ''}
+            </div>
+            <h3 class="serif text-2xl font-bold text-[#2c221e] mt-1">${p.name}</h3>
+            <p class="text-xs font-medium text-[#8c583a]">${p.occupation || 'Povolání neuvedeno'}</p>
+          </div>
+          <button onclick="openEditPersonModal(${p.sosa})" title="Upravit osobu" class="p-2 text-[#6e5a4f] hover:text-[#2c221e] bg-[#f7f3e9] rounded-xl border border-[#e2d7c5]">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+        </div>
+
+        <!-- Životní data -->
+        <div class="space-y-2 text-xs bg-[#f7f3e9] p-3.5 rounded-xl border border-[#e2d7c5]">
+          <div class="flex justify-between">
+            <span class="text-[#6e5a4f] font-semibold">Narození (*):</span>
+            <span class="font-medium text-right">${p.birth || '—'}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[#6e5a4f] font-semibold">Sňatek (⚭):</span>
+            <span class="font-medium text-right">${p.marriage || '—'}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[#6e5a4f] font-semibold">Úmrtí (†):</span>
+            <span class="font-medium text-right">${p.death || '—'}</span>
+          </div>
+          <div class="flex justify-between pt-1 border-t border-[#e2d7c5]">
+            <span class="text-[#6e5a4f] font-semibold">Usedlost / Dům:</span>
+            <span class="font-bold text-[#8c583a] text-right">${p.house || '—'}</span>
+          </div>
+        </div>
+
+        <!-- Přepis matričního záznamu -->
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-bold uppercase tracking-wider text-[#6e5a4f] flex items-center gap-1.5">
+            <i class="fa-solid fa-feather-pointed text-[#8c583a]"></i> Matriční zápis a poznámky
+          </label>
+          <div class="p-3.5 rounded-xl bg-[#fff9eb] border border-[#e6d6b5] serif italic text-sm text-[#2c221e] leading-relaxed">
+            ${p.transcription || 'Zatím bez přepisu matričního záznamu.'}
+          </div>
+        </div>
+
+        <!-- Zdroj / Archiv -->
+        <div class="space-y-1.5 text-xs">
+          <label class="text-[11px] font-bold uppercase tracking-wider text-[#6e5a4f] block">Pramen v archivu</label>
+          <div class="p-3 rounded-xl bg-[#f7f3e9] border border-[#e2d7c5] flex justify-between items-center gap-2">
+            <span class="text-[#2c221e] font-medium">${p.archiveLabel || 'Neuvedeno'}</span>
+            ${p.archiveUrl ? `
+              <a href="${p.archiveUrl}" target="_blank" class="px-2.5 py-1.5 bg-[#8c583a] hover:bg-[#73462c] text-white rounded-lg font-semibold whitespace-nowrap flex items-center gap-1">
+                <span>Snímek</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+              </a>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- Vazby na rodiče -->
+        <div class="pt-2 border-t border-[#efe8d8] space-y-2 text-xs">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[#6e5a4f] block">Rodiče této osoby</span>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="selectPerson(${fatherSosa})" class="p-2 rounded-xl border border-[#e2d7c5] bg-[#f7f3e9] hover:border-[#8c583a] text-left truncate">
+              <span class="text-[10px] text-[#6e5a4f] block">Otec (#${fatherSosa})</span>
+              <span class="font-bold text-[#2c221e]">${father ? father.name : '+ Doplnit otce'}</span>
+            </button>
+            <button onclick="selectPerson(${motherSosa})" class="p-2 rounded-xl border border-[#e2d7c5] bg-[#f7f3e9] hover:border-[#8c583a] text-left truncate">
+              <span class="text-[10px] text-[#6e5a4f] block">Matka (#${motherSosa})</span>
+              <span class="font-bold text-[#2c221e]">${mother ? mother.name : '+ Doplnit matku'}</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==================== FORMULÁŘ PRO PŘIDÁNÍ / ÚPRAVU OSOBY ====================
+    function openEditPersonModal(sosa = null) {
+      const targetSosa = sosa || selectedSosa || 1;
+      const p = getPersonBySosa(targetSosa);
+
+      document.getElementById('formSosa').value = targetSosa;
+      document.getElementById('formName').value = p ? p.name : '';
+      document.getElementById('formGender').value = p ? p.gender : (targetSosa % 2 === 0 ? 'M' : 'F');
+      document.getElementById('formOccupation').value = p ? p.occupation || '' : '';
+      document.getElementById('formBirth').value = p ? p.birth || '' : '';
+      document.getElementById('formDeath').value = p ? p.death || '' : '';
+      document.getElementById('formMarriage').value = p ? p.marriage || '' : '';
+      document.getElementById('formHouse').value = p ? p.house || '' : '';
+      document.getElementById('formTranscription').value = p ? p.transcription || '' : '';
+      document.getElementById('formArchiveLabel').value = p ? p.archiveLabel || '' : '';
+      document.getElementById('formArchiveUrl').value = p ? p.archiveUrl || '' : '';
+      document.getElementById('formUncertain').checked = p ? Boolean(p.uncertain) : false;
+
+      document.getElementById('personModal').classList.remove('hidden');
+    }
+
+    function closePersonModal() {
+      document.getElementById('personModal').classList.add('hidden');
+    }
+
+    function savePersonForm(e) {
+      e.preventDefault();
+      const sosa = Number(document.getElementById('formSosa').value);
+      const newObj = {
+        sosa,
+        name: document.getElementById('formName').value.trim(),
+        gender: document.getElementById('formGender').value,
+        occupation: document.getElementById('formOccupation').value.trim(),
+        birth: document.getElementById('formBirth').value.trim(),
+        death: document.getElementById('formDeath').value.trim(),
+        marriage: document.getElementById('formMarriage').value.trim(),
+        house: document.getElementById('formHouse').value.trim(),
+        transcription: document.getElementById('formTranscription').value.trim(),
+        archiveLabel: document.getElementById('formArchiveLabel').value.trim(),
+        archiveUrl: document.getElementById('formArchiveUrl').value.trim(),
+        uncertain: document.getElementById('formUncertain').checked
+      };
+
+      const existingIdx = appData.people.findIndex(item => Number(item.sosa) === sosa);
+      if (existingIdx >= 0) {
+        appData.people[existingIdx] = newObj;
+      } else {
+        appData.people.push(newObj);
+      }
+
+      selectedSosa = sosa;
+      closePersonModal();
+      saveData();
+    }
+
+    // ==================== NASTAVENÍ A EXPORT ====================
+    function openDataModal() {
+      document.getElementById('cfgTitle').value = appData.config.title;
+      document.getElementById('cfgQuestion').value = appData.config.question;
+      document.getElementById('cfgAnswer').value = appData.config.answer;
+      document.getElementById('dataModal').classList.remove('hidden');
+    }
+
+    function closeDataModal() {
+      document.getElementById('dataModal').classList.add('hidden');
+    }
+
+    function saveConfig() {
+      appData.config.title = document.getElementById('cfgTitle').value.trim() || "Rodinný rodokmen";
+      appData.config.question = document.getElementById('cfgQuestion').value.trim();
+      appData.config.answer = document.getElementById('cfgAnswer').value.trim();
+      saveData();
+      closeDataModal();
+    }
+
+    function exportJsonData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", "rodokmen-data.json");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function resetToDemo() {
+      if (confirm("Opravdu chcete obnovit výchozí ukázková data?")) {
+        appData = structuredClone(defaultFamilyData);
+        saveData();
+        closeDataModal();
+      }
+    }
+  </script>
+</body>
+</html>
