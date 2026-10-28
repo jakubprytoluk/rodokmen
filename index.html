@@ -16,7 +16,6 @@
       --ink-dark: #2c221e;
       --ink-muted: #6e5a4f;
       --accent-sepia: #8c583a;
-      --accent-gold: #b8860b;
       --border-warm: #e2d7c5;
     }
 
@@ -38,7 +37,6 @@
       filter: brightness(0.92);
     }
 
-    /* Sepia scrollbars */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #efe9da; }
     ::-webkit-scrollbar-thumb { background: #c5b49a; border-radius: 4px; }
@@ -75,29 +73,50 @@
 
   <!-- ==================== 2. HLAVNÍ HLAVIČKA ==================== -->
   <header class="bg-[#2c221e] text-[#f7f3e9] border-b-4 border-[#8c583a] sticky top-0 z-30 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-xl bg-[#8c583a] flex items-center justify-center text-[#fffdf9] shadow-inner">
-          <i class="fa-solid fa-tree text-xl"></i>
+    <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-col lg:flex-row justify-between items-center gap-3">
+      <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-[#8c583a] flex items-center justify-center text-[#fffdf9] shadow-inner">
+            <i class="fa-solid fa-tree text-xl"></i>
+          </div>
+          <div>
+            <h1 id="familyTitleHeader" class="serif text-2xl font-bold tracking-wide leading-none">Rodokmen rodu Nováků a Dvořáků</h1>
+            <p class="text-xs text-[#c5b49a] mt-1">Stav bádání v českých matrikách • Cloudová verze</p>
+          </div>
         </div>
-        <div>
-          <h1 id="familyTitleHeader" class="serif text-2xl font-bold tracking-wide leading-none">Rodokmen rodu Nováků a Dvořáků</h1>
-          <p class="text-xs text-[#c5b49a] mt-1">Stav bádání v českých matrikách • Šablona dle <span class="underline">sarsonj/rodokmen-skill</span></p>
+
+        <!-- Cloud Status (Mobilní zobrazení) -->
+        <div id="syncStatusMobile" class="lg:hidden flex items-center gap-1.5 bg-emerald-950/90 text-emerald-400 border border-emerald-800/60 px-2.5 py-1 rounded-full text-[11px]">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Cloud</span>
         </div>
       </div>
 
-      <!-- Vyhledávání a akce -->
-      <div class="flex items-center gap-2 w-full md:w-auto justify-end">
-        <div class="relative flex-1 md:w-60">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-[#a38f72] text-sm"></i>
-          <input type="text" id="globalSearch" oninput="handleSearch(this.value)" placeholder="Hledat jméno, obec, č.p..."
-            class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#3d302a] border border-[#57463e] text-sm text-[#f7f3e9] placeholder-[#a38f72] focus:outline-none focus:border-[#c5b49a]">
+      <!-- Vyhledávání, Cloud Status a akce -->
+      <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end">
+        <!-- Cloud Status (Desktop) -->
+        <div id="syncStatus" class="hidden lg:flex items-center gap-2 bg-emerald-950/90 text-emerald-400 border border-emerald-800/60 px-3 py-1.5 rounded-full text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Cloud připojen (JSONBin)</span>
         </div>
-        <button onclick="openEditPersonModal()" class="bg-[#8c583a] hover:bg-[#a16746] text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shadow">
-          <i class="fa-solid fa-user-plus"></i> <span class="hidden sm:inline">Přidat osobu</span>
+
+        <button onclick="forceSync()" title="Načíst nejnovější stav z cloudu" class="bg-[#3d302a] hover:bg-[#4e3e37] text-[#e2d7c5] px-3 py-1.5 rounded-xl border border-[#57463e] text-xs transition flex items-center gap-1.5">
+          <i class="fa-solid fa-arrows-rotate"></i>
+          <span class="hidden sm:inline">Obnovit</span>
         </button>
-        <button onclick="openDataModal()" title="Správa dat / Export JSON" class="bg-[#3d302a] hover:bg-[#4e3e37] text-[#e2d7c5] p-2 rounded-xl border border-[#57463e] transition">
-          <i class="fa-solid fa-gear"></i>
+
+        <div class="relative flex-1 sm:w-52">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-[#a38f72] text-xs"></i>
+          <input type="text" id="globalSearch" oninput="handleSearch(this.value)" placeholder="Hledat jméno, obec, č.p..."
+            class="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#3d302a] border border-[#57463e] text-xs text-[#f7f3e9] placeholder-[#a38f72] focus:outline-none focus:border-[#c5b49a]">
+        </div>
+
+        <button onclick="openEditPersonModal()" class="bg-[#8c583a] hover:bg-[#a16746] text-white px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap shadow">
+          <i class="fa-solid fa-user-plus"></i> <span>Přidat osobu</span>
+        </button>
+
+        <button onclick="openDataModal()" title="Nastavení rodokmenu / Záloha JSON" class="bg-[#3d302a] hover:bg-[#4e3e37] text-[#e2d7c5] p-2 rounded-xl border border-[#57463e] transition">
+          <i class="fa-solid fa-gear text-xs"></i>
         </button>
       </div>
     </div>
@@ -105,19 +124,19 @@
     <!-- Navigační záložky -->
     <div class="bg-[#382c27] border-t border-[#4a3b34]">
       <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto gap-1 py-1.5 text-xs font-medium">
-        <button onclick="switchTab('fan')" id="tab-fan" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white">
+        <button onclick="switchTab('fan')" id="tab-fan" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white whitespace-nowrap">
           <i class="fa-solid fa-fan"></i> Vějíř předků
         </button>
-        <button onclick="switchTab('tree')" id="tab-tree" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34]">
+        <button onclick="switchTab('tree')" id="tab-tree" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
           <i class="fa-solid fa-sitemap"></i> Strom předků
         </button>
-        <button onclick="switchTab('people')" id="tab-people" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34]">
+        <button onclick="switchTab('people')" id="tab-people" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
           <i class="fa-solid fa-users"></i> Seznam osob (<span id="navCountPeople">0</span>)
         </button>
-        <button onclick="switchTab('stories')" id="tab-stories" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34]">
+        <button onclick="switchTab('stories')" id="tab-stories" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
           <i class="fa-solid fa-scroll"></i> Příběhy rodu
         </button>
-        <button onclick="switchTab('places')" id="tab-places" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34]">
+        <button onclick="switchTab('places')" id="tab-places" class="tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap">
           <i class="fa-solid fa-house-flag"></i> Domy, obce & statistiky
         </button>
       </div>
@@ -214,7 +233,7 @@
       <form onsubmit="savePersonForm(event)" class="space-y-3 text-xs">
         <div class="grid grid-cols-3 gap-3">
           <div>
-            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Číslo Sosa (1-15)</label>
+            <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Číslo Sosa (1-63)</label>
             <input type="number" id="formSosa" min="1" max="63" required placeholder="např. 4" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
           </div>
           <div class="col-span-2">
@@ -282,9 +301,14 @@
           </label>
         </div>
 
-        <div class="flex justify-end gap-2 pt-3 border-t border-[#efe8d8]">
-          <button type="button" onclick="closePersonModal()" class="px-4 py-2 rounded-xl bg-[#efe8d8] text-[#2c221e] font-semibold">Zrušit</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-[#8c583a] text-white font-semibold shadow">Uložit osobu</button>
+        <div class="flex justify-between items-center pt-3 border-t border-[#efe8d8]">
+          <button type="button" onclick="deletePersonFromForm()" class="px-3 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-semibold">
+            <i class="fa-solid fa-trash-can mr-1"></i> Smazat osobu
+          </button>
+          <div class="flex gap-2">
+            <button type="button" onclick="closePersonModal()" class="px-4 py-2 rounded-xl bg-[#efe8d8] text-[#2c221e] font-semibold">Zrušit</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-[#8c583a] text-white font-semibold shadow">Uložit do cloudu</button>
+          </div>
         </div>
       </form>
     </div>
@@ -308,16 +332,16 @@
           <input type="text" id="cfgQuestion" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
         </div>
         <div>
-          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Správná odpověď (nezáleží na velikosti písmen)</label>
+          <label class="font-bold uppercase text-[#6e5a4f] block mb-1">Správná odpověď (nezáleží na velikosti písmen a diakritice)</label>
           <input type="text" id="cfgAnswer" class="w-full p-2.5 rounded-xl border border-[#d5c5ab] bg-white">
         </div>
-        <button onclick="saveConfig()" class="w-full py-2.5 bg-[#8c583a] text-white font-semibold rounded-xl shadow">Uložit nastavení</button>
+        <button onclick="saveConfig()" class="w-full py-2.5 bg-[#8c583a] text-white font-semibold rounded-xl shadow">Uložit nastavení do cloudu</button>
 
         <hr class="border-[#efe8d8] my-3">
 
         <div class="flex gap-2">
           <button onclick="exportJsonData()" class="flex-1 py-2.5 bg-[#382c27] text-white font-semibold rounded-xl">
-            <i class="fa-solid fa-download mr-1"></i> Stáhnout data (JSON)
+            <i class="fa-solid fa-download mr-1"></i> Stáhnout zálohu (JSON)
           </button>
           <button onclick="resetToDemo()" class="py-2.5 px-4 bg-red-100 text-red-800 font-semibold rounded-xl">
             Obnovit výchozí ukázku
@@ -327,12 +351,20 @@
     </div>
   </div>
 
-  <!-- ==================== 6. JAVASCRIPT LOGIKA & DATA ==================== -->
+  <!-- ==================== 6. JAVASCRIPT LOGIKA & JSONBIN INTEGRACE ==================== -->
   <script>
+    // PEVNĚ NASTAVENÉ PŘIHLÁŠENÍ K VAŠEMU JSONBIN CLOUDU
+    const JSONBIN_BIN_ID = "6adc6b4aac6210605a4e2241";
+    const JSONBIN_MASTER_KEY = "$2a$10$TEIYmhA7g5etdJmkOrXXE.cP6pLXM0o9epsQcn5nZXdgfZMPaRF/u";
+    const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
     const STORAGE_KEY = 'rodokmen_sarson_data_v1';
     const UNLOCK_KEY = 'rodokmen_unlocked_v1';
 
-    // Výchozí ukázková data ve stylu sarsonj/rodokmen-skill (Sosa-Stradonitz číslování 1 až 15)
+    // Uchováme případná data z "Domácích projektů", pokud jsou ve stejném Binu
+    let fullCloudRecord = {};
+
+    // Výchozí ukázková data ve stylu sarsonj/rodokmen-skill
     const defaultFamilyData = {
       config: {
         title: "Rodokmen rodu Nováků a Dvořáků",
@@ -567,37 +599,121 @@
       ]
     };
 
-    let appData = null;
+    let appData = structuredClone(defaultFamilyData);
     let selectedSosa = 1;
     let searchFilter = "";
 
     // Inicializace při načtení
-    window.addEventListener('DOMContentLoaded', () => {
-      loadData();
+    window.addEventListener('DOMContentLoaded', async () => {
       checkLockStatus();
-      renderAll();
+      await loadFromCloud();
     });
 
-    function loadData() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          appData = JSON.parse(saved);
-        } catch (e) {
-          appData = structuredClone(defaultFamilyData);
-        }
+    // ==================== CLOUD SYNCHRONIZACE (JSONBIN) ====================
+    function updateSyncStatus(state, text) {
+      const el = document.getElementById('syncStatus');
+      const elMob = document.getElementById('syncStatusMobile');
+      if (state === 'loading') {
+        el.className = "hidden lg:flex items-center gap-2 bg-amber-950/90 text-amber-400 border border-amber-800/60 px-3 py-1.5 rounded-full text-xs";
+        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span><span>${text}</span>`;
+        if (elMob) elMob.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span><span>Sync...</span>`;
+      } else if (state === 'success') {
+        el.className = "hidden lg:flex items-center gap-2 bg-emerald-950/90 text-emerald-400 border border-emerald-800/60 px-3 py-1.5 rounded-full text-xs";
+        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>${text}</span>`;
+        if (elMob) elMob.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Cloud OK</span>`;
       } else {
-        appData = structuredClone(defaultFamilyData);
+        el.className = "hidden lg:flex items-center gap-2 bg-rose-950/90 text-rose-400 border border-rose-800/60 px-3 py-1.5 rounded-full text-xs";
+        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>${text}</span>`;
+        if (elMob) elMob.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>Offline</span>`;
       }
-      document.getElementById('familyTitleHeader').innerText = appData.config.title;
-      document.getElementById('lockQuestionText').innerText = appData.config.question;
     }
 
-    function saveData() {
+    async function loadFromCloud() {
+      updateSyncStatus('loading', 'Načítám z cloudu...');
+      try {
+        const response = await fetch(`${JSONBIN_URL}/latest`, {
+          headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
+        });
+        if (!response.ok) throw new Error('Chyba komunikace s JSONBin');
+
+        const resData = await response.json();
+        const record = resData.record || {};
+        fullCloudRecord = record;
+
+        // Zkontrolujeme, zda už v Binu existuje klíč familyTree
+        if (record.familyTree && Array.isArray(record.familyTree.people)) {
+          appData = record.familyTree;
+        } else if (Array.isArray(record.people) && record.config) {
+          appData = record;
+        } else {
+          // V Binu jsou zatím jen Domácí projekty nebo je prázdný -> inicializujeme familyTree
+          appData = structuredClone(defaultFamilyData);
+          await saveToCloud(false);
+        }
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        applyHeaderAndLockConfig();
+        renderAll();
+        updateSyncStatus('success', 'Cloud připojen (JSONBin)');
+      } catch (err) {
+        console.error('Chyba při načítání z JSONBin, použita lokální záloha:', err);
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          try { appData = JSON.parse(saved); } catch (e) { appData = structuredClone(defaultFamilyData); }
+        } else {
+          appData = structuredClone(defaultFamilyData);
+        }
+        applyHeaderAndLockConfig();
+        renderAll();
+        updateSyncStatus('error', 'Offline (lokální paměť)');
+      }
+    }
+
+    async function saveToCloud(renderUI = true) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-      document.getElementById('familyTitleHeader').innerText = appData.config.title;
-      document.getElementById('lockQuestionText').innerText = appData.config.question;
-      renderAll();
+      applyHeaderAndLockConfig();
+      if (renderUI) renderAll();
+
+      updateSyncStatus('loading', 'Ukládám do cloudu...');
+      try {
+        // Nejprve načteme aktuální stav Binu, abychom nepřepsali případné "projects" z jiné aplikace
+        let payloadToSave = {};
+        if (fullCloudRecord && typeof fullCloudRecord === 'object' && !Array.isArray(fullCloudRecord)) {
+          payloadToSave = { ...fullCloudRecord, familyTree: appData };
+        } else {
+          payloadToSave = { familyTree: appData };
+        }
+
+        const response = await fetch(JSONBIN_URL, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': JSONBIN_MASTER_KEY
+          },
+          body: JSON.stringify(payloadToSave)
+        });
+
+        if (response.ok) {
+          fullCloudRecord = payloadToSave;
+          updateSyncStatus('success', 'Cloud připojen (JSONBin)');
+        } else {
+          throw new Error('Nelze uložit do JSONBin');
+        }
+      } catch (err) {
+        console.error('Chyba při ukládání do cloudu:', err);
+        updateSyncStatus('error', 'Chyba ukládání do cloudu');
+      }
+    }
+
+    function forceSync() {
+      loadFromCloud();
+    }
+
+    function applyHeaderAndLockConfig() {
+      if (appData && appData.config) {
+        document.getElementById('familyTitleHeader').innerText = appData.config.title || "Rodinný rodokmen";
+        document.getElementById('lockQuestionText').innerText = appData.config.question || "Kontrolní otázka:";
+      }
     }
 
     // ==================== KONTROLA RODINNÉ OTÁZKY ====================
@@ -612,9 +728,8 @@
       const input = document.getElementById('lockAnswerInput').value.trim().toLowerCase();
       const expected = (appData.config.answer || '').trim().toLowerCase();
       
-      // Povolíme i bez diakritiky
       const normalize = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      if (normalize(input) === normalize(expected) || input === 'novakova') {
+      if (normalize(input) === normalize(expected) || normalize(input) === 'novakova') {
         sessionStorage.setItem(UNLOCK_KEY, 'true');
         document.getElementById('lockScreen').classList.add('hidden');
       } else {
@@ -629,17 +744,17 @@
         const btn = document.getElementById(`tab-${t}`);
         if (t === tabId) {
           view.classList.remove('hidden');
-          btn.className = "tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white shadow-sm";
+          btn.className = "tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition bg-[#8c583a] text-white shadow-sm whitespace-nowrap";
         } else {
           view.classList.add('hidden');
-          btn.className = "tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34]";
+          btn.className = "tab-btn px-4 py-2 rounded-lg flex items-center gap-2 transition text-[#d5c5ab] hover:bg-[#4a3b34] whitespace-nowrap";
         }
       });
     }
 
     // ==================== HLAVNÍ VYKRESLENÍ ====================
     function renderAll() {
-      document.getElementById('navCountPeople').innerText = appData.people.length;
+      document.getElementById('navCountPeople').innerText = (appData.people || []).length;
       renderFanChart();
       renderTreeGenerations();
       renderPeopleList();
@@ -649,7 +764,7 @@
     }
 
     function getPersonBySosa(sosa) {
-      return appData.people.find(p => Number(p.sosa) === Number(sosa));
+      return (appData.people || []).find(p => Number(p.sosa) === Number(sosa));
     }
 
     // ==================== 1. SVG VĚJÍŘ PŘEDKŮ ====================
@@ -678,7 +793,6 @@
       const svg = document.getElementById('fanChartSvg');
       svg.innerHTML = '';
 
-      // Vykreslíme generace 1 až 3 kolem středu (Sosa 2..15) v polokruhu (-180° až 0°)
       const rings = [
         { gen: 1, rIn: 58, rOut: 140, items: [2, 3] },
         { gen: 2, rIn: 140, rOut: 235, items: [4, 5, 6, 7] },
@@ -725,7 +839,6 @@
           path.setAttribute("stroke-width", Number(selectedSosa) === Number(sosa) ? "3" : "1.2");
           g.appendChild(path);
 
-          // Popisek uvnitř výseče
           const pos = polarToCartesian(0, 0, midRadius, midAngle);
           let textRot = midAngle + 90;
           if (ring.gen === 3) {
@@ -765,7 +878,6 @@
         });
       });
 
-      // Středový kruh (Sosa 1 - Středobod rodokmenu)
       const rootPerson = getPersonBySosa(1);
       const centerG = document.createElementNS("http://www.w3.org/2000/svg", "g");
       centerG.setAttribute("class", "fan-slice");
@@ -787,7 +899,7 @@
       rootText.setAttribute("fill", "#fffdf9");
       rootText.setAttribute("font-size", "11");
       rootText.setAttribute("font-weight", "bold");
-      rootText.textContent = rootPerson ? rootPerson.name : "1. Выchozí osoba";
+      rootText.textContent = rootPerson ? rootPerson.name : "1. Výchozí osoba";
       centerG.appendChild(rootText);
 
       const rootSub = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -854,7 +966,7 @@
 
     function renderPeopleList() {
       const container = document.getElementById('peopleListContainer');
-      const sorted = [...appData.people].sort((a, b) => a.sosa - b.sosa);
+      const sorted = [...(appData.people || [])].sort((a, b) => a.sosa - b.sosa);
       const filtered = sorted.filter(p => {
         if (!searchFilter) return true;
         return (
@@ -897,31 +1009,43 @@
       const container = document.getElementById('storiesContainer');
       container.innerHTML = (appData.stories || []).map(st => `
         <article class="bg-[#f7f3e9] border border-[#e2d7c5] rounded-2xl p-5 space-y-2">
-          <div class="flex justify-between items-start">
+          <div class="flex justify-between items-start gap-2">
             <h3 class="serif text-xl font-bold text-[#2c221e]">${st.title}</h3>
-            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#efe8d8] text-[#8c583a]">${st.period || ''}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#efe8d8] text-[#8c583a]">${st.period || ''}</span>
+              <button onclick="deleteStory('${st.id}')" title="Smazat kapitolu" class="text-[#6e5a4f] hover:text-rose-700 text-xs px-1.5 py-1">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
           </div>
           <p class="text-sm text-[#2c221e] leading-relaxed">${st.content}</p>
         </article>
       `).join('');
     }
 
-    function openStoryModal() {
+    async function openStoryModal() {
       const title = prompt("Název příběhu / kapitoly:");
       if (!title) return;
       const period = prompt("Období (např. 1890–1930):", "");
       const content = prompt("Text rodinného příběhu:");
       if (!content) return;
+      if (!appData.stories) appData.stories = [];
       appData.stories.push({ id: 'st-' + Date.now(), title, period, content });
-      saveData();
+      await saveToCloud(true);
+    }
+
+    async function deleteStory(storyId) {
+      if (!confirm("Opravdu chcete smazat tuto kapitolu z rodinné kroniky?")) return;
+      appData.stories = (appData.stories || []).filter(s => s.id !== storyId);
+      await saveToCloud(true);
     }
 
     // ==================== 5. DOMY A STATISTIKY ====================
     function renderPlacesAndStats() {
       const container = document.getElementById('placesStatsContainer');
-      const houses = appData.people.filter(p => p.house).map(p => ({ house: p.house, name: p.name, sosa: p.sosa }));
+      const houses = (appData.people || []).filter(p => p.house).map(p => ({ house: p.house, name: p.name, sosa: p.sosa }));
       const occupations = {};
-      appData.people.forEach(p => {
+      (appData.people || []).forEach(p => {
         if (p.occupation) {
           occupations[p.occupation] = (occupations[p.occupation] || 0) + 1;
         }
@@ -977,7 +1101,7 @@
               <i class="fa-solid fa-user-plus"></i>
             </div>
             <h3 class="serif text-xl font-bold">Předek #${sosa} dosud nezadán</h3>
-            <p class="text-xs text-[#6e5a4f]">Tuto pozici v rodokmenu můžete okamžitě doplnit.</p>
+            <p class="text-xs text-[#6e5a4f]">Tuto pozici v rodokmenu můžete okamžitě doplnit a uložit do cloudu.</p>
             <button onclick="openEditPersonModal(${sosa})" class="px-4 py-2 bg-[#8c583a] text-white text-xs font-semibold rounded-xl shadow">
               Doplnit osobu #${sosa}
             </button>
@@ -1090,7 +1214,7 @@
       document.getElementById('personModal').classList.add('hidden');
     }
 
-    function savePersonForm(e) {
+    async function savePersonForm(e) {
       e.preventDefault();
       const sosa = Number(document.getElementById('formSosa').value);
       const newObj = {
@@ -1108,6 +1232,7 @@
         uncertain: document.getElementById('formUncertain').checked
       };
 
+      if (!appData.people) appData.people = [];
       const existingIdx = appData.people.findIndex(item => Number(item.sosa) === sosa);
       if (existingIdx >= 0) {
         appData.people[existingIdx] = newObj;
@@ -1117,14 +1242,22 @@
 
       selectedSosa = sosa;
       closePersonModal();
-      saveData();
+      await saveToCloud(true);
+    }
+
+    async function deletePersonFromForm() {
+      const sosa = Number(document.getElementById('formSosa').value);
+      if (!confirm(`Opravdu chcete smazat osobu #${sosa} z rodokmenu?`)) return;
+      appData.people = (appData.people || []).filter(p => Number(p.sosa) !== sosa);
+      closePersonModal();
+      await saveToCloud(true);
     }
 
     // ==================== NASTAVENÍ A EXPORT ====================
     function openDataModal() {
-      document.getElementById('cfgTitle').value = appData.config.title;
-      document.getElementById('cfgQuestion').value = appData.config.question;
-      document.getElementById('cfgAnswer').value = appData.config.answer;
+      document.getElementById('cfgTitle').value = appData.config.title || '';
+      document.getElementById('cfgQuestion').value = appData.config.question || '';
+      document.getElementById('cfgAnswer').value = appData.config.answer || '';
       document.getElementById('dataModal').classList.remove('hidden');
     }
 
@@ -1132,12 +1265,12 @@
       document.getElementById('dataModal').classList.add('hidden');
     }
 
-    function saveConfig() {
+    async function saveConfig() {
       appData.config.title = document.getElementById('cfgTitle').value.trim() || "Rodinný rodokmen";
       appData.config.question = document.getElementById('cfgQuestion').value.trim();
       appData.config.answer = document.getElementById('cfgAnswer').value.trim();
-      saveData();
       closeDataModal();
+      await saveToCloud(true);
     }
 
     function exportJsonData() {
@@ -1150,11 +1283,11 @@
       a.remove();
     }
 
-    function resetToDemo() {
-      if (confirm("Opravdu chcete obnovit výchozí ukázková data?")) {
+    async function resetToDemo() {
+      if (confirm("Opravdu chcete obnovit výchozí ukázková data a přepsat rodokmen v cloudu?")) {
         appData = structuredClone(defaultFamilyData);
-        saveData();
         closeDataModal();
+        await saveToCloud(true);
       }
     }
   </script>
